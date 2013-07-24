@@ -1,0 +1,21 @@
+*.class
+*.svn
+*.db
+
+#directories#
+**/.svn/
+dist/
+tmp/
+##
+
+#local settings#
+build/resource/LoadingEngine-limsdev.properties
+build/user_build_properties/hkim-build.properties
+##
+
+#INTELLIJ files#
+*.ids
+*.iml
+*.ipr
+*.iws
+##
