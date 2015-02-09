@@ -26,6 +26,9 @@
         <webroots>
           <root url="file://$MODULE_DIR$/main/src/www" relative="/" />
         </webroots>
+        <sourceRoots>
+          <root url="file://$MODULE_DIR$/src" />
+        </sourceRoots>
       </configuration>
       <facet type="Struts2" name="Struts 2">
         <configuration>
@@ -44,7 +47,12 @@
   <component name="NewModuleRootManager" inherit-compiler-output="true">
     <exclude-output />
     <content url="file://$MODULE_DIR$">
-      <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/common" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/main/src/test" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/build/resource" type="java-resource" />
+      <sourceFolder url="file://$MODULE_DIR$/main/src/java" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/main/src/www" isTestSource="false" />
+      <excludeFolder url="file://$MODULE_DIR$/resources" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
