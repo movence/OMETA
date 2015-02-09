@@ -1,0 +1,12 @@
+
+dist
+tmp
+out
+
+/* USER FILES */
+build/user_build_properties/movence-build.properties
+LoadingEngine-movence.properties
+
+/* SERVER SPECIFIC FILES */
+build/resource/LoadingEngine-ip-10-0-1-191.properties
+build/resource/LoadingEngine-ip-10-0-1-29.properties
