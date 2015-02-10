@@ -10,3 +10,5 @@ LoadingEngine-movence.properties
 /* SERVER SPECIFIC FILES */
 build/resource/LoadingEngine-ip-10-0-1-191.properties
 build/resource/LoadingEngine-ip-10-0-1-29.properties
+jcvi.ipr
+jcvi.iws
