@@ -44,11 +44,11 @@ public class Actor implements Serializable {
     private String email;
     private Date creationDate;
 
-    private String phone;
+    /*private String phone;
     private String centerName;
     private String role;
     private String piName;
-    private String piEmail;
+    private String piEmail;*/
 
     private String password;
 
@@ -116,7 +116,7 @@ public class Actor implements Serializable {
         this.creationDate = creationDate;
     }
 
-    @Column(name="actor_phone")
+    /*@Column(name="actor_phone")
     public String getPhone() {
         return phone;
     }
@@ -159,7 +159,7 @@ public class Actor implements Serializable {
 
     public void setPiEmail(String piEmail) {
         this.piEmail = piEmail;
-    }
+    }*/
 
     @Transient
     public String getPassword() {
