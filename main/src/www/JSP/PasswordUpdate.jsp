@@ -91,11 +91,9 @@
           </div>
       </div>
     </div>
-
-
-    <jsp:include page="../html/footer.html" />
-
   </div>
+
+  <jsp:include page="../html/footer.html" />
 
   <script type="text/javascript">
     function formSubmit() {
