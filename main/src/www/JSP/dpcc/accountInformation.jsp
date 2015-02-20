@@ -65,27 +65,11 @@
                 </div>
               </div>
             </div>
-            <div class="col-sm-6">
-              <div class="panel panel-info">
-                <div class="panel-heading">
-                  <h3 class="panel-title">Project</h3>
-                </div>
-                <div class="panel-body">
-                  <ul class="list-unstyled">
-                    <li>
-                      <a href="popup.action?t=projectDetails">My Center Projects</a>
-                    </li>
-                  </ul>
-                </div>
-              </div>
-            </div>
-
           </div>
-          
         </div>
       </div>
-      
-      <jsp:include page="../../html/footer.html" />
     </div>
+
+    <jsp:include page="../../html/footer.html" />
   </body>
 </html>

@@ -270,6 +270,14 @@
             <result name="success">/JSP/ActorRole.jsp</result>
             <result name="error">/JSP/ActorRole.jsp</result>
         </action>
+        <action name="editActor" class="org.jcvi.ometa.action.EditActor">
+            <result name="none" type="redirectAction">
+                <param name="actionName">actorRole</param>
+            </result>
+            <result name="input">/JSP/EditActor.jsp</result>
+            <result name="success">/JSP/EditActor.jsp</result>
+            <result name="error">/JSP/EditActor.jsp</result>
+        </action>
         <action name="passwordUpdate" class="org.jcvi.ometa.action.PasswordUpdate">
             <result name="input">/JSP/PasswordUpdate.jsp</result>
             <result name="error">/JSP/PasswordUpdate.jsp</result>

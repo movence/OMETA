@@ -30,7 +30,7 @@
     <link rel="stylesheet" href="style/dataTables.css" type='text/css' media='all' />
     <link rel="stylesheet" href="style/cupertino/jquery-ui-1.8.18.custom.css" type='text/css' media='all' />
 
-    <link rel="stylesheet" href="style/version01.css" />
+    <%--<link rel="stylesheet" href="style/version01.css" />--%>
     <style>
         tr.even { padding: 2px; background-color: #e9e9e9; }
         tr.odd { padding: 2px; background-color: #f5f5f5; }
@@ -51,7 +51,16 @@
 
     <div id="main" class="">
         <div id="inner-content" class="">
-            <div id="content" role="main">
+            <div id="content" class="container max-container" role="main">
+                <div id="ribbon">
+                    <ol class="breadcrumb">
+                        <li>
+                            <a href="/ometa/secureIndex.action">Dashboard</a>
+                        </li>
+                        <li>Data Submission</li>
+                        <li>Event Report</li>
+                    </ol>
+                </div>
 
                 <s:form id="eventReportPage" name="eventReportPage" namespace="/" action="eventReport" method="post" theme="simple">
 
@@ -66,9 +75,11 @@
                             <input type="hidden" id="error_messages" value="<s:iterator value='actionErrors'><s:property/><br/></s:iterator>"/>
                         </s:if>
                         <s:if test="hasActionMessages()">
+                          <div class="alert_info" onclick="$('.alert_info').remove();" style="margin-bottom: 15px;">
                             <div class="alert_info" onclick="$('.alert_info').remove();">
-                                <strong><s:iterator value='actionMessages'><s:property/><br/></s:iterator></strong>
+                              <strong style="color: #ffffff;background-color: #a90329;padding: 3px;border-color: #900323;border: 1px solid transparent;padding: 6px 12px;"><s:iterator value='actionMessages'><s:property/></s:iterator></strong>
                             </div>
+                          </div>
                         </s:if>
                     </div>
                     <div id="mainContent">
@@ -89,7 +100,7 @@
                             </div>
 
                             <div id="attributesTableHeader" style="margin-top:25px;">
-                                <h1 class="csc-firstHeader">Attributes</h1>
+                                <h1 class="csc-firstHeader middle-header">Attributes</h1>
                             </div>
                             <div id="attributesTableDiv">
                                 <table name="attributesTable" id="attributesTable" class="contenttable" style="width:95%;">
@@ -120,10 +131,9 @@
             </div>
         </div>
     </div>
-
-    <jsp:include page="../html/footer.html" />
-
 </div>
+
+<jsp:include page="../html/footer.html" />
 
 <script src="scripts/jquery/jquery.dataTables.js"></script>
 <script>
