@@ -79,7 +79,7 @@ public class EventLoadHelper {
 
         int gridRowIndex = 0;
         for(GridBean gBean : gridList) {
-            if(gBean!=null) {
+            if(gBean!=null && gBean.getProjectName() != null && !gBean.getProjectName().equals("")) {
                 if(isProjectRegistration && gBean.getProjectName() != null) { // new project
                     loadingProject = new Project();
                     loadingProject.setProjectName(gBean.getProjectName());
