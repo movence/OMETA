@@ -486,7 +486,7 @@ public class LoadingEngine {
             }
 
             if(failedCount == 0 && processedLineCount == successCount) {
-                logWriter.write("All data has been loaded successfully for Submission ID: [" + submissionId + "]. Submission to the DPCC complete!");
+                logWriter.write("All data has been loaded successfully for Submission ID: [" + submissionId + "]. Submission to the OMETA complete!");
             }
 
             logWriter.close();

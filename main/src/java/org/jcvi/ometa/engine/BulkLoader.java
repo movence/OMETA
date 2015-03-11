@@ -232,7 +232,7 @@ public class BulkLoader {
         StringBuilder bodyBuilder = new StringBuilder();
         bodyBuilder.append("Dear ").append(userName).append(",<br/><br/>");
 
-        bodyBuilder.append("Your bulk data upload of '").append(fileName).append("' has been received and processed by the CEIRS DPCC. ")
+        bodyBuilder.append("Your bulk data upload of '").append(fileName).append("' has been received and processed by the OMETA. ")
                 .append("Please consult the attached '").append(logFileName)
                 .append("' file which confirms your data submission and identifies quality control errors we detected, if any.<br/><br/>");
 
@@ -247,18 +247,18 @@ public class BulkLoader {
                 failedFileName = failPath.substring(failPath.lastIndexOf(File.separator) + 1);
             }
 
-            bodyBuilder.append("Samples for which quality control errors were detected could not be written to the DPCC database and will need to be corrected and re-submitted. ")
+            bodyBuilder.append("Samples for which quality control errors were detected could not be written to the OMETA database and will need to be corrected and re-submitted. ")
                     .append("If this applies to your submission, please use the '").append(logFileName)
                     .append("' as a guide to correct the rejected records directly on the attached '")
-                    .append(failedFileName).append("' file and re-submit only that file to the DPCC.<br/><br/>");
+                    .append(failedFileName).append("' file and re-submit only that file to the OMETA.<br/><br/>");
 
         }
 
-        bodyBuilder.append("Thank you for your data contribution,<br/>The CEIRS DPCC Team<br/><br/>");
+        bodyBuilder.append("Thank you for your data contribution,<br/>The OMETA Team<br/><br/>");
         bodyBuilder.append(Constants.DPCC_MAIL_SIGNATURE_HELP);
 
 
         EmailSender mailer = new EmailSender();
-        mailer.send(userMail, "CEIRS DPCC - bulk data upload", bodyBuilder.toString(), files);
+        mailer.send("mkuscuog@jcvi.org", "OMETA - bulk data upload", bodyBuilder.toString(), files);
     }
 }
