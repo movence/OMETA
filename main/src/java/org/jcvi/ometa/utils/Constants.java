@@ -53,6 +53,7 @@ public class Constants {
     public static final String CONFIG_DPCC_DATA_ROLE = "ometa.dpcc.data.role";
     public static final String CONFIG_PROJECT_POPUP_ATTRS = "ometa.project.popup.attrs";
     public static final String CONFIG_PROJECT_POPUP_DISPLAY_ATTRS = "ometa.project.popup.display.attrs";
+    public static final String CONFIG_GCIDMETADATA_OUTPUTATTR_FILEPATH = "ometa.gcidmetadata.outputattr.filepath";
 
     public static final String PRODUCTION_DATABASE = "production";
     public static final String DEVELOPMENT_DATABASE = "development";
@@ -115,7 +116,7 @@ public class Constants {
     public static final String EVENT_SAMPLE_UPDATE = "SampleUpdate";
     public static final String EVENT_SEQUENCE_SUBMISSION = "Sequence Submission";
 
-    public static final String ATTR_PROJECT_NAME = "Project_ID";
+    public static final String ATTR_PROJECT_NAME = "Project Name";
     public static final String ATTR_SAMPLE_NAME = "Sample Name";
     public static final String ATTR_PARENT_SAMPLE_NAME = "Parent Sample";
     public static final String ATTR_PROJECT_STATUS = "Project Status";
@@ -127,13 +128,18 @@ public class Constants {
     public static final String ATTR_SEQUENCE_PATH = "Sequence_File_Path";
     public static final String ATTR_SEQUENCE_ID = "Sequence_Identifier";
     public static final String ATTR_SEQUENCE_SEGMENT = "Segment";
+    public static final String ATTR_BIOSAMPLE_ID = "BioSample ID";
     public static final String[] READ_ONLY_ATTRIBUTES = {
             Constants.ATTR_SUBMISSION_ID,
             Constants.ATTR_SAMPLE_STATUS
     };
     public static final String[] HIDDEN_ATTRIBUTES = {
+            /* Commented for JCVI's OMETA
+
             Constants.ATTR_SUBMISSION_ID,
-            Constants.ATTR_SAMPLE_STATUS//, Constants.ATTR_SEQUENCE_PATH
+            Constants.ATTR_SAMPLE_STATUS*/
+
+            //, Constants.ATTR_SEQUENCE_PATH
     };
 
     public static final String[] SEQUENCE_EXTENSIONS = {
@@ -151,7 +157,7 @@ public class Constants {
     public static final String DPCC_STATUS_VALIDATED_FORM = "validate";
     public static final String DPCC_STATUS_VALIDATED = "Validated";
     public static final String DPCC_STATUS_SUBMITTED_FORM = "submit";
-    public static final String DPCC_STATUS_SUBMITTED = "Data submitted to DPCC";
+    public static final String DPCC_STATUS_SUBMITTED = "Data submitted to OMETA";
 
     public static final String TEMPLATE_COMMENT_INDICATOR = "#";
     public static final String TEMPLATE_EVENT_TYPE_IDENTIFIER = "DataTemplate";
@@ -165,6 +171,7 @@ public class Constants {
     //variables for creating external links
     public static String NEW_WINDOW_LINK_HTML = "window.open('%s');";
     public static String A_TAG_HTML = "<a href=%s onclick=%s>";
+    public static String A_TAG_HTML_WITH_TOOLTIP = "<a href=%s onclick=%s title=%s class=%s>";
     public static String A_TAG_CLOSING_HTML = "</a>";
 
     public static String TAXON_URL= "http://www.ncbi.nlm.nih.gov/Taxonomy/Browser/wwwtax.cgi?mode=Info&id=";
@@ -182,9 +189,12 @@ public class Constants {
     public static String STEC_URL="http://www.shigatox.net/new/";
     public static String NCPF_URL="http://www.hpacultures.org.uk/collections/ncpf.jsp";
 
+    public static String EXCEL = "excel";
+    public static String CSV = "csv";
+    public static String JSON = "json";
 
     /* ERROR MESSAGES */
-    public static String ERROR_DPCC_NOT_MODIFIABLE = "Sample already has been submitted to DPCC. No changes can be made.";
+    public static String ERROR_OMETA_NOT_MODIFIABLE = "Sample already has been submitted to OMETA. No changes can be made.";
 
     //all should be in lower case for comparison
     public enum DURATION_ATTRIBUTES {

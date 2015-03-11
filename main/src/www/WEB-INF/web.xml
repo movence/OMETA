@@ -113,6 +113,8 @@
 
             <url-pattern>projectdetail.action</url-pattern>
 
+            <url-pattern>gcidMetadata.action</url-pattern>
+
         </web-resource-collection>
         <auth-constraint>
             <role-name>pstuser</role-name>
