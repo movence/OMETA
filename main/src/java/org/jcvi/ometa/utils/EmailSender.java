@@ -66,14 +66,15 @@ public class EmailSender {
 
     public void send(String to, String subject, String body, List<String> files) throws Exception {
         Properties mailProps = System.getProperties();
-        mailProps.put("mail.smtp.auth", "true");
+        mailProps.setProperty(this.EMAIL_HOST, this.EMAIL_HOST);
+        /*mailProps.put("mail.smtp.auth", "true");
         mailProps.put("mail.smtp.ssl.enable", "true");
         mailProps.put("mail.smtp.port", 587);
         mailProps.put("mail.transport.protocol", "smtp");
-        /*mailProps.put("mail.smtp.starttls.enable", "true");
+        mailProps.put("mail.smtp.starttls.enable", "true");
         mailProps.put("mail.smtp.starttls.required", "true");*/
 
-        Session session = Session.getInstance(mailProps);
+        Session session = Session.getDefaultInstance(mailProps);
         MimeMessage msg = new MimeMessage(session);
         msg.setFrom(new InternetAddress(this.EMAIL_FROM));
 
@@ -103,17 +104,18 @@ public class EmailSender {
         }
         msg.setContent(multipart);
 
-        Transport transport = session.getTransport();
+        //Transport transport = session.getTransport();
 
         try {
-            transport.connect(this.EMAIL_HOST, 587, this.EMAIL_USER, this.EMAIL_PASS);
+            //transport.connect(this.EMAIL_HOST, 587, this.EMAIL_USER, this.EMAIL_PASS);
+            Transport.send(msg);
 
-            transport.sendMessage(msg, msg.getAllRecipients());
+            //transport.sendMessage(msg, msg.getAllRecipients());
         } catch (Exception ex) {
             System.out.println("Error in sending a message: " + ex.getMessage());
         } finally {
             // Close and terminate the connection.
-            transport.close();
+            //transport.close();
         }
     }
 }
