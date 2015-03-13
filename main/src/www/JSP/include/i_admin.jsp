@@ -23,7 +23,7 @@ if (userName!=null && userName!=='null') {
 
 		$('a[data-nav="home"]').click(function(e) {
 			e.preventDefault();
-			document.location = 'http://www.niaidceirs.org';
+			document.location = 'http://limsdev3.jcvi.org:8380/ometa';
 		});
 
 	}
