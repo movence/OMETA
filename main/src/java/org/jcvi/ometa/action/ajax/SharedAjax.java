@@ -102,6 +102,7 @@ public class SharedAjax extends ActionSupport implements IAjaxAction {
             //CommonTool.sortEventMetaAttributeByOrder(registrationEMAList);
 
             List<ProjectAttribute> projectAttributes = readPersister.getProjectAttributes(this.projectId);
+            List<SampleMetaAttribute> allSampleMetaAttributes = readPersister.getSampleMetaAttributes(this.projectId);
 
             Collections.sort(projectAttributes, new Comparator<ProjectAttribute>() {
                 @Override
@@ -132,10 +133,19 @@ public class SharedAjax extends ActionSupport implements IAjaxAction {
                 }
             }
 
+            List<String> attributeList = new ArrayList<String>();
+            for (SampleMetaAttribute sma : allSampleMetaAttributes) {
+                String tempMetaName = sma.getLookupValue().getName();
+                if (!attributeList.contains(tempMetaName)) {
+                    attributeList.add(tempMetaName);
+                }
+            }
+
             projectMap.put("Project Registration", CommonTool.convertTimestampToDate(pMap.getProject().getCreationDate()));
             projectMap.put("editable", pMap.isEditable()?1:0);
 
             aaData.add(projectMap);
+            aaData.add(attributeList);
 
             returnValue = SUCCESS;
         } catch (Exception ex) {
