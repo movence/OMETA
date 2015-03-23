@@ -54,6 +54,8 @@ public class Constants {
     public static final String CONFIG_PROJECT_POPUP_ATTRS = "ometa.project.popup.attrs";
     public static final String CONFIG_PROJECT_POPUP_DISPLAY_ATTRS = "ometa.project.popup.display.attrs";
     public static final String CONFIG_GCIDMETADATA_OUTPUTATTR_FILEPATH = "ometa.gcidmetadata.outputattr.filepath";
+    public static final String CONFIG_GCIDMETADATA_BIOPROJECTFILE_FILEPATH = "ometa.gcidmetadata.bioprojectfile.filepath";
+    public static final String CONFIG_GCIDMETADATA_ATTRMAPPING_FILEPATH = "ometa.gcidmetadata.attrmapping.filepath";
 
     public static final String PRODUCTION_DATABASE = "production";
     public static final String DEVELOPMENT_DATABASE = "development";
@@ -129,6 +131,11 @@ public class Constants {
     public static final String ATTR_SEQUENCE_ID = "Sequence_Identifier";
     public static final String ATTR_SEQUENCE_SEGMENT = "Segment";
     public static final String ATTR_BIOSAMPLE_ID = "BioSample ID";
+    public static final String ATTR_BIOPROJECT_ID = "BioProject ID";
+    public static final String ATTR_GENBANK_ASSEMBLY_ACESSION = "GenBank Assembly Accession";
+    public static final String ATTR_GENBANK_XREF_CHROMOSOMES = "GenBank_Xref_Chromosomes";
+    public static final String ATTR_GENBANK_XREF_PLASMIDS = "GenBank_Xref_Plasmids";
+    public static final String ATTR_GENBANK_XREF_WGS = "GenBank_Xref_WGS";
     public static final String[] READ_ONLY_ATTRIBUTES = {
             Constants.ATTR_SUBMISSION_ID,
             Constants.ATTR_SAMPLE_STATUS

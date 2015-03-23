@@ -414,6 +414,11 @@
                 <param name="contentDisposition">attachment;filename="GCID-Metadata.csv"</param>
                 <param name="inputName">dataTemplateStream</param>
             </result>
+            <result name="bioproject-excel" type="stream">
+                <param name="contentType">application/vnd.ms-excel</param>
+                <param name="contentDisposition">attachment;filename="BRC_GSC_Metadata_Collection v1.32 Bacteria.xlsm"</param>
+                <param name="inputName">dataTemplateStream</param>
+            </result>
         </action>
         <action name="sharedAjax" class="org.jcvi.ometa.action.ajax.SharedAjax" method="runAjax">
             <result name="success" type="json"/>
