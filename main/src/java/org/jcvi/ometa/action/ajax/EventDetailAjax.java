@@ -93,10 +93,17 @@ public class EventDetailAjax extends ActionSupport implements IAjaxAction {
                 List<Sample> samples;
                 Long flexId = (sampleId!=null && sampleId!=0) ? sampleId : projectId;
                 String flexType = (sampleId!=null && sampleId!=0) ? "sample" : "project";
-                String sortCol = iSortCol_0.equals("1") ? "sample"
-                        : iSortCol_0.equals("2") ? "parent"
-                        : iSortCol_0.equals("3") ? "user"
-                        : iSortCol_0.equals("4") ? "date" : null;
+                String sortCol = iSortCol_0.equals("0") ? "sample"
+                        : iSortCol_0.equals("1") ? "parent"
+                        : iSortCol_0.equals("2") ? "user"
+                        : iSortCol_0.equals("3") ? "date" : null;
+                if(sortCol == null){
+                    List<SampleMetaAttribute> allSampleMetaAttributes = readPersister.getSampleMetaAttributes(this.projectId);
+
+                    sortCol = allSampleMetaAttributes.get(Integer.parseInt(iSortCol_0) - 4)
+                            .getLookupValue().getName();;
+                }
+
                 samples = readPersister.getAllSamples(flexId, flexType,sSearch, sortCol, sSortDir_0);
 
                 List<Sample> filteredList = samples.subList(iDisplayStart, iDisplayStart+iDisplayLength>samples.size() ? samples.size() : iDisplayLength+iDisplayStart);
