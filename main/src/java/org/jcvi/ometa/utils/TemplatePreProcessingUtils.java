@@ -40,8 +40,7 @@ public class TemplatePreProcessingUtils {
 
         headers.add(new HeaderDetail(Constants.ATTR_PROJECT_NAME, true, "string", "", null));
 
-        /*
-         remove sample information and public flag
+
         if (isSampleRegistration) { // parent sample name for sample registration
             headers.add(new HeaderDetail(Constants.ATTR_PARENT_SAMPLE_NAME, false, "string", "", null));
         }
@@ -49,7 +48,6 @@ public class TemplatePreProcessingUtils {
         if (isProjectRegistration || isSampleRegistration) { //public flag
             headers.add(new HeaderDetail(Constants.ATTR_PUBLIC_FLAG, true, "int", "", null));
         }
-        */
 
         boolean sampleRequired = false;
         for (EventMetaAttribute ema : emas) {
@@ -315,6 +313,7 @@ public class TemplatePreProcessingUtils {
                 } else if(lineCount == 2) { // attribute headers
                     Collections.addAll(columns, line);
                     hasSampleName = columns.indexOf(Constants.ATTR_SAMPLE_NAME) >= 0;
+                    hasParentSampleName = columns.indexOf(Constants.ATTR_PARENT_SAMPLE_NAME) >= 0;
                     hasPublicFlag = columns.indexOf(Constants.ATTR_PUBLIC_FLAG) >= 0;
 
                 } else { // data lines
