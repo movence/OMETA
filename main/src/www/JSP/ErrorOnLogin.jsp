@@ -32,7 +32,7 @@
   <div id="main">
     <div id="content" class="container max-container" role="main">
       <div class="page-header">
-        <h1>CEIRS Member Login</h1>
+        <h1>OMETA Login</h1>
       </div>
       <div class="row">
 
@@ -81,7 +81,7 @@
         </div>
 
         <div class="col-sm-8 col-md-8 hidden-xs">
-          <h4>Welcome to the CEIRS Data Processing and Coordinating Center site.</h4>
+          <%--<h4>Welcome to the CEIRS Data Processing and Coordinating Center site.</h4>
 
           <p style="margin-top:20px;">Here, members of the CEIRS network can:</p>
           <ol>
@@ -91,16 +91,15 @@
             <li>Access training and education materials</li>
           </ol>
 
-          <p>Please login to access these features or <a href="access.action">Request Access</a> if this is your first time here.</p>
+          <p>Please login to access these features or <a href="access.action">Request Access</a> if this is your first time here.</p>--%>
         </div>
 
       </div>
     </div>
   </div>
-
-  <jsp:include page="../html/footer.html"/>
-
 </div>
+
+<jsp:include page="../html/footer.html"/>
 
 <script>
   $(function () {

@@ -64,20 +64,17 @@ public class LDAPHelper {
             // send mail to the user with a random password
             StringBuilder bodyBuilder = new StringBuilder();
             bodyBuilder.append("Dear ").append(userFullName).append(",<br/><br/>");
-            bodyBuilder.append( " Your CEIRS DPCC account password has been reset to ");
+            bodyBuilder.append( " Your OMETA account password has been reset to ");
             bodyBuilder.append("&nbsp;").append(randomPassword).append("<br/><br/>");
-            bodyBuilder.append(" You may use this new password and your existing username to login the CEIRS Members area of "+
-                    "<a href=\"http://niaidceirs.org\">niaidceirs.org</a>.<br/><br/> "+
-                    "If you would like to change the auto-generated password above to something more memorable to you, you may do so on your " +
-                    "<a href=\"https://dpcc.niaidceirs.org/ometa/accountInformation.action\">Account Information Page</a>.").append("<br/><br/>");
-            bodyBuilder.append(" If this password reset request did not originate from you, please contact the CEIRS DPCC immediately.");
+            bodyBuilder.append(" You may use this new password and your existing username to login the OMETA ").append("<br/><br/>");
+            bodyBuilder.append(" If this password reset request did not originate from you, please contact the OMETA immediately.");
 
-            bodyBuilder.append("<br/><br/>The CEIRS DPCC Team<br/>");
+            bodyBuilder.append("<br/><br/>The OMETA Team<br/>");
             bodyBuilder.append(Constants.DPCC_MAIL_SIGNATURE_HELP);
 
 
             EmailSender mailer = new EmailSender();
-            mailer.send(userMail, "CEIRS DPCC - password reset", bodyBuilder.toString(), null);
+            mailer.send(userMail, "OMETA - password reset", bodyBuilder.toString(), null);
         } catch(Exception ex) {
             throw ex;
         }
