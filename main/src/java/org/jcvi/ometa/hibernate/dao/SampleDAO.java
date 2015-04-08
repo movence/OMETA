@@ -452,18 +452,18 @@ public class SampleDAO extends HibernateDAO {
             if(isSort) {
                 String optSelector = "";
                 List<String> defaults = Arrays.asList(defaultAttributes);
-                if(defaults.contains(sortCol)) {
+                if(defaults.contains(sortCol) || sortCol.equals("Sample Name") || sortCol.equals("Project Name") || sortCol.equals("Parent Sample")) {
                     String temp_sql = "";
                     if(isSearch)
                         temp_sql = " and "+sql_wsort_s.replaceFirst("#sampleIds#", sub_sql.replaceAll("#selector#", "s.sample_id"));
                     temp_sql += " order by ";
-                    if(sortCol.equals(Constants.ATTR_PROJECT_NAME))
+                    if(sortCol.equals(Constants.ATTR_PROJECT_NAME) || sortCol.equals("Project Name"))
                         temp_sql += "p.projet_name ";
-                    else if(sortCol.equals(Constants.ATTR_SAMPLE_NAME))
+                    else if(sortCol.equals(Constants.ATTR_SAMPLE_NAME) || sortCol.equals("Sample Name"))
                         temp_sql += "s.sample_name ";
                     else if(sortCol.equals("Parent Project"))
                         temp_sql += "p_1.project_name ";
-                    else if(sortCol.equals(Constants.ATTR_PARENT_SAMPLE_NAME))
+                    else if(sortCol.equals(Constants.ATTR_PARENT_SAMPLE_NAME) || sortCol.equals("Parent Sample"))
                         temp_sql += "s_1.sample_name ";
                     sql = sql_s_default.replace("#opt#", temp_sql + " #sortDir# ");
                 } else {
@@ -471,7 +471,7 @@ public class SampleDAO extends HibernateDAO {
                         // ea.eventa, sa.sampla, pa.projea
                         String sql_attr = " ,CONCAT(IFNULL(#field#_attribute_str, ''),',',IFNULL(#field#_attribute_date, ''),',',IFNULL(#field#_attribute_int, '')) attr ";
                         sql = sortType.equals("p") ? sql_p.replaceFirst("#p_attr#", sql_attr.replaceAll("#field#", "pa.projea"))
-                                : sortType.equals("p") ? sql_s.replaceFirst("#s_attr#", sql_attr.replaceAll("#field#", "sa.sampla"))
+                                : sortType.equals("s") ? sql_s.replaceFirst("#s_attr#", sql_attr.replaceAll("#field#", "sa.sampla"))
                                 : sql_e.replaceFirst("#e_attr#", sql_attr.replaceAll("#field#", "ea.eventa"));
                         optSelector = "#" + sortType + "_opt#";
                     }
