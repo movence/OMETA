@@ -222,7 +222,10 @@ public class CommonTool {
         Collections.sort(eaList, new Comparator<EventAttribute>() {
             @Override
             public int compare(EventAttribute o1, EventAttribute o2) {
-                return o1.getMetaAttribute().getOrder() == null && o2.getMetaAttribute().getOrder() == null ? 0
+                return o1.getMetaAttribute() == null && o2.getMetaAttribute() == null ? 0
+                        : o1.getMetaAttribute() == null ? -1
+                        : o2.getMetaAttribute() == null ? 1
+                        : o1.getMetaAttribute().getOrder() == null && o2.getMetaAttribute().getOrder() == null ? 0
                         : o1.getMetaAttribute().getOrder() == null ? -1
                         : o2.getMetaAttribute().getOrder() == null ? 1
                         : o1.getMetaAttribute().getOrder().compareTo(o2.getMetaAttribute().getOrder());
