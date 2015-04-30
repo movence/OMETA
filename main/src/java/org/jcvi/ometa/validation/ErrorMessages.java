@@ -31,7 +31,7 @@ public class ErrorMessages {
     public static final String TEMPLATE_OVERSIZE = "please use the Bulk Submission to load a large set of data.";
     public static final String TEMPLATE_COLUMN_COUNT_MISMATCH = "number of columns of a data row does not match the number of header columns. check for missing or extra commas.";
     public static final String TEMPLATE_MULTIPLE_PROJECT = "multiple projects are found in the file";
-    public static final String TEMPLATE_PROJECT_MISSING = "The '" + Constants.ATTR_PROJECT_NAME + "' field is required and must contain a " + Constants.ATTR_PROJECT_NAME + " registered with the DPCC. A list of your Center’s projects can be found on the DPCC Portal under Account Information/My Center Projects";
+    public static final String TEMPLATE_PROJECT_MISSING = "The '" + Constants.ATTR_PROJECT_NAME + "' field is required and must contain a " + Constants.ATTR_PROJECT_NAME + " registered with the OMETA.";
 
     public static final String CLI_BATCH_INPUT_FILE_MISSING = "input file does not exist.";
     public static final String CLI_BATCH_CSV_ONLY = "only csv files are supported.";
