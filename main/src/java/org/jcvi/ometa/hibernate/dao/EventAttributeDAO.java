@@ -169,7 +169,9 @@ public class EventAttributeDAO extends HibernateDAO {
                         }
 
                         for(EventAttribute ea: results) {
-                            EventMetaAttribute ema = eventTypeToNameMap.get(eventVsEventType.get(ea.getEventId())).get(ea.getNameLookupValueId());
+                            Long type = eventVsEventType.get(ea.getEventId());
+                            Map<Long, EventMetaAttribute> name = type == null ? null : eventTypeToNameMap.get(type);
+                            EventMetaAttribute ema = name == null ? null : name.get(ea.getNameLookupValueId());
                             if(ema != null) {
                                 ea.setMetaAttribute(ema);
                             }
