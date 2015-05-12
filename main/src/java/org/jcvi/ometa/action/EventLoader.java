@@ -392,6 +392,7 @@ public class EventLoader extends ActionSupport implements Preparable {
             projectName = null;
             eventId = null;
             eventName = null;
+            sampleName = null;
         }
         if(resetLists) {
             beanList = null;
