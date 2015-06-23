@@ -93,6 +93,7 @@ public class EventLoader extends ActionSupport implements Preparable {
     private ArrayList<String> loadedFiles;
 
     private String ids;
+    private String sampleArrIndex;
     /*private Long defaultProjectId;*/
 
     /* final string values from the form*/
@@ -216,7 +217,7 @@ public class EventLoader extends ActionSupport implements Preparable {
                     loadHelper.gridListToMultiLoadParameter(loadParameter, this.gridList, this.projectName, this.eventName, this.status, userName);
                     psewt.loadAll(null, loadParameter);
 
-                    this.pageDataReset(isProjectRegistration, isSampleRegistration, this.status);
+                    if(!filter.equals("su"))this.pageDataReset(isProjectRegistration, isSampleRegistration, this.status);
 
                     addActionMessage(this.getResultMessage());
 
@@ -562,5 +563,13 @@ public class EventLoader extends ActionSupport implements Preparable {
 
     public void setFilter(String filter) {
         this.filter = filter;
+    }
+
+    public String getSampleArrIndex() {
+        return sampleArrIndex;
+    }
+
+    public void setSampleArrIndex(String sampleArrIndex) {
+        this.sampleArrIndex = sampleArrIndex;
     }
 }
