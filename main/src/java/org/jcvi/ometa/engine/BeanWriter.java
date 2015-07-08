@@ -30,6 +30,7 @@ import org.jcvi.ometa.configuration.BeanPopulator;
 import org.jcvi.ometa.configuration.InputBeanType;
 import org.jcvi.ometa.helper.EventLoadHelper;
 import org.jcvi.ometa.model.*;
+import org.jcvi.ometa.model.Dictionary;
 import org.jcvi.ometa.utils.Constants;
 import org.jcvi.ometa.utils.PresentationActionDelegate;
 import org.jcvi.ometa.utils.TemplatePreProcessingUtils;
@@ -175,6 +176,25 @@ public class BeanWriter {
             }
 
             parameterObject.addLookupValues(newLv);
+        }
+
+        files = collector.getDictionaryFiles();
+        for (File file: files) {
+            List<Dictionary> dictBeans = this.getGenericModelBeans(file, Dictionary.class);
+
+            //load only new dictionaries
+            List<Dictionary> newDict = new ArrayList<Dictionary>();
+            for(Dictionary dict : dictBeans){
+                String code = dict.getDictionaryCode();
+                if(code == null || code.equals("")) code = dict.getDictionaryValue();
+
+                Dictionary existingDict = this.readEjb.getDictionaryByTypeAndCode(dict.getDictionaryType(), code);
+                if(existingDict == null) {
+                    newDict.add(dict);
+                }
+            }
+
+            parameterObject.addDictionaries(newDict);
         }
 
         files = collector.getProjectFiles();
@@ -410,6 +430,9 @@ public class BeanWriter {
                     break;
                 case lookupValue:
                     bean = (B) new LookupValue();
+                    break;
+                case dictionary:
+                    bean = (B) new Dictionary();
                     break;
                 default:
                     break;
