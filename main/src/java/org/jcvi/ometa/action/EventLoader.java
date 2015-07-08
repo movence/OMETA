@@ -239,7 +239,7 @@ public class EventLoader extends ActionSupport implements Preparable {
 
                 } else if(jobType.startsWith(TEMPLATE_DOWNLOAD)) { //download template
                     List<EventMetaAttribute> emaList = this.readPersister.getEventMetaAttributes(this.projectName, this.eventName);
-                    emaList = CommonTool.filterEventMetaAttribute(emaList);
+                    emaList = CommonTool.filterEventMetaAttribute(emaList, "template");
                     //CommonTool.sortEventMetaAttributeByOrder(emaList);
 
                     /*
