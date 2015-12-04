@@ -31,7 +31,7 @@ body {
     width: 100%;
 } /* end #main_block #main_content_3c */
 #content_header { width: 523px; }
-#content { width:auto; }
+/*#content { width:auto; }*/
 #content {
     background: #ffffff;
     padding-left: 0;
@@ -103,10 +103,11 @@ tr.tableHeader th { font-weight: normal; }
 #legal_container { font-size: 1em; }
 p.header1 { clear: none; }
 
-#content {
+/*#content {
     border-left: 1px solid #818080;
     border-right: 1px solid #818080;
-} /* end #container_1 */
+}*/ 
+/* end #container_1 */
 
 #top_dark, #bottom_dark{ /*
   border-left: 1px solid #686868;
@@ -174,7 +175,7 @@ border-right: 1px solid #a0a09b;
 }
 
 .popup {background:#FFF; border:1px solid #333; padding:1px;}
-.popup-header {height:24px; padding:7px; background:url("../images/popup/bgr_popup_header.jpg") repeat-x;}
+.popup-header {padding:7px; background:url("../images/popup/bgr_popup_header.jpg") repeat-x;}
 .popup-header h2 {margin:0; padding:0; font-size:18px; float:left;}
 .popup-header .close-link {float:right; font-size:11px;}
 
@@ -186,7 +187,15 @@ border-right: 1px solid #a0a09b;
     vertical-align: middle;
 }
 
-.tableHeaderStyle {
+.tableHeaderStyle, .tableHeaderNoSort, .tableHeaderNoBG {
+   background-color: #B6B6B6 !important;
+   border: 1px solid #FFF; 
+   vertical-align: top;
+   max-width: 182px;
+   word-wrap:break-word; 
+}
+
+/*.tableHeaderStyle {
     font-family: Verdana,Arial,Helvetica,sans-serif;
     font-weight: normal;
     font-size: 1em;
@@ -231,10 +240,11 @@ border-right: 1px solid #a0a09b;
     cursor: pointer;
     border: 1px solid #FFF;
     background-color: #B6B6B6;
-}
+}*/
 
 
 .hasDatepicker {
+    /*max-width: 88%;*/
     vertical-align : top;
 }
 
@@ -271,7 +281,7 @@ div#tableTop table tr:first-child td:first-child+td {
 button.ui-button-icon-only { width: 1.2em !important; }
 
 /*global button style*/
-input[type="button"], .pageButton {
+/*input[type="button"], .pageButton {
     display: inline-block;
     border: 1px solid #777777;
     background: #547395;
@@ -302,7 +312,7 @@ input[type="button"]:disabled, .pageButton:disabled {
     background: #dbe3eb;
     color: black;
     cursor: none;  
-}
+}*/
 /* smaller button for inline style */
 .inlineButton {
     padding: 2px 4px;  
@@ -335,10 +345,15 @@ tr.borderBottom > td { border-bottom: 1px gray dotted; }
     padding: 15px;
 }
 .alert_error {
+    width: 95%;
     background-color: #F2DEDE;
     border-color: #EBCCD1;
     color: #A94442;
     border: 1px solid rgba(0, 0, 0, 0);
     border-radius: 4px;
-    padding: 5px;
+    padding: 15px;
+}
+
+.row_spacer {
+    margin-top: 7px; /* define margin as you see fit */
 }

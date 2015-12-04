@@ -28,13 +28,17 @@ import org.jcvi.ometa.bean_interface.ProjectSampleEventWritebackBusiness;
 import org.jcvi.ometa.bean_interface.ProjectSampleEventWritebackRemote;
 import org.jcvi.ometa.configuration.BeanPopulator;
 import org.jcvi.ometa.configuration.InputBeanType;
+import org.jcvi.ometa.helper.EventLoadHelper;
 import org.jcvi.ometa.model.*;
+import org.jcvi.ometa.model.Dictionary;
 import org.jcvi.ometa.utils.Constants;
 import org.jcvi.ometa.utils.PresentationActionDelegate;
 import org.jcvi.ometa.utils.TemplatePreProcessingUtils;
 import org.jcvi.ometa.utils.UploadActionDelegate;
+import org.jcvi.ometa.validation.ModelValidator;
 
 import java.io.File;
+import java.io.FileWriter;
 import java.util.*;
 
 /**
@@ -46,9 +50,12 @@ import java.util.*;
  * Takes care of specifics to type of data.
  */
 public class BeanWriter {
+    private Logger logger = Logger.getLogger(BeanWriter.class);
+
     private ProjectSampleEventWritebackBusiness writeEjb;
     private ProjectSampleEventPresentationBusiness readEjb;
-    private Logger logger = Logger.getLogger(BeanWriter.class);
+
+    private Actor submitter;
 
     /** Construct with all stuff needed for subsequent calls. */
     public BeanWriter(String server, String userName, String password) {
@@ -107,52 +114,29 @@ public class BeanWriter {
         }
     }
 
-    public String writeEvent(File eventFile, String eventName, String projectName, boolean processInput) throws Exception {
+    public String writeEvent(File eventFile, String eventName, String projectName, boolean processInput, String path, String submissionId, String submitterId) throws Exception {
         String lastSampleName = null;
-
-        boolean isProjectRegistration = eventName.contains(Constants.EVENT_PROJECT_REGISTRATION);
-        boolean isSampleRegistration = eventName.contains(Constants.EVENT_SAMPLE_REGISTRATION);
-
-        List<GridBean> gridList = this.getEventBeans(eventFile, eventName, processInput);
 
         MultiLoadParameter loadParameter = new MultiLoadParameter();
 
-        int rowIndex = 0;
-        for(GridBean gBean : gridList) {
-            if(gBean!=null) {
-                Project loadingProject = null;
-                Sample loadingSample = null;
-
-                if(isProjectRegistration && gBean.getProjectName() != null && gBean.getProjectPublic() != null) {
-                    loadingProject = new Project();
-                    loadingProject.setProjectName(gBean.getProjectName());
-                    loadingProject.setIsPublic(Integer.valueOf(gBean.getProjectPublic()));
-                    loadingProject.setProjectLevel(1);
-                } else {
-                    projectName = gBean.getProjectName();
-                    loadingProject = readEjb.getProject(projectName);
-
-                    Sample existingSample = readEjb.getSample(loadingProject.getProjectId(), gBean.getSampleName());
-                    if(existingSample == null && isSampleRegistration) {
-                        loadingSample = new Sample();
-                        loadingSample.setSampleName(gBean.getSampleName());
-                        loadingSample.setParentSampleName(gBean.getParentSampleName());
-                        loadingSample.setIsPublic(Integer.valueOf(gBean.getSamplePublic()));
-                        loadingSample.setSampleLevel(1);
-                    } else {
-                        loadingSample = existingSample;
-                    }
-                }
-
-                List<FileReadAttributeBean> fBeanList = gBean.getBeanList();
-                if(fBeanList!=null && fBeanList.size()>0) {
-                    this.createMultiLoadParameter(loadParameter, eventName, projectName, loadingProject,  loadingSample, fBeanList, ++rowIndex);
-                    lastSampleName = gBean.getSampleName();
-                }
-            }
+        if(submitterId != null && !submitterId.isEmpty()) { //manually set createdBy for bulk load
+            loadParameter.setSubmitterId(submitterId);
+            this.submitter = this.readEjb.getActorByUserName(submitterId);
         }
 
+        List<GridBean> gridList = this.getEventBeansFromFile(eventFile, eventName, processInput);
+
+        EventLoadHelper loadHelper = new EventLoadHelper(this.readEjb);
+        loadHelper.setOriginalPath(path); //add path to the helper for relative file paths
+        loadHelper.setSubmissionId(submissionId);
+
+        loadHelper.gridListToMultiLoadParameter(loadParameter, gridList, projectName, eventName, Constants.DPCC_STATUS_SUBMITTED_FORM, submitterId);
+
         writeEjb.loadAll(null, loadParameter);
+
+        if(gridList != null && gridList.size() > 0 && gridList.get(0) != null) {
+            lastSampleName =  gridList.get(0).getSampleName();
+        }
 
         return lastSampleName;
     }
@@ -164,9 +148,104 @@ public class BeanWriter {
      * @throws Exception for called methods.
      */
     public void writeMultiType(FileCollector collector) throws Exception {
-        MultiLoadParameter parameterObject = createMultiLoadParameter(collector);
-        List<String> projectsToSecure = getProjectsToSecure(parameterObject);
+        MultiLoadParameter parameterObject = this.createMultiLoadParameterWithCollector(collector);
+        List<String> projectsToSecure = this.getProjectsToSecure(parameterObject);
         writeEjb.loadAll(projectsToSecure, parameterObject);
+    }
+
+    public void readProjectData(String filePath, String projectName, String eventName) throws  Exception{
+        FileWriter writer = new FileWriter(filePath);
+        LookupValue tempLookupValue;
+
+        Project project = this.readEjb.getProject(projectName);
+        Long projectId = project.getProjectId();
+
+        List<Sample> samples = this.readEjb.getSamplesForProject(projectId);
+
+        if(samples!=null && samples.size()>0) {
+            List<Long> sampleIdList = new ArrayList<Long>();
+            for (Sample sample : samples) {
+                sampleIdList.add(sample.getSampleId());
+            }
+
+            List<SampleAttribute> allSampleAttributes = this.readEjb.getSampleAttributes(sampleIdList);
+            Map<Long, List<SampleAttribute>> sampleIdVsAttributeList = new HashMap<Long, List<SampleAttribute>>();
+            for (SampleAttribute att : allSampleAttributes) {
+                List<SampleAttribute> atts = sampleIdVsAttributeList.get(att.getSampleId());
+                if (atts == null) {
+                    atts = new ArrayList<SampleAttribute>();
+                    sampleIdVsAttributeList.put(att.getSampleId(), atts);
+                }
+                atts.add(att);
+            }
+
+            List<Event> allSampleEvents = this.readEjb.getEventsForSamples(sampleIdList);
+            Map<Long, List<Event>> sampleIdVsEventList = new HashMap<Long, List<Event>>();
+            for (Event att : allSampleEvents) {
+                if(att.getEventTypeLookupValue().getName().equals(eventName)) {
+                    List<Event> atts = sampleIdVsEventList.get(att.getSampleId());
+                    if (atts == null) {
+                        atts = new ArrayList<Event>();
+                        sampleIdVsEventList.put(att.getSampleId(), atts);
+                    }
+                    atts.add(att);
+                }
+            }
+
+            //Create Header
+            List<EventMetaAttribute> eventMetaAttributeList = this.readEjb.getEventMetaAttributes(projectName, eventName);
+            List<String> headerList = new ArrayList<String>(eventMetaAttributeList.size());
+            writer.append("Sample Name");
+            writer.append(",");
+            for(EventMetaAttribute ema : eventMetaAttributeList){
+                if(ema.isActive()) {
+                    writer.append(ema.getAttributeName());
+                    writer.append(',');
+
+                    headerList.add(ema.getAttributeName());
+                }
+            }
+            writer.append('\n');
+
+            HashMap<String, String> sampleData;
+            for (Sample sample : samples) {
+                List<SampleAttribute> sampleAttributes = sampleIdVsAttributeList.get(sample.getSampleId());
+                sampleData = new HashMap<String, String>(sampleAttributes.size());
+
+                writer.append(sample.getSampleName());
+                writer.append(',');
+
+                if (sampleAttributes != null && sampleAttributes.size() > 0) {
+                    for (SampleAttribute sa : sampleAttributes) {
+                        if (sa.getMetaAttribute() == null)
+                            continue;
+                        tempLookupValue = sa.getMetaAttribute().getLookupValue();
+                        String dataType = tempLookupValue.getDataType();
+
+                        if(dataType.equals("date")) {
+                            sampleData.put(tempLookupValue.getName(), '"' + sa.getAttributeDateValue().toString()+  '"');
+                        } else if(dataType.equals("int")) {
+                            sampleData.put(tempLookupValue.getName(), '"' + sa.getAttributeIntValue().toString()+  '"');
+                        } else if(dataType.equals("string") || dataType.equals("file") || dataType.equals("url")) {
+                            sampleData.put(tempLookupValue.getName(), '"' + sa.getAttributeStringValue().toString()+  '"');
+                        } else {
+                            sampleData.put(tempLookupValue.getName(), '"' + sa.getAttributeFloatValue().toString()+  '"');
+                        }
+                    }
+                }
+
+                for(String header : headerList){
+                    String value = sampleData.get(header);
+                    writer.append((value == null) ? "" : value);
+                    writer.append(",");
+                }
+
+                writer.append('\n');
+            }
+        }
+
+        writer.flush();
+        writer.close();
     }
 
     /**
@@ -176,14 +255,43 @@ public class BeanWriter {
      * @return parameter that has the files' contents bundled and separated.
      * @throws Exception thrown by called methods.
      */
-    private MultiLoadParameter createMultiLoadParameter(FileCollector collector) throws Exception {
+    private MultiLoadParameter createMultiLoadParameterWithCollector(FileCollector collector) throws Exception {
         List<File> files = null;
 
         MultiLoadParameter parameterObject = new MultiLoadParameter();
         files = collector.getLookupValueFiles();
         for (File file: files) {
             List<LookupValue> lvBeans = this.getGenericModelBeans(file, LookupValue.class);
-            parameterObject.addLookupValues(lvBeans);
+
+            //load only new lookup values
+            List<LookupValue> newLv = new ArrayList<LookupValue>();
+            for(LookupValue lv : lvBeans) {
+                LookupValue existingLV = this.readEjb.getLookupValue(lv.getName(), lv.getType());
+                if(existingLV == null) {
+                    newLv.add(lv);
+                }
+            }
+
+            parameterObject.addLookupValues(newLv);
+        }
+
+        files = collector.getDictionaryFiles();
+        for (File file: files) {
+            List<Dictionary> dictBeans = this.getGenericModelBeans(file, Dictionary.class);
+
+            //load only new dictionaries
+            List<Dictionary> newDict = new ArrayList<Dictionary>();
+            for(Dictionary dict : dictBeans){
+                String code = dict.getDictionaryCode();
+                if(code == null || code.equals("")) code = dict.getDictionaryValue();
+
+                Dictionary existingDict = this.readEjb.getDictionaryByTypeAndCode(dict.getDictionaryType(), code);
+                if(existingDict == null) {
+                    newDict.add(dict);
+                }
+            }
+
+            parameterObject.addDictionaries(newDict);
         }
 
         files = collector.getProjectFiles();
@@ -355,7 +463,7 @@ public class BeanWriter {
 
     }
 
-    public List<GridBean> getEventBeans(File inputFile, String eventName, boolean processInput) throws Exception {
+    public List<GridBean> getEventBeansFromFile(File inputFile, String eventName, boolean processInput) throws Exception {
 
         // Assume the file contains right kind of data for this tye of bean.
         TemplatePreProcessingUtils templateUtils = new TemplatePreProcessingUtils();
@@ -420,154 +528,14 @@ public class BeanWriter {
                 case lookupValue:
                     bean = (B) new LookupValue();
                     break;
+                case dictionary:
+                    bean = (B) new Dictionary();
+                    break;
                 default:
                     break;
             }
             return bean;
         }
-    }
-
-    private MultiLoadParameter createMultiLoadParameter(MultiLoadParameter loadParameter, String eventName, String projectName, Project project, Sample sample, List<FileReadAttributeBean> frab, int index)
-            throws Exception {
-        boolean isSampleRegistration = false;
-        boolean isProjectRegistration = false;
-
-        if (eventName.contains(Constants.EVENT_PROJECT_REGISTRATION) && project.getProjectName() != null && !project.getProjectName().isEmpty()) {
-            isProjectRegistration = true;
-        } else if (eventName.contains(Constants.EVENT_SAMPLE_REGISTRATION) && sample.getSampleName() != null && !sample.getSampleName().isEmpty()) {
-            isSampleRegistration = true;
-        }
-
-        List<FileReadAttributeBean> loadingList = null;
-        if (frab != null && frab.size() > 0) {
-            loadingList = processFileReadBeans(eventName, isProjectRegistration ? project.getProjectName() : projectName, sample.getSampleName(), frab);
-        }
-
-        if (isProjectRegistration) {
-            /*
-            *   loads all meta attributes from the parent
-            *   by hkim 6/11/13
-            */
-            List<EventMetaAttribute> emas = readEjb.getEventMetaAttributes(projectName, null); //, Constants.EVENT_PROJECT_REGISTRATION);
-            List<EventMetaAttribute> newEmas = null;
-            if (emas != null && emas.size() > 0) {
-                newEmas = new ArrayList<EventMetaAttribute>(emas.size());
-                for (EventMetaAttribute ema : emas) {
-                    EventMetaAttribute newEma = new EventMetaAttribute();
-                    newEma.setProjectName(project.getProjectName());
-                    newEma.setEventName(ema.getEventName());
-                    newEma.setEventTypeLookupId(ema.getEventTypeLookupId());
-                    newEma.setAttributeName(ema.getAttributeName());
-                    newEma.setNameLookupId(ema.getNameLookupId());
-                    newEma.setActive(ema.isActive());
-                    newEma.setRequired(ema.isRequired());
-                    newEma.setDesc(ema.getDesc());
-                    newEma.setDataType(ema.getDataType());
-                    newEma.setLabel(ema.getLabel());
-                    newEma.setOntology(ema.getOntology());
-                    newEma.setOptions(ema.getOptions());
-                    newEma.setSampleRequired(ema.isSampleRequired());
-                    newEmas.add(newEma);
-                }
-            }
-
-            List<SampleMetaAttribute> smas = readEjb.getSampleMetaAttributes(project.getProjectId());
-            List<SampleMetaAttribute> newSmas = null;
-            if(smas != null && smas.size() > 0) {
-                newSmas = new ArrayList<SampleMetaAttribute>(smas.size());
-                for(SampleMetaAttribute sma : smas) {
-                    SampleMetaAttribute newSma = new SampleMetaAttribute();
-                    newSma.setProjectName(project.getProjectName());
-                    newSma.setAttributeName(sma.getAttributeName());
-                    newSma.setNameLookupId(sma.getNameLookupId());
-                    newSma.setDataType(sma.getDataType());
-                    newSma.setDesc(sma.getDesc());
-                    newSma.setLabel(sma.getLabel());
-                    newSma.setOntology(sma.getOntology());
-                    newSma.setOptions(sma.getOptions());
-                    newSma.setRequired(sma.isRequired());
-                    newSma.setActive(sma.isActive());
-                    newSmas.add(newSma);
-                }
-            }
-
-            List<ProjectMetaAttribute> pmas = readEjb.getProjectMetaAttributes(projectName);
-            List<ProjectMetaAttribute> newPmas = null;
-            if (pmas != null && pmas.size() > 0) {
-                newPmas = new ArrayList<ProjectMetaAttribute>(pmas.size());
-                for (ProjectMetaAttribute pma : pmas) {
-                    ProjectMetaAttribute newPma = new ProjectMetaAttribute();
-                    newPma.setProjectName(project.getProjectName());
-                    newPma.setAttributeName(pma.getAttributeName());
-                    newPma.setDataType(pma.getDataType());
-                    newPma.setDesc(pma.getDesc());
-                    newPma.setLabel(pma.getLabel());
-                    newPma.setNameLookupId(pma.getNameLookupId());
-                    newPma.setOntology(pma.getOntology());
-                    newPma.setOptions(pma.getOptions());
-                    newPma.setRequired(pma.isRequired());
-                    newPma.setActive(pma.isActive());
-                    newPmas.add(newPma);
-                }
-            }
-            loadParameter.addProjectPair(feedProjectData(project, projectName), loadingList, newPmas, newSmas, newEmas, index);
-        } else if (isSampleRegistration) {
-            loadParameter.addSamplePair(feedSampleData(sample, project), loadingList, index);
-        } else {
-            loadParameter.addEvents(eventName, loadingList);
-        }
-        return loadParameter;
-    }
-
-    private Project feedProjectData(Project project, String projectName) throws Exception {
-        project.setParentProjectName(projectName);
-
-        Project parentProject = readEjb.getProject(projectName);
-        project.setParentProjectId(parentProject.getProjectId());
-        project.setProjectLevel(parentProject.getProjectLevel()+1);
-        project.setEditGroup(parentProject.getEditGroup());
-        project.setViewGroup(parentProject.getViewGroup());
-        return project;
-    }
-
-    private Sample feedSampleData(Sample sample, Project project) throws Exception {
-        sample.setProjectId(project.getProjectId());
-        sample.setProjectName(project.getProjectName());
-
-        //set project level by adding 1 to selected parent project's level
-        if(sample.getParentSampleName()==null || sample.getParentSampleName().equals("0")) {
-            sample.setParentSampleName(null);
-            sample.setParentSampleId(null);
-            sample.setSampleLevel(1);
-        } else {
-            String parentSampleName = sample.getParentSampleName();
-            if (parentSampleName != null && !parentSampleName.isEmpty() && !parentSampleName.equals("0")) {
-                Sample selectedParentSample = readEjb.getSample(project.getProjectId(), parentSampleName);
-                if(selectedParentSample != null && selectedParentSample.getSampleId() != null) {
-                    sample.setSampleLevel(selectedParentSample.getSampleLevel() + 1);
-                    sample.setParentSampleId(selectedParentSample.getSampleId());
-                }
-            }
-        }
-        return sample;
-    }
-
-    private List<FileReadAttributeBean> processFileReadBeans(String eventName, String projectName, String sampleName, List<FileReadAttributeBean> loadingList) throws Exception {
-
-        List<FileReadAttributeBean> processedList = new ArrayList<FileReadAttributeBean>();
-        for(FileReadAttributeBean fBean:loadingList) {
-            if(fBean.getProjectName()==null || eventName.equals(Constants.EVENT_PROJECT_REGISTRATION)) {
-                fBean.setProjectName(projectName);
-            }
-            if(fBean.getSampleName()==null) {
-                fBean.setSampleName(sampleName);
-            }
-
-            if (!fBean.getAttributeName().equals("0") && fBean.getAttributeValue()!=null && !fBean.getAttributeValue().isEmpty()) { //&& !fBean.getAttributeValue().equals("0")
-                processedList.add(fBean);
-            }
-        }
-        return processedList;
     }
 
 
@@ -592,4 +560,8 @@ public class BeanWriter {
         return eventName;
     }
     */
+
+    public Actor getSubmitter() {
+        return submitter;
+    }
 }

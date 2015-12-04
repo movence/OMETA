@@ -29,6 +29,7 @@ import org.jcvi.ometa.db_interface.DAOFactory;
 import org.jcvi.ometa.hibernate.dao.*;
 import org.jcvi.ometa.interceptor.javaee.ReadOnlyAllOrNothingAuthInterceptor;
 import org.jcvi.ometa.model.*;
+import org.jcvi.ometa.model.Dictionary;
 import org.jcvi.ometa.utils.Constants;
 import org.jtc.common.util.property.PropertyHelper;
 
@@ -90,6 +91,23 @@ public class ProjectSampleEventPresentationStateless implements ProjectSampleEve
             ActorDAO actorDao = daoFactory.getActorDAO();
             Session session = this.startTransactedSession();
             actor = actorDao.getActorById(loginId, session);
+            sessionAndTransactionManager.commitTransaction();
+        } catch (Exception ex) {
+            sessionAndTransactionManager.rollBackTransaction();
+            throw ex;
+        } finally {
+            sessionAndTransactionManager.closeSession();
+        }
+        return actor;
+    }
+
+    @WebMethod
+    public Actor getActorByUserName(String loginName) throws Exception {
+        Actor actor;
+        try {
+            ActorDAO actorDao = daoFactory.getActorDAO();
+            Session session = this.startTransactedSession();
+            actor = actorDao.getActorByLoginName(loginName, session);
             sessionAndTransactionManager.commitTransaction();
         } catch (Exception ex) {
             sessionAndTransactionManager.rollBackTransaction();
@@ -424,6 +442,43 @@ public class ProjectSampleEventPresentationStateless implements ProjectSampleEve
         return sBeans;
     }
 
+    public List<Sample> getSamplesForProjectBySearch( @JCVI_Project Long projectId, String sampleVal, int firstResult, int maxResult ) throws Exception {
+        Session session = startTransactedSession();
+
+        List<Sample> sBeans = Collections.emptyList();
+        try {
+            SampleDAO sDao = daoFactory.getSampleDAO();
+            sBeans = sDao.getAllSamplesBySearch(projectId, sampleVal, firstResult, maxResult, session);
+            sessionAndTransactionManager.commitTransaction();
+        } catch (Exception ex) {
+            sessionAndTransactionManager.rollBackTransaction();
+            throw ex;
+        } finally {
+            sessionAndTransactionManager.closeSession();
+        }
+
+        return sBeans;
+    }
+
+    public Integer getSampleCountForProjectBySearch( @JCVI_Project Long projectId, String sampleVal) throws Exception {
+        Session session = startTransactedSession();
+
+        Integer totalSampleCount = 0;
+        try {
+            SampleDAO sDao = daoFactory.getSampleDAO();
+            totalSampleCount = sDao.getSampleCountForProjectBySearch(projectId, sampleVal, session);
+            sessionAndTransactionManager.commitTransaction();
+        } catch (Exception ex) {
+            sessionAndTransactionManager.rollBackTransaction();
+            throw ex;
+        } finally {
+            sessionAndTransactionManager.closeSession();
+        }
+
+        return totalSampleCount;
+
+    }
+
     @WebMethod
     public List<Sample> getSamplesForProjects( @JCVI_Project List<Long> projectIds ) throws Exception {
         Session session = startTransactedSession();
@@ -463,14 +518,14 @@ public class ProjectSampleEventPresentationStateless implements ProjectSampleEve
         return sBeans;
     }
 
-    @WebMethod
-    public List<Sample> getAllSamples(Long flexId, String type, String sSearch, String sortCol, String sortDir) throws Exception {
+    @WebMethod(exclude = true)
+    public List<Sample> getAllSamples(Long flexId, String type, String sSearch, String sortCol, String sortDir, List<String> columnName, List<String> columnSearchArguments) throws Exception {
         Session session = startTransactedSession();
 
         List<Sample> sBeans = Collections.emptyList();
         try {
             SampleDAO sDao = daoFactory.getSampleDAO();
-            sBeans = sDao.getAllSamples(flexId, type, sSearch, sortCol, sortDir, session);
+            sBeans = sDao.getAllSamples(flexId, type, sSearch, sortCol, sortDir, columnName, columnSearchArguments, session);
             sessionAndTransactionManager.commitTransaction();
         } catch (Exception ex) {
             sessionAndTransactionManager.rollBackTransaction();
@@ -483,13 +538,14 @@ public class ProjectSampleEventPresentationStateless implements ProjectSampleEve
     }
 
     @WebMethod
-    public List<Sample> getAllSamplesBySearch(String projectIds, String attributeNames, String sSearch, String sortType, String sortCol, String sortDir) throws Exception {
+    public List<Sample> getAllSamplesBySearch(String projectIds, String attributeNames, String sSearch, String sortType,
+                                              String sortCol, String sortDir, List<String> columnName, List<String> columnSearchArguments) throws Exception {
         Session session = startTransactedSession();
 
         List<Sample> sBeans = Collections.emptyList();
         try {
             SampleDAO sDao = daoFactory.getSampleDAO();
-            sBeans = sDao.getAllSamples(projectIds, attributeNames, sSearch, sortType, sortCol, sortDir, session);
+            sBeans = sDao.getAllSamples(projectIds, attributeNames, sSearch, sortType, sortCol, sortDir, columnName, columnSearchArguments, session);
             sessionAndTransactionManager.commitTransaction();
         } catch (Exception ex) {
             sessionAndTransactionManager.rollBackTransaction();
@@ -644,7 +700,7 @@ public class ProjectSampleEventPresentationStateless implements ProjectSampleEve
         List<Event> evtBeans = Collections.emptyList();
         try {
             EventDAO evtDao = daoFactory.getEventDAO();
-            evtBeans = evtDao.getAllEvents(projectId, "Project", null, null, null, -1, -1, null, null, session);
+            evtBeans = evtDao.getAllEvents(projectId, "Project", null, null, null, -1, -1, null, null, null, null, session);
             sessionAndTransactionManager.commitTransaction();
         } catch (Exception ex) {
             sessionAndTransactionManager.rollBackTransaction();
@@ -677,13 +733,14 @@ public class ProjectSampleEventPresentationStateless implements ProjectSampleEve
     }
 
     @WebMethod
-    public List<Event> getAllEvents(Long flexId, String type, String sSearch, String sortCol, String sortDir, int start, int count, String fromd, String tod) throws Exception {
+    public List<Event> getAllEvents(Long flexId, String type, String sSearch, String sortCol, String sortDir, int start, int count,
+                                    String fromd, String tod, List<String> columnName, List<String> columnSearchArguments) throws Exception {
         Session session = startTransactedSession();
 
         List<Event> evtBeans = Collections.emptyList();
         try {
             EventDAO evtDao = daoFactory.getEventDAO();
-            evtBeans = evtDao.getAllEvents(flexId, type, sSearch, sortCol, sortDir, start, count, fromd, tod, session);
+            evtBeans = evtDao.getAllEvents(flexId, type, sSearch, sortCol, sortDir, start, count, fromd, tod, columnName, columnSearchArguments, session);
             sessionAndTransactionManager.commitTransaction();
         } catch (Exception ex) {
             sessionAndTransactionManager.rollBackTransaction();
@@ -696,13 +753,13 @@ public class ProjectSampleEventPresentationStateless implements ProjectSampleEve
     }
 
     @WebMethod
-    public List<Event> getEventsForSample(@JCVI_Sample Long sampleId ) throws Exception {
+    public List<Event> getEventsForSample(@JCVI_Sample Long sampleId) throws Exception {
         Session session = startTransactedSession();
 
         List<Event> evtBeans = Collections.emptyList();
         try {
             EventDAO evtDao = daoFactory.getEventDAO();
-            evtBeans = evtDao.getAllEvents(sampleId, "Sample", null, null, null, -1, -1, null, null, session);
+            evtBeans = evtDao.getAllEvents(sampleId, "Sample", null, "date", "asc", -1, -1, null, null, null, null, session);
             sessionAndTransactionManager.commitTransaction();
         } catch (Exception ex) {
             sessionAndTransactionManager.rollBackTransaction();
@@ -769,6 +826,44 @@ public class ProjectSampleEventPresentationStateless implements ProjectSampleEve
         }
 
         return evtBeans;
+    }
+
+    @WebMethod
+    public List<Event> getEventByLookupValue(Long lookupValueId, String lookupValueStr) throws Exception {
+        Session session = startTransactedSession();
+
+        List<Event> evtBeans = Collections.emptyList();
+
+        try {
+            EventDAO evtDao = daoFactory.getEventDAO();
+            evtBeans = evtDao.getEventByLookupValue(lookupValueId, lookupValueStr, session);
+            sessionAndTransactionManager.commitTransaction();
+        } catch (Exception ex) {
+            sessionAndTransactionManager.rollBackTransaction();
+            throw ex;
+        } finally {
+            sessionAndTransactionManager.closeSession();
+        }
+
+        return evtBeans;
+    }
+
+    public Event getLatestEventForSample(@JCVI_Project Long projectId, @JCVI_Sample Long sampleId, Long eventTypeId) throws Exception {
+        Session session = startTransactedSession();
+
+        Event latestEvent = null;
+        try {
+            EventDAO evtDao = daoFactory.getEventDAO();
+            latestEvent = evtDao.getLatestEventForSample(projectId, sampleId, eventTypeId, session);
+            sessionAndTransactionManager.commitTransaction();
+        } catch (Exception ex) {
+            sessionAndTransactionManager.rollBackTransaction();
+            throw ex;
+        } finally {
+            sessionAndTransactionManager.closeSession();
+        }
+
+        return latestEvent;
     }
 
     @WebMethod
@@ -968,7 +1063,7 @@ public class ProjectSampleEventPresentationStateless implements ProjectSampleEve
         try {
             EventDAO eventDao = daoFactory.getEventDAO();
             Session session = this.startTransactedSession();
-            List<Event> events = eventDao.getAllEvents( eventId, "Event", null, null, null, -1, -1, null, null, session);
+            List<Event> events = eventDao.getAllEvents( eventId, "Event", null, null, null, -1, -1, null, null, null, null, session);
 
             if( events.size() > 1 )
                 throw new Exception( "EventDAO - There is more than one event under eventId: "+ eventId );
@@ -1059,6 +1154,128 @@ public class ProjectSampleEventPresentationStateless implements ProjectSampleEve
         }
 
         return rtnVal;
+    }
+
+    public List<Dictionary> getDictionaries(boolean includeInactive) throws Exception {
+        List<Dictionary> rtnVal = null;
+
+        try {
+            DictionaryDAO dictionaryDAO = daoFactory.getDictionaryDAO();
+            Session session = this.startTransactedSession();
+            rtnVal = dictionaryDAO.getDictionaries(session, includeInactive);
+            sessionAndTransactionManager.commitTransaction();
+        } catch (Exception ex) {
+            sessionAndTransactionManager.rollBackTransaction();
+            throw ex;
+        } finally {
+            sessionAndTransactionManager.closeSession();
+        }
+
+        return rtnVal;
+    }
+
+    public List<DictionaryDependency> getDictionaryDependencies() throws Exception {
+        List<DictionaryDependency> rtnVal = null;
+
+        try {
+            DictionaryDAO dictionaryDAO = daoFactory.getDictionaryDAO();
+            Session session = this.startTransactedSession();
+            rtnVal = dictionaryDAO.getDictionaryDependencies(session);
+            sessionAndTransactionManager.commitTransaction();
+        } catch (Exception ex) {
+            sessionAndTransactionManager.rollBackTransaction();
+            throw ex;
+        } finally {
+            sessionAndTransactionManager.closeSession();
+        }
+
+        return rtnVal;
+    }
+
+    public List<Dictionary> getDictionaryByType(String dictType) throws Exception {
+        List<Dictionary> rtnVal = null;
+
+        try {
+            DictionaryDAO dictionaryDAO = daoFactory.getDictionaryDAO();
+            Session session = this.startTransactedSession();
+            rtnVal = dictionaryDAO.getDictionaryByType(dictType, session);
+            sessionAndTransactionManager.commitTransaction();
+        } catch (Exception ex) {
+            sessionAndTransactionManager.rollBackTransaction();
+            throw ex;
+        } finally {
+            sessionAndTransactionManager.closeSession();
+        }
+
+        return rtnVal;
+    }
+
+    public Dictionary getDictionaryByTypeAndCode(String dictType, String dictCode) throws Exception {
+        Dictionary rtnVal = null;
+
+        try {
+            DictionaryDAO dictionaryDAO = daoFactory.getDictionaryDAO();
+            Session session = this.startTransactedSession();
+            rtnVal = dictionaryDAO.getDictionaryByTypeAndCode(dictType, dictCode, session);
+            sessionAndTransactionManager.commitTransaction();
+        } catch (Exception ex) {
+            sessionAndTransactionManager.rollBackTransaction();
+            throw ex;
+        } finally {
+            sessionAndTransactionManager.closeSession();
+        }
+
+        return rtnVal;
+    }
+
+    public List<Dictionary> getDictionaryDependenciesByType(String dictType, String dictCode) throws Exception {
+        List<Dictionary> rtnVal = null;
+
+        try {
+            DictionaryDAO dictionaryDAO = daoFactory.getDictionaryDAO();
+            Session session = this.startTransactedSession();
+            rtnVal = dictionaryDAO.getDictionaryDependenciesByType(dictType, dictCode, session);
+            sessionAndTransactionManager.commitTransaction();
+        } catch (Exception ex) {
+            sessionAndTransactionManager.rollBackTransaction();
+            throw ex;
+        } finally {
+            sessionAndTransactionManager.closeSession();
+        }
+
+        return rtnVal;
+    }
+
+    public List<Object[]> getAllDictionaryTypeCodePairs() throws Exception {
+        List<Object[]> rtnVal = null;
+
+        try {
+            DictionaryDAO dictionaryDAO = daoFactory.getDictionaryDAO();
+            Session session = this.startTransactedSession();
+            rtnVal = dictionaryDAO.getAllDictionaryTypeCodePairs(session);
+            sessionAndTransactionManager.commitTransaction();
+        } catch (Exception ex) {
+            sessionAndTransactionManager.rollBackTransaction();
+            throw ex;
+        } finally {
+            sessionAndTransactionManager.closeSession();
+        }
+
+        return rtnVal;
+    }
+
+    public void updateDictionary(Long dictionaryId, boolean active) throws Exception{
+        try {
+            DictionaryDAO dictionaryDAO = daoFactory.getDictionaryDAO();
+            Session session = this.startTransactedSession();
+            dictionaryDAO.updateDictionary(session, dictionaryId, active);
+            sessionAndTransactionManager.commitTransaction();
+        } catch (Exception ex) {
+            sessionAndTransactionManager.rollBackTransaction();
+            throw ex;
+        } finally {
+            sessionAndTransactionManager.closeSession();
+        }
     }
 
     //---------------------------------------------HELPER METHODS

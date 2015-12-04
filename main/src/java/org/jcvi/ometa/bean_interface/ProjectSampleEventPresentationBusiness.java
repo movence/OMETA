@@ -27,6 +27,7 @@ import org.jcvi.ometa.configuration.ResponseToFailedAuthorization;
 import org.jcvi.ometa.model.*;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created by IntelliJ IDEA.
@@ -38,6 +39,8 @@ import java.util.List;
  */
 public interface ProjectSampleEventPresentationBusiness {
     public Actor getActor(Long loginId) throws Exception;
+
+    public Actor getActorByUserName(String loginName) throws Exception;
 
     public String isUserAdmin(String loginName) throws Exception;
 
@@ -97,13 +100,18 @@ public interface ProjectSampleEventPresentationBusiness {
 
     public List<Sample> getSamplesForProject(Long projectId) throws Exception;
 
+    public List<Sample> getSamplesForProjectBySearch(Long projectId, String sampleVal,int firstResult, int maxResult) throws Exception;
+
+    public Integer getSampleCountForProjectBySearch(Long projectId, String sampleVal) throws Exception;
+
     public List<Sample> getSamplesForProjects(List<Long> projectIds) throws Exception;
 
     public List<Sample> getSamplesForProjectByPublicFlag(Long projectId, boolean isPublic) throws Exception;
 
-    public List<Sample> getAllSamples(Long flexId, String type, String sSearch, String sortCol, String sortDir) throws Exception;
+    public List<Sample> getAllSamples(Long flexId, String type, String sSearch, String sortCol, String sortDir, List<String> columnName, List<String> columnSearchArguments) throws Exception;
 
-    public List<Sample> getAllSamplesBySearch(String projectIds, String attributeNames, String sSearch, String sortType, String sortCol, String sortDir) throws Exception;
+    public List<Sample> getAllSamplesBySearch(String projectIds, String attributeNames, String sSearch, String sortType,
+                                              String sortCol, String sortDir, List<String> columnName, List<String> columnSearchArguments) throws Exception;
 
     public List<SampleAttribute> getSampleAttributes(String sampleName) throws Exception;
 
@@ -118,7 +126,8 @@ public interface ProjectSampleEventPresentationBusiness {
 
     public List<Event> getEventsForProjects(List<Long> projectIds) throws Exception;
 
-    public List<Event> getAllEvents(Long flexId, String type, String sSearch, String sortCol, String sortDir, int start, int count, String fromd, String tod) throws Exception;
+    public List<Event> getAllEvents(Long flexId, String type, String sSearch, String sortCol, String sortDir, int start, int count,
+                                    String fromd, String tod, List<String> columnName, List<String> columnSearchArguments) throws Exception;
 
     public List<Event> getEventsForSample(Long sampleId) throws Exception;
 
@@ -127,6 +136,10 @@ public interface ProjectSampleEventPresentationBusiness {
     public List<Event> getEventByType(Long projectId, Long eventTypeId) throws Exception;
 
     public List<Event> getEventByTypeAndSample(Long sampleId, Long eventTypeId) throws Exception;
+
+    public List<Event> getEventByLookupValue(Long lookupValueId, String lookupValueStr) throws Exception;
+
+    public Event getLatestEventForSample(Long projectId, Long sampleId, Long eventTypeId) throws Exception;
 
     public List<Event> getUniqueEventTypes() throws Exception;
 
@@ -159,4 +172,18 @@ public interface ProjectSampleEventPresentationBusiness {
     public List<Group> getAllGroup() throws Exception;
 
     public List<LookupValue> getLookupValueByType(String type) throws Exception;
+
+    public List<Dictionary> getDictionaries(boolean includeInactive) throws Exception;
+
+    public List<DictionaryDependency> getDictionaryDependencies() throws Exception;
+
+    public List<Dictionary> getDictionaryByType(String dictType) throws Exception;
+
+    public Dictionary getDictionaryByTypeAndCode(String dictType, String dictCode) throws Exception;
+
+    public List<Dictionary> getDictionaryDependenciesByType(String dictType, String dictCode) throws Exception;
+
+    public List<Object[]> getAllDictionaryTypeCodePairs() throws Exception;
+
+    public void updateDictionary(Long dictionaryId, boolean active) throws Exception;
 }

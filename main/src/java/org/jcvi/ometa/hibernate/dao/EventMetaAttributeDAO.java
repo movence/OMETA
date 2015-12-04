@@ -24,6 +24,7 @@ package org.jcvi.ometa.hibernate.dao;
 import org.hibernate.Criteria;
 import org.hibernate.SQLQuery;
 import org.hibernate.Session;
+import org.hibernate.criterion.Order;
 import org.hibernate.criterion.Restrictions;
 import org.jcvi.ometa.model.EventMetaAttribute;
 import org.jcvi.ometa.validation.ModelValidator;
@@ -98,6 +99,9 @@ public class EventMetaAttributeDAO extends HibernateDAO {
             crit.add( Restrictions.eq( "projectId", projectId ) );
             if(eventTypeLookupId != null)
                 crit.add( Restrictions.eq( "eventTypeLookupId", eventTypeLookupId ) );
+
+            crit.addOrder(Order.asc("order")); //order by position value
+
             List results = crit.list();
 
             if ( results != null ) {
@@ -122,11 +126,15 @@ public class EventMetaAttributeDAO extends HibernateDAO {
             throws DAOException {
         List<EventMetaAttribute> attributeList = new ArrayList<EventMetaAttribute>();
         try {
-            if ( projectIds.size() > 0 ) {
-                Criteria crit = session.createCriteria( EventMetaAttribute.class );
-                crit.add( Restrictions.in("projectId", projectIds) );
-                if(eventTypeLookupId != null)
-                    crit.add( Restrictions.eq( "eventTypeLookupId", eventTypeLookupId ) );
+            if(projectIds.size() > 0) {
+                Criteria crit = session.createCriteria(EventMetaAttribute.class);
+                crit.add(Restrictions.in("projectId", projectIds));
+                if(eventTypeLookupId != null) {
+                    crit.add(Restrictions.eq("eventTypeLookupId", eventTypeLookupId));
+                }
+
+                crit.addOrder(Order.asc("order")); //order by position value
+
                 List<EventMetaAttribute> results = crit.list();
 
                 if ( results != null   &&   results.size() > 0 ) {
@@ -166,12 +174,6 @@ public class EventMetaAttributeDAO extends HibernateDAO {
     }
 
     private void prepareForWriteback(EventMetaAttribute model, String actorName, Date transactionDate, Session session ) throws Exception {
-        /*
-         * Only apply active flag to newly added meta attribute
-         * by hkim 9/7/12
-         */
-        if (model.getCreationDate() == null)
-            model.setActive(true);
         handleProjectRelation( model, model.getProjectName(), model.getAttributeName(), session );
         handleCreationTracking( model, actorName, transactionDate, session );
         locateAttribNameLookupId( model, session, ModelValidator.ATTRIBUTE_LV_TYPE_NAME);

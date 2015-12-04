@@ -28,6 +28,8 @@ import org.jcvi.ometa.bean_interface.ProjectSampleEventWritebackBusiness;
 import org.jcvi.ometa.configuration.JCVI_Project;
 import org.jcvi.ometa.db_interface.WritebackBeanPersister;
 import org.jcvi.ometa.engine.MultiLoadParameter;
+import org.jcvi.ometa.exception.DetailedException;
+import org.jcvi.ometa.exception.ForbiddenResourceException;
 import org.jcvi.ometa.hibernate.dao.ContainerizedSessionAndTransactionManager;
 import org.jcvi.ometa.interceptor.javaee.WriteableAllOrNothingAuthInterceptor;
 import org.jcvi.ometa.intf.BeanPersistenceFacadeI;
@@ -280,20 +282,29 @@ public class ProjectSampleEventTrackerStateless implements ProjectSampleEventWri
         int rowIndex = 1;
 
         try {
+            String userName = multiLoadParameter.getSubmitterId() != null ? multiLoadParameter.getSubmitterId() : this.getUserName();
+
             // Order: write back lookup values; projects
             if (multiLoadParameter.getLookupValues() != null) {
                 for (List<LookupValue> lv : multiLoadParameter.getLookupValues()) {
                     beanPersister.writeBackLookupValues(lv);
                 }
             }
+
+            if (multiLoadParameter.getDictionaries() != null) {
+                for(List<Dictionary> dict : multiLoadParameter.getDictionaries()) {
+                    beanPersister.writeBackDictionaries(dict);
+                }
+            }
+
             if(multiLoadParameter.getProjectPairs() != null) {
-                String userName = this.getUserName();
                 for(MultiLoadParameter.ProjectPair projectPair : multiLoadParameter.getProjectPairs()) {
                     rowIndex = projectPair.getRowIndex();
 
                     List<Project> projectList = new ArrayList<Project>(1);
                     projectList.add(projectPair.getProject());
                     beanPersister.writeBackProjects(projectList, userName);
+
                     if(projectPair.getEmas() != null) {
                         beanPersister.writeBackEventMetaAttributes(projectPair.getEmas(), userName);
                     }
@@ -315,7 +326,6 @@ public class ProjectSampleEventTrackerStateless implements ProjectSampleEventWri
                 }
             }
             if(multiLoadParameter.getSamplePairs() != null) {
-                String userName = this.getUserName();
                 for(MultiLoadParameter.SamplePair samplePair : multiLoadParameter.getSamplePairs()) {
                     rowIndex = samplePair.getRowIndex();
 
@@ -336,34 +346,34 @@ public class ProjectSampleEventTrackerStateless implements ProjectSampleEventWri
             }
             if (multiLoadParameter.getProjects() != null) {
                 for (List<Project> projects : multiLoadParameter.getProjects()) {
-                    beanPersister.writeBackProjects(projects, getUserName());
+                    beanPersister.writeBackProjects(projects, userName);
                     rowIndex++;
                 }
             }
             if (multiLoadParameter.getSamples() != null) {
                 for (List<Sample> samples : multiLoadParameter.getSamples()) {
-                    beanPersister.writeBackSamples(samples, getUserName());
+                    beanPersister.writeBackSamples(samples, userName);
                     rowIndex++;
                 }
             }
             if (multiLoadParameter.getPmas() != null) {
                 for (List<ProjectMetaAttribute> pmas : multiLoadParameter.getPmas()) {
-                    beanPersister.writeBackProjectMetaAttributes(pmas, getUserName());
+                    beanPersister.writeBackProjectMetaAttributes(pmas, userName);
                 }
             }
             if (multiLoadParameter.getSmas() != null) {
                 for (List<SampleMetaAttribute> smas : multiLoadParameter.getSmas()) {
-                    beanPersister.writeBackSampleMetaAttributes(smas, getUserName());
+                    beanPersister.writeBackSampleMetaAttributes(smas, userName);
                 }
             }
             if (multiLoadParameter.getEmas() != null) {
                 for (List<EventMetaAttribute> emas : multiLoadParameter.getEmas()) {
-                    beanPersister.writeBackEventMetaAttributes(emas, getUserName());
+                    beanPersister.writeBackEventMetaAttributes(emas, userName);
                 }
             }
             if (multiLoadParameter.getOtherEvents() != null) {
                 for (MultiLoadParameter.LoadableEventBean bean : multiLoadParameter.getOtherEvents()) {
-                    beanPersister.writeBackAttributes(bean.getAttributes(), bean.getEventName(), getUserName());
+                    beanPersister.writeBackAttributes(bean.getAttributes(), bean.getEventName(), userName);
                     rowIndex++;
                 }
             }
@@ -383,6 +393,23 @@ public class ProjectSampleEventTrackerStateless implements ProjectSampleEventWri
             beanPersister.close();
         }
 
+    }
+
+    @Override
+    @WebMethod
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
+    public void updateActor(Actor actor) throws Exception {
+        BeanPersistenceFacadeI beanPersister = getBeanPersister();
+        beanPersister.open();
+        try {
+            beanPersister.updateActor(actor);
+        } catch (Exception ex) {
+            logger.error(ex);
+            beanPersister.error();
+            throw ex;
+        } finally {
+            beanPersister.close();
+        }
     }
 
     @Override
@@ -457,6 +484,40 @@ public class ProjectSampleEventTrackerStateless implements ProjectSampleEventWri
             }
         };
         return localLoader.loadBeans(beans);
+    }
+
+    @Override
+    @WebMethod
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
+    public void loadDictionary(String dictType, String dictValue, String dictCode) throws Exception {
+        BeanPersistenceFacadeI beanPersister = getBeanPersister();
+        beanPersister.open();
+        try {
+            beanPersister.loadDictionary(dictType, dictValue, dictCode);
+        } catch (Exception ex) {
+            logger.error(ex);
+            beanPersister.error();
+            throw ex;
+        } finally {
+            beanPersister.close();
+        }
+    }
+
+    @Override
+    @WebMethod
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
+    public void loadDictionaryWithDependency(String dictType, String dictValue, String dictCode, String parentDictTypeCode) throws Exception {
+        BeanPersistenceFacadeI beanPersister = getBeanPersister();
+        beanPersister.open();
+        try {
+            beanPersister.loadDictionaryWithDependency(dictType, dictValue, dictCode, parentDictTypeCode);
+        } catch (Exception ex) {
+            logger.error(ex);
+            beanPersister.error();
+            throw ex;
+        } finally {
+            beanPersister.close();
+        }
     }
 
     private String getUserName() {

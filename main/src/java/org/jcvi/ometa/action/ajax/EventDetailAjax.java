@@ -69,16 +69,15 @@ public class EventDetailAjax extends ActionSupport implements IAjaxAction {
     private String iSortCol_0;
     private String sSortDir_0;
 
+    //Column Filter Values
+    private List<String> columnName;
+    private List<String> columnSearchArguments;
+
+    private List<String> attributeList;
+
     //date
     private String fd;
     private String td;
-
-    private final String HTML_NO_DATA = "<tr class=\"odd\"><td colspan=\"6\">No Data</td></tr>";
-    private final String HTML_TD = "<td>%s</td>";
-    private final String HTML_TR = "<tr class='%s'>%s</tr>";
-    private final String HTML_ROW_EXPANDER_IMG = "<img src='images/dataTables/details_open.png' id='rowDetail_openBtn'/>";
-    private final String HTML_EVENT_EDIT = "&nbsp;&nbsp;<a href=\"javascript:changeEventStatus(%d);\"><img src=\"images/blue/%s.png\"/></a>";
-    private final String HTML_SAMPLE_EDIT = "&nbsp;&nbsp;<a color=\"white\" href=\"javascript:openSampleEditPopup('%s');\"><img src=\"images/editBtn.gif\"/></a>";
 
     public EventDetailAjax() {
         Properties props = PropertyHelper.getHostnameProperties(Constants.PROPERTIES_FILE_NAME);
@@ -98,12 +97,20 @@ public class EventDetailAjax extends ActionSupport implements IAjaxAction {
 
             if("sdt".equals(type)) {
                 List<Sample> samples;
-                Long flexId = (sampleId!=null && sampleId!=0)?sampleId:projectId;
-                String flexType = (sampleId!=null && sampleId!=0)?"sample":"project";
-                String sortCol = iSortCol_0.equals("1")?"sample":iSortCol_0.equals("2")?"parent":iSortCol_0.equals("3")?"user":iSortCol_0.equals("4")?"date":null;
-                samples = readPersister.getAllSamples(flexId, flexType,sSearch, sortCol, sSortDir_0);
+                Long flexId = (sampleId!=null && sampleId!=0) ? sampleId : projectId;
+                String flexType = (sampleId!=null && sampleId!=0) ? "sample" : "project";
+                String sortCol = iSortCol_0.equals("0") ? "sample"
+                        : iSortCol_0.equals("1") ? "parent"
+                        : iSortCol_0.equals("2") ? "user"
+                        : iSortCol_0.equals("3") ? "date"
+                        : attributeList != null && !attributeList.isEmpty() ? attributeList.get(Integer.parseInt(iSortCol_0) - 4)
+                        : null;
 
-                List<Sample> filteredList = samples.subList(iDisplayStart, iDisplayStart+iDisplayLength>samples.size()?samples.size():iDisplayLength+iDisplayStart);
+                samples = readPersister.getAllSamples(flexId, flexType,sSearch, sortCol, sSortDir_0, columnName, columnSearchArguments);
+
+                List<Sample> filteredList = samples.subList(iDisplayStart, iDisplayStart+iDisplayLength>samples.size() ? samples.size() : iDisplayLength+iDisplayStart);
+
+                if(filteredList.size() == 0) filteredList = samples;
 
                 Map<Long, List<SampleAttribute>> sampleIdVsAttributes = this.getSampleVsAttributeList(filteredList);
                 Map<Long, String> sampleNameById = new HashMap<Long, String>();
@@ -121,59 +128,83 @@ public class EventDetailAjax extends ActionSupport implements IAjaxAction {
                         actors.put(tempActor.getLoginId(), tempActor.getLastName() + ", " + tempActor.getFirstName());
                     }
 
-                    Map<String, String> sampleMap = new HashMap<String, String>();
-                    sampleMap.put("0", HTML_ROW_EXPANDER_IMG);
-                    sampleMap.put("1", sample.getSampleName() + (canEdit==1?String.format(HTML_SAMPLE_EDIT, sample.getSampleId()):""));
-                    sampleMap.put("2", sampleNameById.get(sample.getParentSampleId()));
-                    sampleMap.put("3", actors.get(sample.getCreatedBy()));
-                    sampleMap.put("4", ModelValidator.PST_DEFAULT_TIMESTAMP_FORMAT.format(sample.getCreationDate()));
+                    Map<String, Object> sampleMap = new HashMap<String, Object>();
+                    sampleMap.put("sample", sample);
+                    sampleMap.put("sampleName", sample.getSampleName());
+                    sampleMap.put("parentSampleName", sampleNameById.get(sample.getParentSampleId()));
+                    sampleMap.put("actor", actors.get(sample.getCreatedBy()));
+                    sampleMap.put("createdOn", ModelValidator.PST_DEFAULT_DATE_FORMAT.format(sample.getCreationDate()));
 
-                    String attrStr;
                     if(sampleIdVsAttributes.containsKey(sample.getSampleId())) {
-                        StringBuffer headers = new StringBuffer();
-                        StringBuffer bodys = new StringBuffer();
-                        for (SampleAttribute sa : sampleIdVsAttributes.get(sample.getSampleId())) {
-                            if(sa.getMetaAttribute()!=null) {
-                                LookupValue tempLookupValue = sa.getMetaAttribute().getLookupValue();
-                                Object attrValue = ModelValidator.getModelValue(tempLookupValue, sa);
-                                headers.append(String.format(HTML_TD, tempLookupValue.getName()));
-                                bodys.append(String.format(HTML_TD, attributeDecorator(tempLookupValue, attrValue)));
+                        Map<String, Object> attributeMap = new LinkedHashMap<String, Object>();
+
+                        List<Event> sampleEvents = this.readPersister.getEventsForSample(sample.getSampleId());
+                        if(!sampleEvents.isEmpty()) {
+                            Event registrationEvent = sampleEvents.get(0);
+                            List<EventMetaAttribute> registrationEMA = this.readPersister.getEventMetaAttributes(sample.getProjectId(), registrationEvent.getEventTypeLookupValue().getLookupValueId());
+                            final List<String> orderedEMANames = new ArrayList<String>(registrationEMA.size());
+                            for (EventMetaAttribute ema : registrationEMA) {
+                                orderedEMANames.add(ema.getLookupValue().getName());
                             }
+
+                            List<SampleAttribute> sampleAttributes = sampleIdVsAttributes.get(sample.getSampleId());
+                            Collections.sort(sampleAttributes, new Comparator<SampleAttribute>() {
+                                @Override
+                                public int compare(SampleAttribute sa1, SampleAttribute sa2) {
+                                    Integer sa1Index = orderedEMANames.indexOf(sa1.getMetaAttribute().getLookupValue().getName());
+                                    Integer sa2Index = orderedEMANames.indexOf(sa2.getMetaAttribute().getLookupValue().getName());
+
+                                    //Sample Attrs on top of list
+                                    if (sa1Index == -1) sa1Index = orderedEMANames.size() + 1;
+                                    if (sa2Index == -1) sa2Index = orderedEMANames.size() + 1;
+                                    return sa1Index.compareTo(sa2Index);
+                                }
+                            });
+                            for (SampleAttribute sa : sampleIdVsAttributes.get(sample.getSampleId())) {
+                                if (sa.getMetaAttribute() != null) {
+                                    LookupValue tempLookupValue = sa.getMetaAttribute().getLookupValue();
+                                    Object attrValue = ModelValidator.getModelValue(tempLookupValue, sa);
+                                    attributeMap.put(tempLookupValue.getName(), attributeDecorator(tempLookupValue, attrValue));
+                                }
+                            }
+                            sampleMap.put("attributes", attributeMap);
+                            sampleMap.put("event", registrationEvent.getEventTypeLookupValue().getName());
                         }
-                        attrStr=String.format(HTML_TR, "even", headers)+String.format(HTML_TR, "odd", bodys);
-                    } else {
-                        attrStr = HTML_NO_DATA;
                     }
-                    sampleMap.put("5", attrStr);
                     aaData.add(sampleMap);
 
                     iTotalDisplayRecords = iTotalRecords = samples.size();
                 }
 
             } else if ("edt".equals(type)) {
-                String sortCol = iSortCol_0.equals("1")?"event":iSortCol_0.equals("2")?"sample":iSortCol_0.equals("3")?"date":iSortCol_0.equals("4")?"user":null;
+                String sortCol = iSortCol_0.equals("1") ? "event"
+                        :iSortCol_0.equals("2") ? "sample"
+                                :iSortCol_0.equals("3") ? "date"
+                                :iSortCol_0.equals("4") ? "user"
+                                :null;
+
                 List<Event> eventList;
                 if (sampleId != 0) {
-                    eventList = readPersister.getAllEvents(sampleId, "Sample", sSearch, sortCol, sSortDir_0, -1, -1, fd, td);
+                    eventList = readPersister.getAllEvents(sampleId, "Sample", sSearch, sortCol, sSortDir_0, -1, -1, fd, td, columnName, columnSearchArguments);
                 } else {
-                    eventList = readPersister.getAllEvents(projectId, "Eventlist", sSearch, sortCol, sSortDir_0, -1, -1, fd, td);
+                    eventList = readPersister.getAllEvents(projectId, "Eventlist", sSearch, sortCol, sSortDir_0, -1, -1, fd, td, columnName, columnSearchArguments);
                 }
 
                 List<Event> filteredList = eventList.subList(iDisplayStart, iDisplayStart+iDisplayLength>eventList.size()?eventList.size():iDisplayLength+iDisplayStart);
                 Map<Long, List<EventAttribute>> eventIdVsAttributes = this.getEventIdVsAttributeList(filteredList);
 
-                Map<Long, String> sampleNames = new HashMap<Long, String>();
+                Map<Long, String> sampleIdtoNames = new HashMap<Long, String>();
                 Map<Long, String> actors = new HashMap<Long, String>();
                 for (Event event : filteredList) {
                     Map<String, Object> eventMap = new HashMap<String, Object>();
 
                     String sampleName = null;
-                    if(event.getSampleId()!=null && event.getSampleId()!=0) {
-                        if(sampleNames.containsKey(event.getSampleId()))
-                            sampleName = sampleNames.get(event.getSampleId());
+                    if(event.getSampleId() != null && event.getSampleId() != 0) {
+                        if(sampleIdtoNames.containsKey(event.getSampleId()))
+                            sampleName = sampleIdtoNames.get(event.getSampleId());
                         else {
                             sampleName = readPersister.getSample(event.getSampleId()).getSampleName();
-                            sampleNames.put(event.getSampleId(), sampleName);
+                            sampleIdtoNames.put(event.getSampleId(), sampleName);
                         }
                     }
                     if (!actors.containsKey(event.getCreatedBy())) {
@@ -183,30 +214,31 @@ public class EventDetailAjax extends ActionSupport implements IAjaxAction {
 
                     String eventStatus = event.getEventStatusLookupValue().getName();
 
-                    eventMap.put("0", HTML_ROW_EXPANDER_IMG);
-                    eventMap.put("1", event.getEventTypeLookupValue().getName());
-                    eventMap.put("2", sampleName);
-                    eventMap.put("3", ModelValidator.PST_DEFAULT_TIMESTAMP_FORMAT.format(event.getCreationDate()));
-                    eventMap.put("4", actors.get(event.getCreatedBy()));
-                    eventMap.put("5", eventStatus+(canEdit==1?String.format(HTML_EVENT_EDIT, event.getEventId(), eventStatus.equals("Active")?"cross":"tick"):""));
+                    // core data
+                    eventMap.put("event", event);
+                    eventMap.put("eventId", event.getEventId());
+                    eventMap.put("eventName", event.getEventTypeLookupValue().getName());
+                    eventMap.put("sampleName", sampleName);
+                    eventMap.put("createdOn", ModelValidator.PST_DEFAULT_DATE_FORMAT.format(event.getCreationDate()));
+                    eventMap.put("actor", actors.get(event.getCreatedBy()));
+                    eventMap.put("eventStatus", eventStatus);
+                    eventMap.put("canEdit", canEdit);
 
-                    String attrStr;
                     if(eventIdVsAttributes.containsKey(event.getEventId())) {
-                        StringBuffer headers = new StringBuffer();
-                        StringBuffer bodys = new StringBuffer();
-                        for (EventAttribute ea : eventIdVsAttributes.get(event.getEventId())) {
-                            if(ea.getMetaAttribute()!=null) {
+                        Map<String, Object> attributeMap = new LinkedHashMap<String, Object>();
+
+                        List<EventAttribute> eventAttributes = eventIdVsAttributes.get(event.getEventId());
+                        CommonTool.sortEventAttributeByOrder(eventAttributes); // sort event attribute by meta attribute order
+
+                        for (EventAttribute ea : eventAttributes) {
+                            if(ea.getMetaAttribute() != null) {
                                 LookupValue tempLookupValue = ea.getMetaAttribute().getLookupValue();
                                 Object attrValue = ModelValidator.getModelValue(tempLookupValue, ea);
-                                headers.append(String.format(HTML_TD, tempLookupValue.getName()));
-                                bodys.append(String.format(HTML_TD, attributeDecorator(tempLookupValue, attrValue)));
+                                attributeMap.put(tempLookupValue.getName(), attributeDecorator(tempLookupValue, attrValue));
                             }
                         }
-                        attrStr=String.format(HTML_TR, "even", headers)+String.format(HTML_TR, "odd", bodys);
-                    } else {
-                        attrStr = HTML_NO_DATA;
+                        eventMap.put("attributes", attributeMap);
                     }
-                    eventMap.put("6", attrStr);
                     aaData.add(eventMap);
 
                     iTotalRecords = eventList.size();
@@ -249,7 +281,7 @@ public class EventDetailAjax extends ActionSupport implements IAjaxAction {
             } else if(lookupValue.getDataType().equals(ModelValidator.FILE_DATA_TYPE)) {
                 String justFileName = (String)attrVal;
                 justFileName = justFileName.substring(justFileName.lastIndexOf(File.separator)+1);
-                attrVal = "<a href=\"getFile.action?fn="+attrVal+"\">"+justFileName+"</a>";
+                attrVal = "<a href=\"download.action?fp=" + attrVal + "\">" + justFileName + "</a>";
             }
         }
         return attrVal;
@@ -264,7 +296,7 @@ public class EventDetailAjax extends ActionSupport implements IAjaxAction {
         List<SampleAttribute> allSampleAttributes = readPersister.getSampleAttributes(allSampleIds);
         Map<Long, List<SampleAttribute>> sampleIdVsAttributeList = new HashMap<Long, List<SampleAttribute>>();
         for (SampleAttribute att : allSampleAttributes) {
-            if(att.getMetaAttribute().isActive()) {
+            if(att.getMetaAttribute() != null && att.getMetaAttribute().isActive()) {
                 List<SampleAttribute> attributeList = sampleIdVsAttributeList.get(att.getSampleId());
                 if (attributeList == null) {
                     attributeList = new ArrayList<SampleAttribute>();
@@ -422,5 +454,30 @@ public class EventDetailAjax extends ActionSupport implements IAjaxAction {
 
     public void setTd(String td) {
         this.td = td;
+    }
+
+
+    public List<String> getColumnName() {
+        return columnName;
+    }
+
+    public void setColumnName(List<String> columnName) {
+        this.columnName = columnName;
+    }
+
+    public List<String> getColumnSearchArguments() {
+        return columnSearchArguments;
+    }
+
+    public void setColumnSearchArguments(List<String> columnSearchArguments) {
+        this.columnSearchArguments = columnSearchArguments;
+    }
+
+    public List<String> getAttributeList() {
+        return attributeList;
+    }
+
+    public void setAttributeList(List<String> attributeList) {
+        this.attributeList = attributeList;
     }
 }

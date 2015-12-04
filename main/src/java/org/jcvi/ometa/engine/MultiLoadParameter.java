@@ -38,6 +38,7 @@ import java.util.List;
 public class MultiLoadParameter implements Serializable {
 
     private List<List<LookupValue>> lookupValues;
+    private List<List<Dictionary>> dictionaries;
     private List<List<Project>> projects;
     private List<ProjectPair> projectPairs;
     private List<SamplePair> samplePairs;
@@ -48,6 +49,9 @@ public class MultiLoadParameter implements Serializable {
     private List<LoadableEventBean> otherEvents;
     private String eventName;
 
+    private String submitterId;
+    private Long submitterActorId;
+
     /**
      * Adders: all add list to the list of list.
      */
@@ -56,6 +60,14 @@ public class MultiLoadParameter implements Serializable {
             lookupValues = new ArrayList<List<LookupValue>>();
         }
         getLookupValues().add(lvs);
+    }
+
+    public void addDictionaries( List<Dictionary> dicts) {
+        if( getDictionaries() == null) {
+            dictionaries = new ArrayList<List<Dictionary>>();
+        }
+
+        getDictionaries().add(dicts);
     }
 
     public void addProjects( List<Project> newProjects ) {
@@ -93,19 +105,24 @@ public class MultiLoadParameter implements Serializable {
         getEmas().add(newMetaAttributes);
     }
 
-    public void addEvents( String eventName, List<FileReadAttributeBean> eventAttributes ) {
+    public void addEvents(String eventName, List<FileReadAttributeBean> eventAttributes, int rowIndex) {
         if ( getOtherEvents() == null ) {
             otherEvents = new ArrayList<LoadableEventBean>();
         }
         LoadableEventBean leBean = new LoadableEventBean();
         leBean.setAttributes( eventAttributes );
         leBean.setEventName( eventName );
+        leBean.setRowIndex(rowIndex);
         getOtherEvents().add(leBean);
     }
 
     /** Getters all return list-of-list. */
     public List<List<LookupValue>> getLookupValues() {
         return lookupValues;
+    }
+
+    public List<List<Dictionary>> getDictionaries() {
+        return dictionaries;
     }
 
     public List<List<Project>> getProjects() {
@@ -177,6 +194,7 @@ public class MultiLoadParameter implements Serializable {
     public static class LoadableEventBean implements Serializable {
         private String eventName;
         private List<FileReadAttributeBean> attributes;
+        private int rowIndex;
 
         public String getEventName() {
             return eventName;
@@ -192,6 +210,14 @@ public class MultiLoadParameter implements Serializable {
 
         public void setAttributes(List<FileReadAttributeBean> attributes) {
             this.attributes = attributes;
+        }
+
+        public int getRowIndex() {
+            return rowIndex;
+        }
+
+        public void setRowIndex(int rowIndex) {
+            this.rowIndex = rowIndex;
         }
     }
 
@@ -280,5 +306,22 @@ public class MultiLoadParameter implements Serializable {
         public void setRowIndex(int rowIndex) {
             this.rowIndex = rowIndex;
         }
+    }
+
+
+    public String getSubmitterId() {
+        return submitterId;
+    }
+
+    public void setSubmitterId(String submitterId) {
+        this.submitterId = submitterId;
+    }
+
+    public Long getSubmitterActorId() {
+        return submitterActorId;
+    }
+
+    public void setSubmitterActorId(Long submitterActorId) {
+        this.submitterActorId = submitterActorId;
     }
 }

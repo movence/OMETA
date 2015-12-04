@@ -24,10 +24,15 @@ package org.jcvi.ometa.db_interface;
 import org.hibernate.Session;
 import org.jcvi.ometa.hibernate.dao.*;
 import org.jcvi.ometa.model.*;
+import org.jcvi.ometa.model.Dictionary;
 import org.jcvi.ometa.utils.Constants;
 import org.jcvi.ometa.utils.GuidGetter;
+import org.jcvi.ometa.validation.DataValidator;
 import org.jcvi.ometa.validation.ModelValidator;
+import org.jtc.common.util.property.PropertyHelper;
 
+import java.io.File;
+import java.lang.reflect.Method;
 import java.text.MessageFormat;
 import java.util.*;
 
@@ -49,6 +54,8 @@ public class EventPersistenceHelper {
             "Unknown attribute type {0} " );
     protected static final MessageFormat CONTROLLED_VOCAB_VIOLATED_HUMAN_READABLE_MSG = new MessageFormat(
             "{0} {1} attribute may not be set to {2}.  Possible values: {3} " );
+    protected static final MessageFormat NOT_VALID_ATTRIB_HUMAN_READABLE_MSG = new MessageFormat(
+            "{0} {1} attribute may not be set to {2}.  Validation failed! " );
     protected static final MessageFormat EVENT_NOT_IN_PROJECT_HUMAN_READABLE_MSG = new MessageFormat(
             "Event attribute of {0} does not belong to project {1} " );
     protected static final MessageFormat INVALID_PROJECT_META_ATTRIB_HUMAN_READABLE_MSG = new MessageFormat(
@@ -65,6 +72,8 @@ public class EventPersistenceHelper {
             "Project {0} unknown." );
     protected static final MessageFormat SAMPLE_REQUIRED_HUMAN_READABLE_MSG = new MessageFormat(
             "Event attribute of {0} requires sample " );
+    protected static final MessageFormat EXCEED_VALUE_LENGTH_HUMAN_READABLE_MSG = new MessageFormat(
+            "Event attribute of {0} exceeds value length limit ( {1} character(s)) " );
 
     private DAOFactory daoFactory;
     private GuidGetter guidGetter;
@@ -87,6 +96,8 @@ public class EventPersistenceHelper {
     private Map<String,String> pmaNameToControls = null;
     private Map<String,String> smaNameToControls = null;
     private Map<String,String> emaNameToControls = null;
+
+    private Map<String,String> dictParentValueMap = null;
 
     private boolean sampleAttributesEncountered = false;
     private boolean isSampleRequiredForEvent = false;
@@ -213,6 +224,42 @@ public class EventPersistenceHelper {
         }
     }
 
+    public void setDictionaryParentValue(List<FileReadAttributeBean> aBeans, AttributeType aType) throws Exception {
+        Map<String,String> controlMap = null;
+        switch( aType ) {
+            case project:
+                controlMap = pmaNameToControls;
+                break;
+            case sample:
+                controlMap = smaNameToControls;
+                break;
+            case event:
+                controlMap = emaNameToControls;
+                break;
+            default: {
+                String message = UNKNOWN_ATTRIB_TYPE_HUMAN_READABLE_MSG.format( new Object[] { aType.toString() } );
+                throw new Exception( message );
+            }
+        }
+
+        dictParentValueMap = new HashMap<String, String>(0);
+        String parentDef = "Parent:";
+        for( Map.Entry<String, String> entry : controlMap.entrySet()){
+            String value = entry.getValue();
+            if(value.contains(parentDef)){
+                dictParentValueMap.put(value.substring(value.lastIndexOf(parentDef) + 7), "");
+            }
+        }
+
+        for(FileReadAttributeBean bean : aBeans) {
+            String parentFieldName = bean.getAttributeName();
+
+            if(dictParentValueMap.get(parentFieldName) != null){
+                dictParentValueMap.put(parentFieldName, bean.getAttributeValue());
+            }
+        }
+    }
+
     /** Check that the value given is within the control set, if a control set was given. */
     public void checkControlledValue( String attributeName, String attributeValue, AttributeType aType )
             throws Exception {
@@ -238,34 +285,120 @@ public class EventPersistenceHelper {
         // Not all values are controlled.  Some may have empty control values.
         if ( controlValues != null  &&  controlValues.trim().length() > 0 ) {
             String multiplePrefix = "multi(";
-            //trim multiple select for validation
-            if(controlValues.startsWith(multiplePrefix) && controlValues.endsWith(")")) {
-                controlValues = controlValues.substring(multiplePrefix.length(), controlValues.length()-1);
+            String radioPrefix = "radio(";
+            String dictionaryPrefix = "Dictionary:";
+            String validationPrefix = "validate:";
+            boolean valid = true;
+
+            if(controlValues.contains(validationPrefix)){
+                int indexOfValidate = controlValues.indexOf(validationPrefix);
+
+                String valStr = controlValues.substring(indexOfValidate, controlValues.length());
+                controlValues = controlValues.replace(valStr, "");
+
+                valStr = valStr.substring(validationPrefix.length(), valStr.length());
+                String[] validationRequests = valStr.split(",");
+
+                for(String valReq : validationRequests){
+                    String[] classMethodVal = valReq.split("\\.");
+                    boolean hasArgument = false;
+                    String argVal = null;
+
+                    if(classMethodVal[1].contains("(") && classMethodVal[1].contains(")")){
+                        int indexOfArg = classMethodVal[1].indexOf("(");
+                        argVal = classMethodVal[1].substring(indexOfArg+1, classMethodVal[1].length() - 1);
+
+                        classMethodVal[1] = classMethodVal[1].substring(0, indexOfArg);
+                        hasArgument = true;
+                    }
+
+                    Class validatorClass = Class.forName("org.jcvi.ometa.validation."+classMethodVal[0]);
+                    Method validatorMethod;
+                    if(hasArgument){
+                        validatorMethod = validatorClass.getDeclaredMethod(classMethodVal[1], String.class, String.class);
+                        valid = (Boolean) validatorMethod.invoke(validatorClass.newInstance(), attributeValue, argVal);
+                    } else {
+                        validatorMethod = validatorClass.getDeclaredMethod(classMethodVal[1], String.class);
+                        valid = (Boolean) validatorMethod.invoke(validatorClass.newInstance(), attributeValue);
+                    }
+
+                    if(!valid) break;
+                }
             }
-            List<String> controlValueList = Arrays.asList(controlValues.split(";"));
-            boolean found = true;
-            if(attributeValue.contains(",")) {
-                for(String currentAttributeValue : attributeValue.split(",")) {
-                    if(controlValueList.indexOf(currentAttributeValue.trim())<0) {
-                        found = false;
+
+            if(valid) {
+                if(!controlValues.equals("")) {
+                    //trim multiple select for validation
+                    if (controlValues.startsWith(multiplePrefix) && controlValues.endsWith(")")) {
+                        controlValues = controlValues.substring(multiplePrefix.length(), controlValues.length() - 1);
+                    } else if (controlValues.startsWith(radioPrefix) && controlValues.endsWith(")")) {
+                        controlValues = controlValues.substring(radioPrefix.length(), controlValues.length() - 1);
+                    } else if (controlValues.startsWith(dictionaryPrefix)) {
+                        String dictType = controlValues.replace(dictionaryPrefix, "");
+                        boolean hasParent = dictType.contains("Parent:");
+
+                        try {
+                            Properties props = PropertyHelper.getHostnameProperties(Constants.PROPERTIES_FILE_NAME);
+                            ReadBeanPersister readPersister = new ReadBeanPersister(props);
+                            List<Dictionary> dictList = null;
+
+                            if (hasParent) {
+                                String[] dictOpts = dictType.split(",Parent:");
+                                String parentAttrName = dictOpts[1];
+                                String parentAttrValue = dictParentValueMap.get(parentAttrName);
+
+                                if (parentAttrValue != null && !parentAttrValue.equals("")) {
+                                    dictList = readPersister.getDictionaryDependenciesByType(
+                                            controlMap.get(parentAttrName).replace(dictionaryPrefix, ""), parentAttrValue.split(" - ")[0]);
+                                }
+                            } else {
+                                dictList = readPersister.getDictionaryByType(dictType);
+                            }
+
+                            StringBuilder sb = new StringBuilder();
+                            String delim = "";
+
+                            for (Dictionary dictionary : dictList) {
+                                sb.append(delim).append(dictionary.getDictionaryCode());
+
+                                delim = ";";
+                            }
+
+                            controlValues = sb.toString();
+                        } catch (Exception ex) {
+                            ex.printStackTrace();
+                        }
+                    }
+                    List<String> controlValueList = Arrays.asList(controlValues.split(";"));
+                    boolean found = true;
+                    if (attributeValue.contains(",")) {
+                        for (String currentAttributeValue : attributeValue.split(",")) {
+                            if (controlValueList.indexOf(currentAttributeValue.trim()) < 0) {
+                                found = false;
+                                break;
+                            }
+                        }
+                    } else {
+                        found = controlValueList.indexOf(attributeValue) >= 0;
+                    }
+                /*for ( String controlValue: controlValueArray ) {
+                    if ( attributeValue.equals( controlValue ) ) {
+                        found = true;
                         break;
+                    }
+                }*/
+
+                    if (!found) {
+                        String message = CONTROLLED_VOCAB_VIOLATED_HUMAN_READABLE_MSG.format(
+                                new Object[]{aType.toString(), attributeName, attributeValue, controlValues});
+                        throw new Exception(message);
+
                     }
                 }
             } else {
-                found = controlValueList.indexOf(attributeValue) >= 0;
-            }
-            /*for ( String controlValue: controlValueArray ) {
-                if ( attributeValue.equals( controlValue ) ) {
-                    found = true;
-                    break;
-                }
-            }*/
-
-            if ( ! found ) {
-                String message = CONTROLLED_VOCAB_VIOLATED_HUMAN_READABLE_MSG.format(
-                        new Object[] { aType.toString(), attributeName, attributeValue, controlValues } );
-                throw new Exception( message );
-
+                String message = NOT_VALID_ATTRIB_HUMAN_READABLE_MSG.format(
+                        new Object[]{aType.toString(), attributeName, attributeValue});
+                throw new Exception(message);
             }
         }
     }
@@ -291,19 +424,27 @@ public class EventPersistenceHelper {
 
         checkSampleGivenForEventAttribute(attribName, ema);
 
-        if ( ema == null   &&  ! attributeNamesPermitted.contains( attribName ) ) {
-            String message = EVENT_NOT_IN_PROJECT_HUMAN_READABLE_MSG.format( new Object[] { attribName, projectName } );
-            throw new DAOException( message );
-        }
-        else if ( ema.isSampleRequired() && ( sampleId == null || sampleId == 0 ) ) {
-            String message = SAMPLE_REQUIRED_HUMAN_READABLE_MSG.format( new Object[] { attribName } );
-            throw new DAOException( message );
-        }
-        else {
-            EventAttributeDAO attribDAO = daoFactory.getEventAttributeDAO();
-            attribDAO.write( attribute, transactionStartDate, session );
+        if(ema.getLookupValue() != null) {
+            String dataType = ema.getLookupValue().getDataType();
+            int attrValueLength = (dataType.equals("string")) ? attribute.getAttributeStringValue().length()
+                    : (dataType.equals("int")) ? attribute.getAttributeIntValue().toString().length()
+                    : (dataType.equals("date")) ? attribute.getAttributeDateValue().toString().length()
+                    : attribute.getAttributeFloatValue().toString().length();
 
+            if (ema == null && !attributeNamesPermitted.contains(attribName)) {
+                String message = EVENT_NOT_IN_PROJECT_HUMAN_READABLE_MSG.format(new Object[]{attribName, projectName});
+                throw new DAOException(message);
+            } else if (ema.isSampleRequired() && (sampleId == null || sampleId == 0)) {
+                String message = SAMPLE_REQUIRED_HUMAN_READABLE_MSG.format(new Object[]{attribName});
+                throw new DAOException(message);
+            } else if (ema.getValueLength() != null && attrValueLength > ema.getValueLength()) {
+                String message = EXCEED_VALUE_LENGTH_HUMAN_READABLE_MSG.format(new Object[]{attribName, ema.getValueLength()});
+                throw new DAOException(message);
+            }
         }
+
+        EventAttributeDAO attribDAO = daoFactory.getEventAttributeDAO();
+        attribDAO.write(attribute, transactionStartDate, session);
     }
 
     public void writeBackAttribute(
@@ -473,8 +614,7 @@ public class EventPersistenceHelper {
         if (ema.isSampleRequired() || this.eventType.contains(Constants.EVENT_SAMPLE_REGISTRATION)) {
             isSampleRequiredForEvent = true;
             if ( sampleId == null ) {
-                throw new DAOException( "Event '" + eventType + "' requires a sample for event attribute " + attribName +
-                                        " but no sample was given.");
+                throw new DAOException("'" + attribName + "' for '" + eventType + "' requires a sample");
             }
         }
     }
@@ -486,8 +626,7 @@ public class EventPersistenceHelper {
      */
     private void checkSampleForEvent() throws DAOException {
         if(!isSampleRequiredForEvent  &&  sampleId != null)
-            throw new DAOException( "Event of type " + eventType +
-                                    " should not have a sample associated with it, but does." );
+            throw new DAOException("'" + eventType + " should not have a sample associated with it." );
     }
 
     /** Will return the required meta attributes for project or sample, depending on boolean switch. */

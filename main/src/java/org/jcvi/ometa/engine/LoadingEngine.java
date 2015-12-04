@@ -29,10 +29,12 @@ import org.jcvi.ometa.bean_interface.ProjectSampleEventPresentationBusiness;
 import org.jcvi.ometa.configuration.FileMappingSupport;
 import org.jcvi.ometa.configuration.InputBeanType;
 import org.jcvi.ometa.hibernate.dao.DAOException;
+import org.jcvi.ometa.model.Actor;
 import org.jcvi.ometa.model.EventMetaAttribute;
 import org.jcvi.ometa.model.Project;
 import org.jcvi.ometa.model.Sample;
 import org.jcvi.ometa.utils.*;
+import org.jcvi.ometa.validation.ErrorMessages;
 import org.jcvi.ometa.validation.ModelValidator;
 import org.jtc.common.util.scratch.ScratchUtils;
 
@@ -62,31 +64,43 @@ public class LoadingEngine {
      */
     public static void main(String[] args) {
         try {
+            int success = 1;
             LoadingEngineUsage usage = new LoadingEngineUsage(args);
 
             LoadingEngine engine = new LoadingEngine(usage);
-            if(usage.isCmdLineNamedEvent()) {
-                if(usage.isBatchLoad()) {
-                    engine.batchLoad();
-                } else {
-                    engine.loadEventFile();
-                }
+            if(usage.isMakeEventTemplate() && usage.isCmdLineNamedEvent()) {
+                engine.createEventTemplate();
+            } else if(usage.isBatchLoad()) {
+                success = engine.batchLoad();
             } else if(usage.isMultiFile()) {
-                engine.digestMultipart();
+                success = engine.digestMultipart();
             } else if(usage.isDirectory()) {
                 engine.digestMultiDirectory();
-            } else if (usage.isMakeEventTemplate()) {
-                engine.createEventTemplate();
+            } else if(usage.isDownloadData()){
+                engine.downloadData();
             } else {
-                engine.dispatchByFilename();
+                engine.loadEventFile();
+                //engine.dispatchByFilename();
             }
-            System.out.println("Loading process done!");
+
+            String finalMessage = null;
+            if(success == 1) {
+                finalMessage = "Loading process done!";
+            } else {
+                finalMessage = "Error occurred. check the log.";
+            }
+            System.out.println(finalMessage);
+
         } catch (DAOException daoex) {
             System.out.println("Database Access Error: " + daoex.getMessage());
             logger.error(LogTraceFormatter.formatStackTrace(daoex));
             logger.fatal(daoex);
         } catch (Throwable ex) {
-            System.out.println("Error: " + ex.getMessage());
+            Throwable cause = ex.getCause();
+            while(cause != null && cause.getCause() != null) { //drill down to the actual exception
+                cause = cause.getCause();
+            }
+            System.out.println("Error: " + (cause == null ? ex.getMessage() : cause.getMessage()));
             logger.error(LogTraceFormatter.formatStackTrace(ex));
             logger.fatal(ex);
         }
@@ -103,6 +117,8 @@ public class LoadingEngine {
         this.usage = usage;
 
     }
+
+    public LoadingEngine() {}
 
     /**
      * Given the project and event, will create an incomplete "template/form" event TSV file.
@@ -121,8 +137,7 @@ public class LoadingEngine {
 
         try {
             PresentationActionDelegate delegate = new PresentationActionDelegate();
-            ProjectSampleEventPresentationBusiness ejb = delegate.getEjb(
-                    PresentationActionDelegate.EJB_NAME, server, userName, passWord, logger);
+            ProjectSampleEventPresentationBusiness ejb = delegate.getEjb(PresentationActionDelegate.EJB_NAME, server, userName, passWord, logger);
 
             Project project = ejb.getProject(projectName);
             List<EventMetaAttribute> emaList = ejb.getEventMetaAttributes(project.getProjectName(), eventName);
@@ -132,25 +147,15 @@ public class LoadingEngine {
                 // No sample name provided.
                 // Need a sample?
                 if (ejb.isSampleRequired(projectName, eventName)) {
-                    throw new IllegalArgumentException(
-                            "Sample is required for this template. Therefore, please provide a sample name."
-                    );
+                    throw new IllegalArgumentException("Sample is required for the event.");
                 }
             }
             else {
                 // User provided a sample name.
                 // Does the sample go with the project?
-                List<Sample> samples = ejb.getSamplesForProject(project.getProjectId());
-                boolean found = false;
-                for (Sample sample: samples) {
-                    if (sample.getSampleName().equals(sampleName)) {
-                        found = true;
-                    }
-                }
-                if (! found) {
-                    throw new IllegalArgumentException(
-                            "Sample name " + sampleName + " given does not belong to project " + projectName
-                    );
+                Sample sample = ejb.getSample(project.getProjectId(), sampleName);
+                if(sample == null) {
+                    throw new IllegalArgumentException("Sample '" + sampleName + "' not found with project '" + projectName + "'");
                 }
             }
 
@@ -189,8 +194,10 @@ public class LoadingEngine {
         try {
             BeanWriter writer = new BeanWriter(serverUrl, userName, passWord);
 
+            String submissionId = Long.toString(CommonTool.getGuid()); //submission Id
+
             File eventFile = new File(eventFileName);
-            writer.writeEvent(eventFile, eventType, projectName, true);
+            writer.writeEvent(eventFile, eventType, projectName, true, eventFile.getParent(), submissionId, null);
 
         } catch (Exception ex) {
             throw ex;
@@ -200,7 +207,9 @@ public class LoadingEngine {
     /**
      * Given a file with multiple parts, applying to Projects, Samples, and events, handle all.
      */
-    public void digestMultipart() throws Exception {
+    public int digestMultipart() throws Exception {
+        int success = 1;
+
         String userName = usage.getUsername();
         String passWord = usage.getPassword();
         String serverUrl = usage.getServerUrl();
@@ -223,6 +232,7 @@ public class LoadingEngine {
             writer.writeMultiType(collector);
 
         } catch (Exception ex) {
+            success = 0;
             throw ex;
         } finally {
             if (scratchLoc != null  &&  scratchLoc.exists()) {
@@ -239,6 +249,8 @@ public class LoadingEngine {
                 splitter.removeDirectory(cleanupDir);
             }
         }
+
+        return success;
     }
 
     /**
@@ -319,7 +331,7 @@ public class LoadingEngine {
                     writer.writePMAs(file);
                     break;
                 case eventAttributes:
-                    writer.writeEvent(file, null, null, true);
+                    writer.writeEvent(file, null, null, true, null, null, null);
                     break;
                 default:
                     throw new IllegalArgumentException(
@@ -331,14 +343,14 @@ public class LoadingEngine {
         }
     }
 
-    public void batchLoad() throws Exception {
+    public int batchLoad() throws Exception {
+        int success = 1;
+
         String userName = usage.getUsername();
         String passWord = usage.getPassword();
         String serverUrl = usage.getServerUrl();
 
         String eventFileName = usage.getInputFilename();
-        String eventName = usage.getEventName();
-        String projectName = usage.getProjectName();
         String outputPath = usage.getOutputLocation();
 
         int batchSizeInt = 1;
@@ -347,23 +359,32 @@ public class LoadingEngine {
             batchSizeInt = Integer.parseInt(batchSize);
         }
 
+        String submissionId = Long.toString(CommonTool.getGuid()); //submission Id
+
         File eventFile = new File(eventFileName);
 
-        Long timeStamp = new Date().getTime();
-        File logFile = new File(outputPath + File.separator + "ometa.log");
+        File logFile = new File(outputPath + File.separator + submissionId /*LoadingEngine.getNameWoExt(eventFile.getName())*/ + "_summary.txt");
         FileWriter logWriter = new FileWriter(logFile, false);
 
+        if(!eventFile.canRead() || !eventFile.isFile()) {
+            throw new Exception(ErrorMessages.CLI_BATCH_INPUT_FILE_MISSING);
+        }
+        if(!eventFileName.endsWith(".csv")) { // temporary?
+            throw new Exception(ErrorMessages.CLI_BATCH_CSV_ONLY);
+        }
+
         int successCount = 0;
-        File processedFile = new File(outputPath + File.separator + "ometa_processed.csv");
+        File processedFile = new File(outputPath + File.separator + submissionId /*LoadingEngine.getNameWoExt(eventFile.getName())*/ + "-success.csv");
         FileWriter processedWriter = new FileWriter(processedFile, false);
+
         int failedCount = 0;
-        File failedFile = new File(outputPath + File.separator + "ometa_failed.csv");
+        File failedFile = new File(outputPath + File.separator + submissionId /*LoadingEngine.getNameWoExt(eventFile.getName())*/  + "-errors.csv");
         FileWriter failedWriter = new FileWriter(failedFile, false);
 
         // Must break this file up, and deposit it into a temporary output directory.
         String userBase = System.getProperty("user.home");
         ScratchUtils.setScratchBaseLocation(userBase + "/" + Constants.SCRATCH_BASE_LOCATION);
-        File scratchLoc = ScratchUtils.getScratchLocation(timeStamp, "LoadingEngine__" + eventFile.getName());
+        File scratchLoc = ScratchUtils.getScratchLocation(new Date().getTime(), "LoadingEngine__" + eventFile.getName());
 
         int processedLineCount = 0;
         try {
@@ -372,46 +393,90 @@ public class LoadingEngine {
             LineIterator lineIterator = FileUtils.lineIterator(eventFile);
             int lineCount = 0;
 
+            String eventNameLine = null;
+            String eventName = null;
             String headerLine = null;
             while(lineIterator.hasNext()) {
                 ++lineCount;
                 String currLine = lineIterator.nextLine();
 
                 if(lineCount == 1) {
+                    if(!currLine.startsWith(Constants.TEMPLATE_COMMENT_INDICATOR) && currLine.contains(Constants.TEMPLATE_EVENT_TYPE_IDENTIFIER)) {
+                        throw new Exception("event type is missing in the data file.");
+                    }
+                    eventNameLine = currLine;
+                    String[] eventTypeTokens = eventNameLine.split(":");
+                    if(eventTypeTokens.length != 2 || eventTypeTokens[1].isEmpty()) {
+                        throw new Exception(Constants.TEMPLATE_EVENT_TYPE_IDENTIFIER + " must be '" + Constants.TEMPLATE_EVENT_TYPE_IDENTIFIER + ":<eventName>'");
+                    }
+                    eventName = eventTypeTokens[1].trim().replaceAll("(,)*$", "");
+
+                    processedWriter.write(eventNameLine + "\n");
+                    failedWriter.write(eventNameLine + "\n");
+                } else if(lineCount == 2) {
                     headerLine = currLine;
                     processedWriter.write(currLine + "\n");
                     failedWriter.write(currLine + "\n");
                     continue;
-                } else if(lineCount == 2 && (currLine.startsWith("#") || currLine.startsWith("\"#"))) { //skip comment line
-                    continue;
                 } else {
-                    File singleEventFile = new File(scratchLoc.getAbsoluteFile() + File.separator + "temp.csv");
-                    List<String> lines = new ArrayList<String>(2);
-                    lines.add(headerLine);
-                    lines.add(currLine);
-                    FileUtils.writeLines(singleEventFile, lines);
+                    if(currLine.startsWith(Constants.TEMPLATE_COMMENT_INDICATOR) || currLine.startsWith("\"" + Constants.TEMPLATE_COMMENT_INDICATOR)) { //skip comment line
+                        continue;
+                    } else {
+                        File singleEventFile = new File(scratchLoc.getAbsoluteFile() + File.separator + "temp.csv");
+                        List<String> lines = new ArrayList<String>(2);
+                        lines.add(eventNameLine);
+                        lines.add(headerLine);
+                        lines.add(currLine);
+                        FileUtils.writeLines(singleEventFile, lines);
 
-                    try {
-                        String eventTarget = writer.writeEvent(singleEventFile, eventName, projectName, true);
-                        logWriter.write(String.format("[%d] loaded event for %s\n", lineCount, eventTarget));
-                        processedWriter.write(currLine + "\n");
-                        successCount++;
-                    } catch (Exception ex) {
-                        failedWriter.write(currLine + "\n");
-                        logWriter.write(String.format("[%d] failed :\n", lineCount));
-                        logWriter.write(ex.getMessage() + "\n");
-                        failedCount++;
+                        try {
+                            String eventTarget = writer.writeEvent(singleEventFile, eventName, null, false, eventFile.getParent(), submissionId, (usage.getSubmitter() != null ? usage.getSubmitter() : userName));
+                            //logWriter.write(String.format("[%d] loaded event%s.\n", lineCount, (eventTarget == null ? "" : " for '" + eventTarget + "'")));
+                            processedWriter.write(currLine + "\n");
+                            successCount++;
+                        } catch(java.lang.IllegalAccessError iae) {
+                            String exceptionString = iae.getCause() == null ? iae.getMessage() : iae.getCause().getMessage();
+                            logWriter.write(exceptionString + "\n");
+                            success = 0;
+                            throw iae;
+                        }catch (Exception ex) {
+                            failedWriter.write(currLine + "\n");
+                            logWriter.write(String.format("[%d] failed : ", ++failedCount));
+
+
+                            if(ex.getClass() == javax.ejb.EJBException.class) {
+                                String accessError = ex.getMessage();
+                                if(accessError != null && accessError.contains("java.lang.IllegalAccessError")) {
+                                    logWriter.write(ErrorMessages.DENIED_USER_EDIT_MESSAGE + "\n");
+                                }
+                            } else {
+                                logWriter.write((ex.getCause() == null ? ex.getMessage() : ex.getCause().getMessage()) + "\n");
+                            }
+                        }
+                        processedLineCount++;
                     }
-                    processedLineCount++;
                 }
             }
+            usage.setTotalCount(processedLineCount);
+            usage.setSuccessCount(successCount);
+            usage.setFailCount(failedCount);
+            usage.setLogFileName(logFile.getName());
+            usage.setFailFileName(failedFile.getName());
+            if(writer.getSubmitter() != null) {
+                Actor submitter = writer.getSubmitter();
+                usage.setSubmitterEmail(submitter.getEmail());
+                usage.setSubmitterName(submitter.getFirstName() + " " + submitter.getLastName());
+            }
+
         } catch(IOException ioe) {
             System.err.println("IOException: " + ioe.getMessage());
+            success = 0;
         } catch (Exception ex) {
             String exceptionString = ex.getCause() == null ? ex.getMessage() : ex.getCause().getMessage();
-            logWriter.write(exceptionString);
+            logWriter.write(exceptionString + "\n");
+            success = 0;
             throw ex;
-        } finally {
+        }  finally {
             if(scratchLoc != null  &&  scratchLoc.exists()) {
                 File cleanupDir = scratchLoc;
                 String parentDirName = cleanupDir.getParentFile().getName();
@@ -422,11 +487,47 @@ public class LoadingEngine {
                 FileUtils.forceDelete(cleanupDir);
             }
 
+            if(failedCount == 0 && processedLineCount == successCount) {
+                logWriter.write("All data has been loaded successfully for Submission ID: [" + submissionId + "]. Submission to the OMETA complete!");
+            }
+
             logWriter.close();
             processedWriter.close();
             failedWriter.close();
             System.out.printf("total: %d, processed: %d, failed: %d\n", processedLineCount, successCount, failedCount);
             System.out.println("log file: " + logFile.getAbsolutePath());
         }
+
+        return success;
+    }
+
+    public void downloadData() throws Exception {
+        String userName = usage.getUsername();
+        String passWord = usage.getPassword();
+        String serverUrl = usage.getServerUrl();
+
+        String projectName = usage.getProjectName();
+        String eventName = usage.getEventName();
+        String outputPath = usage.getOutputLocation();
+
+        try {
+            BeanWriter writer = new BeanWriter(serverUrl, userName, passWord);
+            String filePath = outputPath + File.separator + projectName + "_Data.csv";
+            writer.readProjectData(filePath, projectName, eventName);
+
+        } catch (Exception ex) {
+            throw ex;
+        }
+    }
+
+
+    public static String getNameWoExt(String name) {
+        int index = name.lastIndexOf(".");
+        if (index < 1) return name;
+        return name.substring(0,index);
+    }
+
+    public void setUsage(LoadingEngineUsage usage) {
+        this.usage = usage;
     }
 }

@@ -25,9 +25,11 @@ import org.hibernate.Session;
 import org.jcvi.ometa.configuration.AccessLevel;
 import org.jcvi.ometa.configuration.QueryEntityType;
 import org.jcvi.ometa.configuration.ResponseToFailedAuthorization;
+import org.jcvi.ometa.exception.InvalidInputException;
 import org.jcvi.ometa.hibernate.dao.*;
 import org.jcvi.ometa.intf.BeanPersistenceFacadeI;
 import org.jcvi.ometa.model.*;
+import org.jcvi.ometa.model.Dictionary;
 import org.jcvi.ometa.utils.Constants;
 import org.jcvi.ometa.utils.GuidGetter;
 import org.jcvi.ometa.validation.ModelValidator;
@@ -49,7 +51,9 @@ public class WritebackBeanPersister implements BeanPersistenceFacadeI {
     protected static final String BAD_LOOKUP_TYPE_MSG = "'%s' is not an attribute.";
     protected static final String INVALID_LOOKUP_VALUE_DATA_TYPE_MSG = "invalid data type '%s'.";
     protected static final String INCOMPATIBLE_LOOKUP_VALUE_MSG = "Lookup value %s already exists. (%s, %s)";//, and is not compatible.";
-    protected static final String UNKNOWN_SAMPLE_FOR_PROJECT_MSG = "Project '%s' does not have sample '%s'.";
+    protected static final String INCOMPATIBLE_DICTIONARY_MSG = "Dictionary already exists. (%s, %s, %s)";//, and is not compatible.";
+    protected static final String UNKNOWN_SAMPLE_FOR_PROJECT_MSG = "Project '%s' does not have sample '%s'.";;
+    protected static final String VALIDATION_PREFIX = "validate:";
 
     private SessionAndTransactionManagerI sessionAndTransactionManager;
     private Session session;
@@ -276,6 +280,70 @@ public class WritebackBeanPersister implements BeanPersistenceFacadeI {
         }
     }
 
+    public void writeBackDictionaries(List<Dictionary> dictList) throws Exception {
+        try {
+            StringBuilder errors = new StringBuilder();
+
+            DictionaryDAO dictionaryDAO = daoFactory.getDictionaryDAO();
+            List<Dictionary> loadingList = new ArrayList<Dictionary>(dictList.size()); //load all or nothing list
+
+            for (Dictionary dict : dictList) {
+                String dictType = dict.getDictionaryType();
+                String dictCode = dict.getDictionaryCode();
+                String dictValue = dict.getDictionaryValue();
+                if(dictCode == null || dictCode.equals("")) dictCode = dictValue;
+
+                Dictionary oldDict = dictionaryDAO.getDictionaryByTypeAndCode(dictType, dictCode, session);
+                if (oldDict == null) {
+                    boolean hasParentError = false;
+                    String parentDictionary = dict.getParentDependency();
+                    if(parentDictionary != null && !parentDictionary.equals("")){
+                        String[] parentDictTypeCode = parentDictionary.split(" - ");
+                        Dictionary parentDict = dictionaryDAO.getDictionaryByTypeAndCode(parentDictTypeCode[0], parentDictTypeCode[1], session);
+
+                        if(parentDict == null) {
+                            hasParentError = true;
+                            errors.append(dictType + ", " + dictCode + ", " + dictValue + ":parent dictionary does not exist!\n");
+                        }
+                    }
+
+                    if(!hasParentError)
+                        loadingList.add(dict);
+                } else {
+                    String message = String.format(INCOMPATIBLE_DICTIONARY_MSG,
+                            oldDict.getDictionaryType(), oldDict.getDictionaryCode(), oldDict.getDictionaryValue());
+                    errors.append(dictType + ", " + dictCode + ", " + dictValue + ":dictionary already exists\n");
+                }
+            }
+
+            if(loadingList.size() > 0 && loadingList.size() == dictList.size()) { //only load if there is no error
+                for(Dictionary dict : loadingList) {
+                    String dictCode = dict.getDictionaryCode();
+                    String dictValue = dict.getDictionaryValue();
+                    if(dictCode == null || dictCode.equals("")) dictCode = dictValue;
+
+                    String parentDictionary = dict.getParentDependency();
+                    if(parentDictionary != null && !parentDictionary.equals("")) {
+                        dictionaryDAO.loadDictionaryWithDependency(dict.getDictionaryType(), dictValue, dictCode, parentDictionary,
+                                sessionAndTransactionManager.getTransactionStartDate(), session);
+                    } else {
+                        dictionaryDAO.loadDictionary(dict.getDictionaryType(), dictValue, dictCode,
+                                sessionAndTransactionManager.getTransactionStartDate(), session);
+                    }
+                }
+            }
+
+            // Explain what went wrong.
+            if (errors.length() > 0) {
+                throw new Exception(errors.toString());
+            }
+
+        } catch (Exception ex) {
+            sessionAndTransactionManager.rollBackTransaction();
+            throw ex;
+        }
+    }
+
     /**
      * Call this when you have a project read up to the spec given for filesystem, or non-db-origin data.
      *
@@ -293,6 +361,22 @@ public class WritebackBeanPersister implements BeanPersistenceFacadeI {
                 project.setCreatedBy(actorId);
                 projectDAO.write(project, sessionAndTransactionManager.getTransactionStartDate(), session);
             }
+        } catch (Exception ex) {
+            sessionAndTransactionManager.rollBackTransaction();
+            throw ex;
+        }
+    }
+
+    /**
+     * Call this when you have an actor to update.
+     *
+     * @param actor       actor to update.
+     * @throws Exception thrown by called methods.
+     */
+    public void updateActor(Actor actor) throws  Exception {
+        try {
+            ActorDAO actorDAO = daoFactory.getActorDAO();
+            actorDAO.update(actor, session);
         } catch (Exception ex) {
             sessionAndTransactionManager.rollBackTransaction();
             throw ex;
@@ -388,8 +472,17 @@ public class WritebackBeanPersister implements BeanPersistenceFacadeI {
                     attribute.setCreatedBy(actorId);
                 else
                     attribute.setModifiedBy(actorId);
+
                 if(attribute.getId()==null)
                     attribute.setId(guidGetter.getGuid());
+
+                if(attribute.isActive() == null) {
+                    attribute.setActiveDB(1);
+                }
+
+                if(pmaDAO.getProjectMetaAttribute(attribute.getNameLookupId(), attribute.getProjectId(), session) != null) {
+                    continue;
+                }
 
                 if(attribute.getCreationDate()==null)
                     pmaDAO.write(attribute, sessionAndTransactionManager.getTransactionStartDate(), session);
@@ -411,6 +504,7 @@ public class WritebackBeanPersister implements BeanPersistenceFacadeI {
             Map<String, Long> projNameVsId = new HashMap<String, Long>();
             for (SampleMetaAttribute attribute : smaBeans) {
                 validateSampleMetaAttributeInput(attribute);
+
                 if (attribute.getProjectId() == null) {
                     String projectName = attribute.getProjectName();
                     Long projectId = getAndCacheProjectId(session, projNameVsId, projectName);
@@ -423,7 +517,15 @@ public class WritebackBeanPersister implements BeanPersistenceFacadeI {
                 if(attribute.getId()==null)
                     attribute.setId(guidGetter.getGuid());
 
-                if(attribute.getCreationDate()==null)
+                if(attribute.isActive() == null) {
+                    attribute.setActiveDB(1);
+                }
+
+                if(smaDAO.getSampleMetaAttribute(attribute.getNameLookupId(), attribute.getProjectId(), session) != null) {
+                    continue; //skip for any existing SMA
+                }
+
+                if(attribute.getCreationDate() == null)
                     smaDAO.write(attribute, sessionAndTransactionManager.getTransactionStartDate(), session);
                 else
                     smaDAO.update(attribute, sessionAndTransactionManager.getTransactionStartDate(), session);
@@ -449,52 +551,58 @@ public class WritebackBeanPersister implements BeanPersistenceFacadeI {
 
             Map<String, Long> projNameVsId = new HashMap<String, Long>();
             for (EventMetaAttribute attribute : emaBeans) {
-                if (attribute.getEventTypeLookupId() == null || attribute.getEventTypeLookupId() == 0) {
+                LookupValue attributeNameLookup = lvDAO.getLookupValue(attribute.getAttributeName(), session);
+                if(attributeNameLookup == null) {
+                    throw new Exception("attribute name '" + attribute.getAttributeName() + "' does not exist.");
+                }
+
+                if (attribute.getEventTypeLookupId() == null || attribute.getEventTypeLookupId() == 0) { //free event type id
                     String eventName = attribute.getEventName();
                     LookupValue eventNameLV = lvDAO.getLookupValue(eventName, ModelValidator.EVENT_TYPE_LV_TYPE_NAME, session);
                     if (eventNameLV == null) {
-                        throw new Exception("No lookup value for " + eventName + ".");
+                        throw new Exception("'" + eventName + "' not found as an event type.");
                     }
                     attribute.setEventTypeLookupId(eventNameLV.getLookupValueId());
                 }
 
-                if (attribute.getProjectId() == null) {
+                if (attribute.getProjectId() == null) { //feed project id
                     String projectName = attribute.getProjectName();
                     Long projectId = getAndCacheProjectId(session, projNameVsId, projectName);
-
                     attribute.setProjectId(projectId);
                 }
 
+                /*EventMetaAttribute duplicate = emaDAO.getEventMetaAttribute(attributeNameLookup.getLookupValueId(), attribute.getProjectId(), attribute.getEventTypeLookupId(), session);
+                if(duplicate != null) {
+                    throw new Exception("attribute '" + attribute.getAttributeName() + "' already exists for '" + attribute.getEventName() + "' event.");
+                }*/
+
                 if (attribute.isSampleRequired() == null) {
-                    throw new Exception(
-                            "SampleRequired not set for event meta attribute " + attribute.getAttributeName() +
-                                    " all event meta attributes must have this column set."
-                    );
+                    throw new Exception("SampleRequired field needs value for '" + attribute.getAttributeName() + "'");
                 }
                 validateEventMetaAttributeInput(attribute);
-                if (attribute.isSampleRequired() == null) {
-                    throw new Exception("");
-                }
-                if(attribute.getCreatedBy()==null)
-                    attribute.setCreatedBy(actorId);
-                else
-                    attribute.setModifiedBy(actorId);
-                if(attribute.getEventMetaAttributeId()==null)
-                    attribute.setEventMetaAttributeId(guidGetter.getGuid());
 
-                if(attribute.getCreationDate()==null)
+                if(attribute.getCreatedBy() == null) {
+                    attribute.setCreatedBy(actorId);
+                } else {
+                    attribute.setModifiedBy(actorId);
+                }
+
+                if(attribute.getEventMetaAttributeId() == null) {
+                    attribute.setEventMetaAttributeId(guidGetter.getGuid());
+                }
+
+                if(attribute.getCreationDate() == null)
                     emaDAO.write(attribute, sessionAndTransactionManager.getTransactionStartDate(), session);
                 else { //update corresponding PMA or SMA
                     emaDAO.update(attribute, sessionAndTransactionManager.getTransactionStartDate(), session);
-                    LookupValue attributeLV = lvDAO.getLookupValue(attribute.getAttributeName(), session);
-                    if((pma = getProjectMetaAttribute(attribute.getProjectId(), attributeLV.getLookupValueId()))!=null) {
+                    if((pma = getProjectMetaAttribute(attribute.getProjectId(), attributeNameLookup.getLookupValueId())) != null) {
                         pma.setActiveDB(attribute.getActiveDB());
                         pma.setRequiredDB(attribute.getRequiredDB());
                         pma.setOptions(attribute.getOptions());
                         pma.setDesc(attribute.getDesc());
                         pmaDAO.update(pma, sessionAndTransactionManager.getTransactionStartDate(), session);
                     }
-                    if((sma = getSampleMeatAttribute(attribute.getProjectId(), attributeLV.getLookupValueId()))!=null) {
+                    if((sma = getSampleMeatAttribute(attribute.getProjectId(), attributeNameLookup.getLookupValueId())) != null) {
                         sma.setActiveDB(attribute.getActiveDB());
                         sma.setRequiredDB(attribute.getRequiredDB());
                         sma.setDesc(attribute.getDesc());
@@ -571,6 +679,7 @@ public class WritebackBeanPersister implements BeanPersistenceFacadeI {
             Long eventId = event.getEventId();
 
             helper.setPhase(EventPersistenceHelper.ProcessingPhase.iterate);
+            helper.setDictionaryParentValue(aBeans, EventPersistenceHelper.AttributeType.event);
             for (FileReadAttributeBean bean : aBeans) {
                 String beanProjectName = bean.getProjectName();
                 String beanSampleName = bean.getSampleName();
@@ -675,6 +784,31 @@ public class WritebackBeanPersister implements BeanPersistenceFacadeI {
         }
     }
 
+    public void loadDictionary(String dictType, String dictValue, String dictCode) throws Exception {
+        try {
+            DictionaryDAO dictionaryDAO = daoFactory.getDictionaryDAO();
+
+            dictionaryDAO.loadDictionary(dictType, dictValue, dictCode, new Date(), session);
+
+        } catch (Exception ex) {
+            sessionAndTransactionManager.rollBackTransaction();
+            throw ex;
+        }
+    }
+
+    public void loadDictionaryWithDependency(String dictType, String dictValue, String dictCode, String parentDictTypeCode) throws Exception {
+        try {
+            DictionaryDAO dictionaryDAO = daoFactory.getDictionaryDAO();
+
+            dictionaryDAO.loadDictionaryWithDependency(dictType, dictValue, dictCode, parentDictTypeCode,
+                    sessionAndTransactionManager.getTransactionStartDate(), session);
+
+        } catch (Exception ex) {
+            sessionAndTransactionManager.rollBackTransaction();
+            throw ex;
+        }
+    }
+
     public void updateEventStatus(Event event, String actorUserName) throws Exception {
         try {
             EventDAO eventDao = daoFactory.getEventDAO();
@@ -700,8 +834,7 @@ public class WritebackBeanPersister implements BeanPersistenceFacadeI {
         return actor.getLoginId();
     }
 
-    private Long getAndCacheProjectId(Session session, Map<String, Long> projNameVsId, String projectName)
-            throws Exception {
+    private Long getAndCacheProjectId(Session session, Map<String, Long> projNameVsId, String projectName) throws Exception {
         Long projectId;
         projectId = projNameVsId.get(projectName);
         if (projectId == null) {
@@ -719,12 +852,20 @@ public class WritebackBeanPersister implements BeanPersistenceFacadeI {
     private Long getProjectId(String projectName, Session session) throws Exception {
         ProjectDAO projectDAO = daoFactory.getProjectDAO();
         Project project = projectDAO.getProject(projectName, session);
+
+        if(project == null) {
+            throw new Exception("project '" + projectName + "' does not exist.");
+        }
         return project.getProjectId();
     }
 
     private Sample getSample(Long projectId, String sampleName, Session session) throws Exception {
         SampleDAO sampleDAO = daoFactory.getSampleDAO();
         Sample sample = sampleDAO.getSample(projectId, sampleName, session);
+
+        if(sample == null) {
+            throw new Exception("sample '" + sampleName + "' does not exist under the project.");
+        }
         return sample;
     }
 
@@ -791,7 +932,8 @@ public class WritebackBeanPersister implements BeanPersistenceFacadeI {
         }
     }
 
-    private void validateProjectMetaAttributeInput(ProjectMetaAttribute attribute) throws InvalidInputException {
+    private void validateProjectMetaAttributeInput(ProjectMetaAttribute attribute)
+            throws InvalidInputException, ClassNotFoundException, NoSuchMethodException {
         /*if (isEmpty(attribute.getAttributeName())) {
             throw new InvalidInputException("Invalid project meta attribute: must have attribute name.");
         }
@@ -804,10 +946,13 @@ public class WritebackBeanPersister implements BeanPersistenceFacadeI {
         modelValidator.isValidDataType(dataType);*/
         if (isEmpty(attribute.getAttributeName()) || isEmpty(attribute.getProjectName())) {
             throw new InvalidInputException("Invalid project meta attribute: must have attribute name and project name.");
+        } else if(attribute.getOptions() != null && attribute.getOptions().contains(VALIDATION_PREFIX)){
+            checkValidationClassAndMethod(attribute.getOptions());
         }
     }
 
-    private void validateSampleMetaAttributeInput(SampleMetaAttribute attribute) throws InvalidInputException {
+    private void validateSampleMetaAttributeInput(SampleMetaAttribute attribute)
+            throws InvalidInputException, ClassNotFoundException, NoSuchMethodException {
         /*if (isEmpty(attribute.getAttributeName())) {
             throw new InvalidInputException("Invalid project meta attribute: must have attribute name.");
         }
@@ -820,18 +965,22 @@ public class WritebackBeanPersister implements BeanPersistenceFacadeI {
         // Check: valid data type?
         modelValidator.isValidDataType(dataType);*/
         if (isEmpty(attribute.getAttributeName()) || isEmpty(attribute.getProjectName())) {
-            throw new InvalidInputException("Invalid project meta attribute: must have attribute name and project name.");
+            throw new InvalidInputException("project name and attribute name are required.");
+        } else if(attribute.getOptions() != null && attribute.getOptions().contains(VALIDATION_PREFIX)){
+            checkValidationClassAndMethod(attribute.getOptions());
         }
     }
 
-    private void validateEventMetaAttributeInput(EventMetaAttribute attribute) throws InvalidInputException {
+    private void validateEventMetaAttributeInput(EventMetaAttribute attribute)
+            throws InvalidInputException, ClassNotFoundException, NoSuchMethodException {
         if (isEmpty(attribute.getAttributeName())) {
-            throw new InvalidInputException("Invalid event meta attribute: must have attribute name.");
+            throw new InvalidInputException("attribute name is empty or null.");
+        } else if(attribute.getOptions() != null && attribute.getOptions().contains(VALIDATION_PREFIX)){
+            checkValidationClassAndMethod(attribute.getOptions());
         }
 
         if (isEmpty(attribute.getProjectName()) || isEmpty(attribute.getEventName())) {
-            throw new InvalidInputException(
-                    "Invalid event meta attribute: must have project name, and event name.");
+            throw new InvalidInputException("project name and event name are required.");
         }
 
         /*
@@ -847,6 +996,36 @@ public class WritebackBeanPersister implements BeanPersistenceFacadeI {
         // Check: valid data type?
         modelValidator.isValidDataType(dataType);
         */
+    }
+
+    public void checkValidationClassAndMethod(String options) throws ClassNotFoundException, NoSuchMethodException{
+        int indexOfValidate = options.indexOf(VALIDATION_PREFIX);
+
+        String valStr = options.substring(indexOfValidate, options.length());
+
+        valStr = valStr.substring(VALIDATION_PREFIX.length(), valStr.length());
+        String[] validationRequests = valStr.split(",");
+
+        for(String valReq : validationRequests){
+            String[] classMethodVal = valReq.split("\\.");
+
+            try {
+                Class validatorClass = Class.forName("org.jcvi.ometa.validation." + classMethodVal[0]);
+
+                if(classMethodVal[1].contains("(") && classMethodVal[1].contains(")")){
+                    int indexOfArg = classMethodVal[1].indexOf("(");
+                    classMethodVal[1] = classMethodVal[1].substring(0, indexOfArg);
+
+                    validatorClass.getDeclaredMethod(classMethodVal[1], String.class, String.class);
+                } else {
+                    validatorClass.getDeclaredMethod(classMethodVal[1], String.class);
+                }
+            } catch (ClassNotFoundException e){
+                throw new ClassNotFoundException("Error while processing meta attribute positions. Validation class:" + classMethodVal[0] + " not found!");
+            } catch (NoSuchMethodException e){
+                throw new NoSuchMethodException("Error while processing meta attribute positions. Validation method:"+ classMethodVal[1] +" not found!");
+            }
+        }
     }
 
 }

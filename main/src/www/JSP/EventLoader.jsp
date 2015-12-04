@@ -18,833 +18,595 @@
   ~ You should have received a copy of the GNU General Public License
   ~ along with this program.  If not, see <http://www.gnu.org/licenses/>.
   --%>
+<!doctype html>
 
-<!DOCTYPE HTML>
 <%@ page contentType="text/html; charset=UTF-8" %>
 <%@ taglib uri="/struts-tags" prefix="s" %>
 <%@ page isELIgnored="false" %>
 
-<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
 <head>
-  <link rel="stylesheet" href="style/dataTables.css" />
-  <link rel="stylesheet" href="style/cupertino/jquery-ui-1.8.18.custom.css" />
-  <link rel="stylesheet" href="style/multiple-select.css" />
-  <style>
-    .loadRadio { margin-left: 10px; margin-right: 3px; }
-    #gridBody .ui-autocomplete-input { width: 150px; }
-    .gridIndex { max-width: 5px !important; text-align: center;}
-    .ms-choice {line-height: 20px; }
-    .ms-choice, .ms-choice > div { height: 20px; }
-  </style>
+  <jsp:include page="header.jsp" />
+  <link rel="stylesheet" href="style/dataTables.css" type='text/css' media='all' />
+  <link rel="stylesheet" href="style/cupertino/jquery-ui-1.8.18.custom.css" type='text/css' media='all' />
+  <link rel="stylesheet" href="style/multiple-select.css" type='text/css' media='all' />
 
+  <%--<link rel="stylesheet" href="style/version01.css" />--%>
+  <style>
+    .loadRadio {
+      margin-left: 10px;
+      margin-right: 3px;
+    }
+    .submission-radio{margin-right: 5px !important;}
+    #gridBody .ui-autocomplete-input {
+      width: 150px;
+    }
+    .gridIndex {
+      max-width: 20px !important;
+      min-width: 15px;
+      text-align: center;
+    }
+    .ms-choice {
+      line-height: 20px;
+    }
+    .ms-choice, .ms-choice > div {
+      height: 20px;
+    }
+
+    /* dropbox */
+    #dropzone {
+      border-style: dashed;
+      border-color: #3276b1;
+      width: 500px;
+      height: 100px;
+    }
+    .bar {
+      height: 18px;
+      background: green;
+    }
+    .search-button{
+      border: 1px solid #aed0ea;background: #d7ebf9;font-weight: bold;color: #2779aa;height: 24px; width: 34px;
+    }
+    .search-box{
+      position:initial !important;position: static\0 !important;height: 24px;color: #362b36;border-top-left-radius:6px;border-bottom-left-radius:6px;
+      font-family: Lucida Grande, Lucida Sans, Arial, sans-serif;font-size: 1.1em;margin: 0;padding: 1px;vertical-align: top;padding-left: 5px;
+    }
+
+    .scrollButton{padding:10px;text-align:center;font-weight: bold;color: #FFFAFA;text-decoration: none;position:fixed;right:40px;background: rgb(0, 129, 179);display: none;}
+
+    #autofill-control:hover:after{ background: #333; background: rgba(0,0,0,.8);
+      border-radius: 5px; bottom: 0px; color: #fff; content: attr(data-tooltip);
+      left: 140%; padding: 5px 15px; position: absolute; z-index: 98; width: auto; display: inline-table; }
+    #autofill-control:hover:before{border: solid; border-color: transparent #333;border-width: 6px 6px 6px 0px;
+      bottom: 8px; content: ""; left: 125%; position: absolute; z-index: 99;}
+  </style>
 </head>
 
-<body>
+<body class="smart-style-2">
+<div id="container">
 
-<s:form id="eventLoaderPage" name="eventLoaderPage" namespace="/" action="eventLoader" method="post" theme="simple" enctype="multipart/form-data">
-  <s:hidden name="jobType" id="jobType"/>
-  <s:hidden name="label" id="label"/>
-  <s:hidden name="eventName" id="eventName" />
-  <s:hidden name="projectName" id="projectName" />
-  <s:include value="TopMenu.jsp" />
-  <div id="HeaderPane" style="margin:15px 0 0 30px;">
-    <div class="panelHeader">Event Loader</div>
-    <div id="errorMessagesPanel" style="margin-top:15px;"></div>
-    <s:if test="hasActionErrors()">
-      <input type="hidden" id="error_messages" value="<s:iterator value='actionErrors'><s:property/><br/></s:iterator>"/>
-    </s:if>
-    <s:if test="hasActionMessages()">
-      <div class="alert_info" onclick="$('.alert_info').remove();">
-        <strong><s:iterator value='actionMessages'><s:property/><br/></s:iterator></strong>
+  <jsp:include page="top.jsp" />
+
+  <div id="main" class="">
+    <a href="#" class="scrollButton scrollToTop" style="top:75px;"><i class="glyphicon glyphicon-chevron-up"></i></a>
+    <a href="#" class="scrollButton scrollToBottom" style="top:125px;"><i class="glyphicon glyphicon-chevron-down"></i></a>
+    <div id="inner-content" class="">
+      <div id="content" class="container max-container" role="main">
+        <div id="ribbon">
+          <ol class="breadcrumb">
+            <li>
+              <a href="/ometa/secureIndex.action">Dashboard</a>
+            </li>
+            <li id="breadcrumb2">Data Submission</li>
+            <li>Submit Data</li>
+          </ol>
+        </div>
+
+        <%--<div class="page-header">
+            <h1>Submit Data</h1>
+        </div>--%>
+        <div class="page-header">
+          <h1>Submit Data</h1>
+        </div>
+
+        <div id="HeaderPane">
+          <!-- error messages -->
+          <div id="errorMessagesPanel" style="margin-top:15px;margin-bottom: 15px;"></div>
+          <s:if test="hasActionErrors()">
+            <input type="hidden" id="error_messages" value="<s:iterator value='actionErrors'><s:property/><br/></s:iterator>"/>
+          </s:if>
+
+          <!-- action messages -->
+          <s:if test="hasActionMessages()">
+            <div class="row" style="margin-top: 15px;margin-bottom: 15px;margin-left: 0px;">
+              <div class="alert_info" onclick="$('.alert_info').remove();">
+                <strong style="color: #31708f;background-color: #d9edf7;padding: 3px;border-color: #bce8f1;border: 1px solid transparent;padding: 6px 12px;"><s:iterator value='actionMessages'><s:property/></s:iterator></strong>
+              </div>
+            </div>
+          </s:if>
+
+          <div class="row" id="loadingImg">
+            <div class="container" style="padding-left:5px;">
+              <img src="images/loading.gif" />
+            </div>
+          </div>
+        </div>
+
+        <div id="popupLayerScreenLocker" style="position: fixed; left: 0; top: 0; opacity: 0.5; height: 100%; width: 100%; z-index: 1000; display: none; background: rgb(0, 0, 0);"><!-- --></div>
+        <div id="processingDiv" class="show_processing" style="display: none;position: fixed;">Processing your request. Please wait...</div>
+
+        <div id="mainContent" style="">
+          <!-- regular interactive event loader -->
+          <s:form id="eventLoaderPage" name="eventLoaderPage" namespace="/" action="eventLoader" method="post" theme="simple" enctype="multipart/form-data">
+            <s:hidden name="jobType" id="jobType"/>
+            <s:hidden name="status" id="status"/>
+            <s:hidden name="label" id="label"/>
+            <s:hidden name="filter" id="filter"/>
+            <s:hidden name="eventName" id="eventName" />
+            <s:hidden name="projectName" id="projectName" />
+            <s:hidden name="sampleName" id="sampleName" />
+            <input type="hidden" value="<s:property value="%{gridList.size}"/>" id="gridListSize" />
+            <div id="interactiveDiv" style="float:left;width:100%;">
+              <div id="statusTableDiv">
+                <div class="row"></div>
+                <div id="tableTop">
+                  <div class="row col-md-12">
+                    <table id="interactive-submission-table" style="min-width: 80%">
+                      <tr>
+                        <td style="width: 136px;">Submit Data For</td>
+                        <td>
+                          <div class="btn-group" data-toggle="buttons" style="margin-left: 15px">
+                            <label class="btn btn-default active">
+                              <input type="radio" name="loadType" class="loadRadio" value="form" id="r_sw"> Single Sample
+                            </label>
+                            <label class="btn btn-default">
+                              <input type="radio" name="loadType" class="loadRadio" value="grid" id="r_mw" > Multiple Samples (Web Form)
+                            </label>
+                            <label class="btn btn-default">
+                              <input type="radio" name="loadType" class="loadRadio" value="file" id="r_mf"> Multiple Samples (Excel Template)
+                            </label>
+                            <label class="btn btn-default">
+                              <input type="radio" name="loadType" class="loadRadio" value="bulk" id="r_bs"> Bulk Submission
+                            </label>
+                          </div>
+                        </td>
+                        <td></td>
+                      </tr>
+                      <tr class="interactiveTableInfo">
+                        <td>Project Name</td>
+                        <td><div class="col-lg-11 col-md-11 combobox">
+                          <s:select label="Project" id="_projectSelect" cssStyle="width:150px;margin:0 5 0 10;"
+                                    list="projectList" name="projectId" headerKey="0" headerValue="Select by Project Name"
+                                    listValue="projectName" listKey="projectId" required="true"/>
+                        </div></td>
+                        <td><button type="button" class="btn btn-xs btn-info" id="projectPopupBtn" onclick="button.projectPopup();">Display Project Details</button></td>
+                      </tr>
+                      <tr class="interactiveTableInfo">
+                        <td>Event</td>
+                        <td><div class="col-md-11 combobox">
+                          <s:select id="_eventSelect" list="#{0:'Select by Event Name'}" name="eventId" required="true" disabled="true"/>
+                        </div></td>
+                        <td></td>
+                      </tr>
+                      <tr class="interactiveTableInfo">
+                        <td>Sample</td>
+                        <td><div class="col-md-5" style="width: 530px;"><div class="input-group">
+                          <s:textfield id="sampleSelect" placeholder="Select by Sample Name" name="sampleName"  required="true" cssClass="form-control search-box"/>
+                          <span class="input-group-btn" id="basic-addon2"><button type="button" class="btn btn-default btn-xs search-button" id="searchSample" onclick="searchSamples(this.id);">
+                            <span class="glyphicon glyphicon-search" aria-hidden="true"></span>
+                          </button></span>
+                        </div></div><img src="images/loading.gif" id="sampleLoadingImg" style="height: 23px;display: none" >
+                        </td>
+                        <td></td>
+                      </tr>
+                    </table>
+                  </div>
+                </div>
+                <div class="row"></div>
+                <div id="projectDetailInputDiv" style="display:none;margin-top: 25px;">
+                  <div class="middle-header">
+                    <h4>Project Information</h4>
+                  </div>
+                  <div id="projectDetailSubDiv">
+                    <div class="row row_spacer" style="margin-bottom: 3px;">
+                      <div class="col-md-1">Project Name</div>
+                      <div class="col-md-11">
+                        <input type="text" id="_projectName" name="loadingProject.projectName" style="width: 470px;"/>
+                      </div>
+                    </div>
+                    <div class="row row_spacer">
+                      <div class="col-md-1">Public</div>
+                      <div class="col-md-11">
+                        <s:select id="_isProjectPublic" list="#{0:'No', 1:'Yes'}" name="loadingProject.isPublic" required="true" />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div id="sampleDetailInputDiv" style="display:none;">
+                  <div style="margin:25px 10px 0 0;">
+                    <h1 class="csc-firstHeader middle-header">Sample Information</h1>
+                  </div>
+                  <div id="sampleDetailSubDiv">
+                    <div class="row row_spacer" style="margin-bottom: 3px;">
+                      <div class="col-md-1">Sample Name</div>
+                      <div class="col-md-11">
+                        <input type="text" id="_sampleName" name="loadingSample.sampleName" style="width: 470px;"/>
+                      </div>
+                    </div>
+                    <div class="row row_spacer" style="margin-bottom: 3px;">
+                      <div class="col-md-1">Parent Sample</div>
+                      <div class="col-md-5" style="width: 530px;"><div class="input-group">
+                        <s:textfield id="parentSelect"  name="loadingSample.parentSampleName"  required="true" cssClass="form-control search-box"/>
+                          <span class="input-group-btn" id="basic-addon2"><button type="button" class="btn btn-default btn-xs search-button" id="searchParentSample" onclick="searchSamples(this.id);">
+                            <span class="glyphicon glyphicon-search" aria-hidden="true"></span>
+                          </button></span>
+                      </div></div>
+                    </div>
+                    <div class="row row_spacer">
+                      <div class="col-md-1">Public</div>
+                      <div class="col-md-11">
+                        <s:select id="_isSamplePublic" list="#{0:'No', 1:'Yes'}" name="loadingSample.isPublic" required="true" />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div id="dataSubmissionScope">
+                <div class="row row_spacer">
+                  <div class="col-lg-3 col-md-4 middle-header" style="border-bottom: none;">
+                    <h3>Data Submission</h3>
+                  </div>
+                  <div style="font-size:0.9em;padding-top:30px;" class="col-lg-9 col-md-8">
+                    <input type="image" id="autofill-control" src="images/autofill_icon.png" onclick="triggerAutofill();return false;" title="Toggle Autofill" data-tooltip="Toggle Autofill" style="float: left;margin-right: 10px;margin-top: -3px;"/>
+                    [<img style="vertical-align:bottom;" src="images/icon/info_r.png"/>-Information, <img src="images/icon/ontology.png"/>-Ontology, <small class="text-danger" style="vertical-align: bottom">*</small>-Required]
+                  </div>
+                </div>
+                <div id="attributeInputDiv" style="clear:both;display:none;">
+                  <s:if test="beanList != null && beanList.size() > 0">
+                    <table>
+                      <s:iterator value="beanList" var="attrName" status="stat">
+                        <tr class="gappedTr">
+                          <s:hidden name="beanList[%{#stat.index}].projectName" />
+                          <s:hidden name="beanList[%{#stat.index}].sampleName" />
+                          <s:hidden name="beanList[%{#stat.index}].attributeName" />
+                          <td align="right"><s:property value="attributeName"/></td>
+                          <td><s:textfield name="beanList[%{#stat.index}].attributeValue"/></td>
+                        </tr>
+                      </s:iterator>
+                    </table>
+                  </s:if>
+                </div>
+                <div id="gridInputDiv" style="margin:25px 10px 0 0 ;overflow-x: auto;display:none;">
+                  <table name="eventTable" id="eventTable" class="contenttable">
+                    <thead id="gridHeader" style="background-color: #B6B6B6"></thead>
+                    <tbody id="gridBody"></tbody>
+                  </table>
+                </div>
+                <nav id="sample-pagination-nav" style="display: none;">
+                  <ul class="pagination">
+                  </ul>
+                  <div class="row" id="pagination-loadingImg" style="display: none;margin-top: -50px;">
+                    <div class="container" style="padding-left:5px;">
+                      <img src="images/loading.gif" style="width: 25px;"/>
+                    </div>
+                  </div>
+                  <div id="pagination-warning" style="padding-top: 20px;display: none;">
+                    <label style="color: rgb(169, 32, 32);">You will lose the updated data if you don't submit before pulling other samples.</label>
+                  </div>
+                </nav>
+                <div id="confirmDiv"></div>
+                <div id="fileInputDiv" style="margin:25px 10px 0 0 ;display:none;">
+                  <table>
+                    <tr>
+                      <td>Load CSV File</td>
+                      <td>
+                        <s:file name="dataTemplate" id="dataTemplate" cssStyle="margin:0 0 0 14px;" size="75px" />
+                      </td>
+                    </tr>
+                  </table>
+                </div>
+
+                <div id="submitDiv" style="margin:15px 10px 5px 0;width:100%;padding-top: 15px;border-top: 1px solid #eeeeee;">
+                    <%--<input type="button" class="btn btn-info" onclick="javascript:button.submit('save');" id="saveButton" value="Save Progress" disabled="true" title="Saves the data currently entered in the form to the DPCC database. This does not submit data to the DPCC but allows the user to complete the data submission task at a later time. A temporary submission ID will be generated for later retrieval."/>
+                    <input type="button" class="btn btn-primary" onclick="javascript:button.submit('validate');" id="validateButton" value="Validate Submission" disabled="true" title="Performs validation of the data currently entered in the form and ensures compliance with the CEIRS data standards. Returns a list of validation errors encountered, if any. This does not submit the data to the DPCC."/>--%>
+                  <input type="button" class="btn btn-success" onclick="javascript:button.submit('submit');" id="submitButton" value="Submit to OMETA" disabled="true"/>
+                  <input type="button" class="btn btn-info" onclick="javascript:button.add_event();" id="gridAddLineButton" value="Add Row" style="display:none;"/>
+                  <input type="button" class="btn btn-info" onclick="javascript:button.remove_event();" id="gridRemoveLineButton" value="Remove Row" style="display:none;"/>
+                  <input type="button" class="btn btn-info" onclick="javascript:button.template();" id="templateButton" value="Download Template"/>
+                  <!--<input type="button" class="btn btn-info" onclick="javascript:return;" id="exportButton" value="Export to .csv Template"/>  -->
+                  <input type="button" class="btn btn-primary" onclick="javascript:button.clear_form();" value="Clear" />
+                </div>
+              </div>
+            </div>
+          </s:form>
+          <!-- file drop box -->
+          <div id="dropBoxDiv" style="display:none;float:left;margin-top: 30px;">
+            <div id="tableTop">
+              <div class="row row_spacer">
+                <div class="panel-body">
+                  <div class="form-group">
+                    <div class="row row_spacer" id="projectSelectRow">
+                      <div class="col-lg-2 col-md-4"><strong>Select file</strong></div>
+                      <div class="col-lg-10 col-md-8">
+                        <input id="uploadFile" type="file" name="upload" data-url="fileUploadAjax.action">
+                      </div>
+                    </div>
+                  </div>
+                  <p>Drag and Drop file in box to upload (Max file size is 2GB) </p>
+                  <div id="dropzone" class="well">Drop files here</div>
+                  <div class="row row_spacer fileupload-buttonbar">
+                    <input type="button" class="btn btn-success start" id="uploadFilesBtn" style="margin-left:10px;" value="Submit to OMETA"/>
+                  </div>
+                  <div class="row row_spacer">
+                    <div id="progress" style="margin: 10px;">
+                      <div class="bar" style="width: 0%;"></div>
+                    </div>
+                  </div>
+                  <div class="row row_spacer">
+                    <div id="files" class="files" style="padding-left:20px;"></div>
+                  </div>
+                  <p>
+                    <%--Bulk data submissions must use one of the standard OMETA data submission templates available <a href="dpcc_help.action">here</a>. --%>Please select your submission file using the “Choose File” button or drag it directly to the upload area.
+                    </br><br>
+                    The data will be processed by the OMETA and upon completion you will receive an email notification containing a submission summary. The email notification may also include a list of data processing errors and instructions for re-submission.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
-    </s:if>
-  </div>
-  <div id="middle_content_template">
-  <div id="statusTableDiv">
-  <div id="tableTop">
-    <table id="ddTable">
-      <tr>
-        <td><strong>Load Type</strong></td>
-        <td style="padding-left:10px">
-          <input type="radio" name="loadType" class="loadRadio" value="form"><strong>Form</strong></input>
-          <input type="radio" name="loadType" class="loadRadio" value="grid"><strong>Grid</strong></input>
-          <input type="radio" name="loadType" class="loadRadio" value="file"><strong>File</strong></input>
-        </td>
-      </tr>
-      <tr height="10px"/>
-      <tr>
-        <div id="projectDropBox">
-          <td>Project</td>
-          <td style="padding-left:10px" class="ui-combobox">
-            <s:select id="_projectSelect" list="projectList" name="projectId" headerKey="0" headerValue=""
-                      listValue="projectName" listKey="projectId" required="true"/>
-          </td>
-        </div>
-      </tr>
-      <tr>
-        <div id="eventDropBox">
-          <td>Event</td>
-          <td style="padding-left:10px" class="ui-combobox">
-            <s:select id="_eventSelect" list="#{'0':''}" name="eventId" required="true" disabled="true"/>
-          </td>
-        </div>
-      </tr>
-      <tr class="sampleSelectTr">
-        <td id="sampleNameLabel">Sample</td>
-        <td style="padding-left:10px" class="ui-combobox">
-          <s:select id="_sampleSelect" list="#{'0':''}" name="sampleName" required="true" disabled="true"/>
-        </td>
-      </tr>
-    </table>
-  </div>
-  <div id="projectDetailInputDiv">
-    <div style="margin:25px 10px 0 0;">
-      <h1 class="csc-firstHeader">Project Information</h1>
-    </div>
-    <div id="projectDetailSubDiv">
-      <table>
-        <tr>
-          <td align="right" id="loadProjectNameLabel">Project Name</td>
-          <td class="requiredField"><input type="text" id="_projectName" name="loadingProject.projectName" size="33px"/></td>
-        </tr>
-        <tr class="gappedTr">
-          <td align="right">Public</td>
-          <td class="requiredField">
-            <s:select id="_isProjectPublic" list="#{0:'No', 1:'Yes'}" name="loadingProject.isPublic" required="true" />
-          </td>
-        </tr>
-      </table>
     </div>
   </div>
-  <div id="sampleDetailInputDiv">
-    <div style="margin:25px 10px 0 0;">
-      <h1 class="csc-firstHeader">Sample Information</h1>
-    </div>
-    <div id="sampleDetailSubDiv">
-      <table>
-        <tr>
-          <td align="right" id="loadSampleNameLabel">Sample Name</td>
-          <td class="requiredField"><input type="text" id="_sampleName" name="loadingSample.sampleName" size="33px"/></td>
-        </tr>
-        <tr id="parentSelectTr" class="gappedTr">
-          <td align="right" id="parentSampleLabel">Parent Sample</td>
-          <td class="ui-combobox">
-            <s:select id="_parentSampleSelect" list="#{'0':''}" name="loadingSample.parentSampleName" required="true"/>
-          </td>
-        </tr>
-        <tr class="gappedTr">
-          <td align="right">Public</td>
-          <td class="requiredField">
-            <s:select id="_isSamplePublic" list="#{0:'No', 1:'Yes'}" name="loadingSample.isPublic" required="true" />
-          </td>
-        </tr>
-      </table>
-    </div>
-  </div>
+  <div class="row"></div>
+</div>
 
-  <div style="margin:25px 10px 0 0;">
-    <div style="float:left;">
-      <h1 class="csc-firstHeader">Event Attributes</h1>
-    </div>
-    <div style="font-size:0.9em;padding-top:5px;margin-left:135px;padding-left:50px">
-      [<img style="vertical-align:bottom;" src="images/icon/req.png"/><img style="vertical-align:bottom;" src="images/icon/info_r.png"/>-Required, <img style="vertical-align:bottom;" src="images/icon/ontology.png"/>-Ontology]
-    </div>
-  </div>
-  <div id="attributeInputDiv" style="margin:10px 0;">
-    <s:if test="beanList != null && beanList.size() > 0">
-      <table>
-        <s:iterator value="beanList" var="attrName" status="stat">
-          <tr class="gappedTr">
-            <s:hidden name="beanList[%{#stat.index}].projectName" />
-            <s:hidden name="beanList[%{#stat.index}].sampleName" />
-            <s:hidden name="beanList[%{#stat.index}].attributeName" />
-            <td align="right"><s:property value="attributeName"/></td>
-            <td><s:textfield name="beanList[%{#stat.index}].attributeValue"/></td>
-          </tr>
-        </s:iterator>
-      </table>
-    </s:if>
-  </div>
-  <div id="gridInputDiv" style="margin:25px 10px 0 0 ;">
-    <table name="eventTable" id="eventTable" class="contenttable">
-      <thead id="gridHeader"></thead>
-      <tbody id="gridBody"></tbody>
-    </table>
-  </div>
-  <div id="fileInputDiv" style="margin:25px 10px 0 0 ;">
-    <table>
-      <tr>
-        <td>Loader CSV File</td>
-        <td>
-          <s:file name="dataTemplate" id="upload" cssStyle="margin:0 0 0 14px;" size="75px" />
-        </td>
-      </tr>
-    </table>
-  </div>
-
-  <div id="submitDiv" style="margin:15px 10px 5px 0;width:100%;">
-    <input type="button" onclick="javascript:button.submit_event();" id="eventLoadButton" value="Submit Event" disabled="true"/>
-    <input type="button" onclick="javascript:button.add_event();" id="gridAddLineBtn" value="Add Event Line" style="display:none;"/>
-    <input type="button" onclick="javascript:button.template();" id="templateButton" value="Download Template"/>
-    <input type="button" onclick="javascript:button.clear_form();" value="Clear" />
-    <div>
-    </div>
-  </div>
-</s:form>
+<jsp:include page="../html/footer.html" />
 
 <script src="scripts/jquery/jquery.multiple.select.js"></script>
+<script src="scripts/jquery/jquery.ui.widget.js"></script>
+<script src="scripts/jquery/jquery.iframe-transport.js"></script>
+<script src="scripts/jquery/jquery.fileupload.js"></script>
 <script>
-var eventAttributes = [], gridLineCount=0, avDic= {};
-var pBeanHtml='<input type="hidden" value="$pn$" name="$lt$projectName"/>',
-    anBeanHtml='<input type="hidden" value="$an$" name="$lt$attributeName"/>',
-    avTextHtml='<input type="text" id="$an$" name="$lt$attributeValue" value="$val$"/>',
-    avFileHtml='<input type="file" id="$an$" name="$lt$upload"/>',
-    avSelectHtml='<select $multi$ id="$an$" name="$lt$attributeValue" style="min-width:35px;width:200px;">$opts$</select>',
-    avSampleSelectHtml='<td><select id="$si$" name="$sn$">$opts$</select></td>',
-    multiSelectPrefix='multi(',
-    avHtml, sample_options;
+  var g_eventAttributes = [];
+  var g_gridLineCount=0;
+  var g_avDic= {};
+  var g_sampleIds;
+  var g_sampleArrIndex = 0;
+  var g_transferType;
+  var avHtml;
+  var sample_options;
 
-var _utils = {
-      labeling: function(l) {
-        var headerT;
-        if(l==='SampleReceipt') {
-          headerT = 'Sample Receipt';
-          l='Sample';
-        } else if(l.indexOf("Metadata")>0) {
-          headerT = l;
-          var l_arr = l.split(' ');
-          l=l_arr[0];
-        } else {
-          headerT = 'Register ' + l;
-        }
-
-        $('.panelHeader').html(headerT);
-        $('.csc-firstHeader').html(l+' Information');
-        $('#sampleNameLabel').html(l+' ID');
-      },
-      makeAjax: function(u,d,p,cb) {
-        $.ajax({
-          url:u,
-          cache: false,
-          async: false,
-          data: d,
-          success: function(data){ cb(data,p); },
-          fail: function() { alert("Ajax Process has failed."); }
-        });
-      },
-      addDD: function(n,p,l) {
-        $(
-            '<tr>'+
-                '    <div id="'+n.replace(' ', '')+'Dropbox">'+
-                '        <td>'+n.charAt(0).toUpperCase()+n.substring(1)+' ID</td>'+
-                '        <td style="padding-left:10px" class="ui-combobox" id="td_'+n+'Select"><select id="a_'+n+'Select"></select></td>'+
-                '    </div>'+
-                '</tr>'
-        ).insertBefore($('table#ddTable tr:last-child'));
-        if(l===1) {
-          this.makeAjax('sharedAjax.action', 'type=Sample&projectId='+p+'&sampleLevel='+l, n, callbacks.added);
-        }
-        $('#a_'+n+'Select').combobox();
-      },
-      addGridRows: function(pn,en) {
-        //have at least 5 event lines for the grid view
-        for(var _rows=$('#gridBody > tr').length;_rows<5;_rows++) {
-          button.add_event(pn,en);
-        }
-      },
-      showPS:function(et) {
-        $('.sampleSelectTr').hide();
-        if(utils.checkSR(et)) { // triggers sample loader
-          $('#sampleDetailInputDiv').show();
-        } else if(utils.checkPR(et)) {
-          $('#projectDetailInputDiv').show();
-        } else {
-          $('.sampleSelectTr').show();
-        }
-      },
-      hidePS: function() {
-        $('#sampleDetailInputDiv, #projectDetailInputDiv').hide();
-      },
-      ontologify: function(desc, $inputNode) {
-        var ontologyInfo = desc.substring(desc.lastIndexOf('[')+1, desc.length-1).split(',');
-
-        if(ontologyInfo.length === 2) {
-          var tid = ontologyInfo[0].replace(/^\s+|\s+$/g, '');
-          var ot = ontologyInfo[1].replace(/^\s+|\s+$/g, '');
-          $inputNode.find('input').autocomplete({
-            source: function( request, response ) {
-              $.ajax({
-                url: "ontologyAjax.action?t=child",
-                data: {
-                  maxRows: 12,
-                  sw: request.term.replace(' ', '%20'),
-                  tid: tid,
-                  ot: ot
-                },
-                success: function( data ) {
-                  //cleans decorated input fields when fails
-                  if(!data || !data.result) {
-                    utils.error.remove();
-                    $('input[id^="ontology"]').removeClass('ui-autocomplete-loading').removeAttr('style');
-                    utils.error.add("Ontolo gy search failed. Please try again.");
-                  } else {
-                    response( $.map( data.result, function( item ) {
-                      //decorate options
-                      if(item.ontology) {
-                        return {
-                          label: item.tlabel + " - " + item.ontolabel,
-                          value: item.tlabel + "[" + item.taccession + "]"
-                        }
-                      } else {
-                        return {
-                          label: item,
-                          value: '',
-                          ontology: null,
-                          term: null
-                        }
-                      }
-                    }));
-                  }
-                }
-              });
-            },
-            minLength: 3,
-            select: function(event, ui) {
-              return;
-            }
-          }); //.css('width', '175px');
-        }
-      },
-      validation: function() {
-        var valid = true;
-        if($("#_projectSelect").val()==='0' || $("#_eventSelect").val()==='0') {
-          utils.error.add("Select a Project and Event");
-          valid = false;
-        }
-        return valid;
-      }
-    },
-    callbacks = {
-      added: function(data,id) {
-        var list = vs.empty;
-        $.each(data.aaData, function(i1,v1) {
-          if(i1!=null && v1!=null) {
-            list += vs.vnoption.replace('$v$',v1.id).replace('$n$',v1.name);
-          }
-        });
-        $("#a_"+id+"Select").append(list);
-        return;
-      },
-      sample: function(data) {
-        var list = vs.empty;
-        $.each(data.aaData, function(i1,v1) {
-          if(i1!=null && v1!=null) {
-            list += vs.vvoption.replace(/\\$v\\$/g, v1.name);
-          }
-        });
-        $("#_sampleSelect, #_parentSampleSelect").html(list);
-
-        sample_options=list;
-        return;
-      },
-      event: function(data) {
-        var list = vs.empty;
-        $.each(data, function(i1,v1) {
-          if(v1 != null) {
-            $.each(v1, function(i2,v2) {
-              if(v2 != null && v2.lookupValueId != null && v2.name != null) {
-                list += vs.vnoption.replace('$v$',v2.lookupValueId).replace('$n$',v2.name);
-              }
-            });
-          }
-        });
-
-        $("#_eventSelect").html(list);
-        return;
-      },
-      meta: function(data, en) {
-        var content = '';
-        var count= 0;
-        var $attributeDiv = $("#attributeInputDiv"); //where attributes are placed
-        $attributeDiv.empty(); //empty any existing contents
-        
-        eventAttributes = []; 
-        gridLineCount=0; 
-        avDic={};
-
-        var requireImgHtml = '<img class="attributeIcon" src="images/icon/req.png"/>';
-
-        // //add table headers for grid view
-        var gridHeaders = '', $gridHeaders = $('<tr/>');
-        $gridHeaders.append($('<th/>').addClass('tableHeaderNoBG gridIndex').append('#')); //grid row index
-        if(utils.checkNP(en)) {
-          if(!utils.checkSR(en)) {
-            $gridHeaders.append($('<th/>').addClass('tableHeaderNoBG').append('Sample<br/>', requireImgHtml));
-          } else {
-            $gridHeaders.append(
-              $('<th/>').addClass('tableHeaderNoBG').append('Sample Name<br/>', requireImgHtml),
-              $('<th/>').addClass('tableHeaderNoBG').append('Parent Sample'),
-              $('<th/>').addClass('tableHeaderNoBG').append('Public<br/>', requireImgHtml)
-            )
-          }
-        } else {
-          if(utils.checkPR(en)) {
-            $gridHeaders.append(
-              $('<th/>').addClass('tableHeaderNoBG').append('Project Name<br/>', requireImgHtml),
-              $('<th/>').addClass('tableHeaderNoBG').append('Public<br/>', requireImgHtml)
-            );
-          }
-        }        
-
-        //meta attribute loop to genereate input fields
-        $.each(data.aaData, function(ma_i, _ma) { 
-          if(_ma && _ma.eventMetaAttributeId && _ma.projectId) {
-            eventAttributes.push(_ma); //stores event attributes for other uses
-
-            //options
-            var isDesc = (_ma.desc && _ma.desc !== '');
-            var isRequired = _ma.requiredDB;
-            var hasOntology = (_ma.ontology && _ma.ontology !== '');
-            var $attributeTr = $('<tr class="gappedTr"/>');
-
-            $attributeTr.append(//icons and hover over information
-              $('<td align="right"/>').attr('title', (isDesc ? _ma.desc : '')).append(
-                (_ma.label != null && _ma.label !== '' ?_ma.label:_ma.lookupValue.name),
-                "&nbsp;",
-                (
-                  isDesc && isRequired ? '<img class="attributeIcon" src="images/icon/info_r.png"/>'
-                    : isDesc ? '<img class="attributeIcon" src="images/icon/info.png"/>'
-                      : isRequired ? requireImgHtml 
-                        : ''
-                ),
-                (hasOntology ? '<img class="attributeIcon" src="images/icon/ontology.png"/>' : '')
-              )
-            );
-            $gridHeaders.append(
-              $('<th/>').addClass('tableHeaderNoBG').attr('title', (isDesc ? _ma.desc : '')).append(
-                (_ma.label ? _ma.label : _ma.lookupValue.name) + '<br/>',
-                (isRequired ? requireImgHtml : ''),
-                (hasOntology ? '<img class="attributeIcon" src="images/icon/ontology.png"/>' : '')
-              )
-            );
-
-            var inputElement='';
-            var isSelect = (_ma.options && _ma.options !== '' && _ma.options.indexOf(';') > 0);
-            var isMulti = false;
-            var isText = false;
-
-            inputElement = '<input type="hidden" value="' + utils.getProjectName() + '" name="$lt$projectName"/>';
-            inputElement += '<input type="hidden" value="' + _ma.lookupValue.name + '" name="$lt$attributeName"/>';
-
-            if(isSelect) { //select box for option values
-              //is this multi select
-              isMulti = (_ma.options.substring(0, multiSelectPrefix.length)===multiSelectPrefix) && (_ma.options.lastIndexOf(')')===_ma.options.length-1);
-              var options = isMulti ? '' : '<option value=""></option>';
-              var givenOptions = _ma.options;
-
-              if(isMulti) { //trim multi select wrapper
-                givenOptions = givenOptions.substring(multiSelectPrefix.length, givenOptions.length-1);
-              }
-
-              //convert 0 or 1 options to yes/no
-              if(givenOptions === '0;1' || givenOptions === '1;0') {
-                options = '<option value="1">Yes</option><option value="0">No</option>';
-              } else {
-                $.each(givenOptions.split(';'), function(o_i,o_v) {
-                  options += '<option value="' + o_v + '">' + o_v + '</option>';
-                });
-              }
-              inputElement += '<select id="$id$" name="$lt$attributeValue" style="min-width:35px;width:200px;" ' + (isMulti ? 'multiple="multiple"':'') + '>' + options + '</select>';
-            } else {
-              if(_ma.lookupValue.dataType==='file') { //file
-                inputElement += '<input type="file" id="$id$" name="$lt$upload"/>';
-              } else { //text input
-                isText = true;
-                inputElement += '<input type="text" id="' + _ma.lookupValue.dataType + '_$id$" name="$lt$attributeValue" value="$val$"/>';
-              }
-            }
-            inputElement = inputElement.replace("$id$",_ma.lookupValue.name.replace(/ /g,"_")+"_$id$");
-
-            avDic[_ma.lookupValue.name] = { //store html contents with its attribute name for later use in adding row
-              'ma': _ma,
-              'inputElement': inputElement,
-              'isText': isText,
-              'hasOntoloty': hasOntology,
-              'isSelect': isSelect,
-              'isMulti': isMulti
-            }; 
-
-            var $inputNode = $('<td/>').append(inputElement.replace(/\\$val\\$/g, '').replace("$id$", count).replace(/\\$lt\\$/g,"beanList["+count+"]."));
-
-            if(isText && hasOntology) {
-              _utils.ontologify(_ma.desc, $inputNode);
-            }
-
-            /* multiple select jquery plugin */
-            if(isMulti) {
-              $inputNode.find('select').multipleSelect();
-            }
-            $attributeDiv.append($attributeTr.append($inputNode));
-            count++;
-          }
-        });
-        //utils.smartDatePicker(); //initialise date fields
-
-        //add attribut headers to the grid view and add empty rows
-        $('thead#gridHeader').append($gridHeaders);
-        _utils.addGridRows(null, en);
-
-        return;
-      }
-    },
-    changes = {
-      project: function(projectId) {
-        $("#_sampleSelect").attr("disabled", false);
-        _utils.hidePS();
-
-        var label=$('input:hidden#label').val(), level=0;
-        switch(label) {
-          case 'SR': label=3; break;
-          case 'HM':case 'FM':case 'PM':level=1; break;
-          default: level=0;
-        }
-        if(label!=='FM' && label!=='SM') {
-          _utils.makeAjax('sharedAjax.action', 'type=Sample&projectId='+projectId+'&sampleLevel='+level, null, callbacks.sample);
-        }
-        $("#_eventSelect").attr("disabled", false);
-        _utils.makeAjax('sharedAjax.action', 'type=Event&projectId='+projectId+'&eventTypeId=0', null, callbacks.event);
-        $('#_sampleSelect+.ui-autocomplete-input, #_eventSelect+.ui-autocomplete-input').val('');
-      },
-      sample: function(){ /*nothing to do when sample changes*/ },
-      event: function(et) {
-        _utils.hidePS();
-
-        $("#eventLoadButton").attr("disabled", false);
-        if(utils.getLoadType()==='form') {
-          _utils.showPS(et);
-        }
-        _utils.makeAjax('sharedAjax.action', 'type=ea&projectName='+utils.getProjectName()+'&eventName='+et, et, callbacks.meta);
-      }
-    };
-
-var button = {
-  submit_event: function() {
-    var loadType = $('input[name="loadType"]:radio:checked').val();
-    this.submit_form(loadType==='form'?'insert':loadType);
-  },
-  template: function() {
-    if(_utils.validation()) {
-      $.openPopupLayer({
-        name: "LPopupTemplateSelect",
-        width: 450,
-        url: "popup.action?t=sel_t&projectName="+$("#_projectSelect option:selected").text()+"&eventName="+$("#_eventSelect option:selected").text()
-      });
-      //this.submit_form("template");
-    }
-  },
-  submit_form: function(type) {
-    $("#projectName").val(utils.getProjectName());
-    $("#sampleName").val(utils.getSampleName());
-    $("#eventName").val(utils.getEventName());
-    $("#jobType").val(type);
-    if(type === 'file') {
-      $("form#eventLoaderPage").attr("enctype", "multipart/form-data");
-    }
-    $('form#eventLoaderPage').submit();
-  },
-  add_event: function(pn,en,dict) { //add event to grid view
-    var _pn = pn ? pn : utils.getProjectName(),
-        _en = en ? en : utils.getEventName(),
-        $eventLine = $('<tr class="borderBottom"/>');
-
-    $eventLine.append('<td class="gridIndex">' + (gridLineCount + 1)+ '</td>'); //grid row index
-
-    if(_pn && _en) {
-      if(utils.checkNP(_en)){ //not project related
-        if(utils.checkSR(_en)) { //add sample information fields for sample registration
-          $eventLine.append(
-            $('<td/>').append($('<input/>').attr({
-                'type': 'text',
-                'name': 'gridList[' + gridLineCount + '].sampleName',
-                'id': '_sampleName' + gridLineCount
-              })
-            )
-          );
-          $eventLine.append(
-            $('<td/>').append(
-                $('<select/>').attr({
-                  'name': 'gridList['+gridLineCount+'].parentSampleName',
-                  'id': '_parentSelect' + gridLineCount
-                }).append(sample_options)  
-              )
-          );
-          $eventLine.append(
-            $('<td/>').append(
-              $('<select/>').attr({
-                'name': 'gridList['+gridLineCount+'].samplePublic'
-              }).append(vs.ynoption)
-            )
-          );
-        } else {
-          $eventLine.append(
-            $('<td/>').append(
-                $('<select/>').attr({
-                  'name': 'gridList[' + gridLineCount + '].sampleName',
-                  'id': '_sampleSelect' + gridLineCount
-                }).append(sample_options)  
-              )
-          );
-        }
-      } else { 
-        if(utils.checkPR(_en)) { //add project information fields for project registration
-          $eventLine.append(
-            $('<td/>').append($('<input/>').attr({
-                'type': 'text',
-                'name': 'gridList[' + gridLineCount + '].projectName',
-                'id': '_projectName' + gridLineCount
-              })
-            )
-          );
-          $eventLine.append(
-            $('<td/>').append(
-              $('<select/>').attr({
-                'name': 'gridList[' + gridLineCount + '].projectPublic'
-              }).append(vs.ynoption)
-            )
-          );
-        }
-      }
-      var ltVal, bean, avCnt = 0;
-      var beans = ((dict && dict['beans']) ? dict['beans'] : null);
-
-      //add event meta attribute fields
-      $.each(avDic, function(av_k, av_v) {
-        bean = null;
-        if(beans) {
-          $.each(beans, function(b_i,b_v) {
-            if(av_v.ma.lookupValue.name === b_v[0]) {
-              bean = b_v;
-            }
-          });
-        }
-
-
-
-        ltVal = 'gridList[' + gridLineCount + '].beanList[' + (avCnt++) + '].';
-
-        var attributeField = avDic[av_v.ma.lookupValue.name]['inputElement'];
-        attributeField = attributeField.replace('$val$', (bean ? bean[1] : ''));  
-
-        var $inputNode = $('<td/>').append(
-          attributeField.replace(/\\$lt\\$/g, ltVal).replace(/\\$id\\$/g, gridLineCount)
-        );
-        if(av_v.isSelect === true && bean) {
-          utils.preSelectWithNode($inputNode, bean[1]); 
-        } 
-        if(av_v.isMulti === true) {
-          $inputNode.find('select').multipleSelect();
-        }
-        $eventLine.append($inputNode);
-      });
-
-      //add to grid body
-      $('#gridBody').append($eventLine);
-
-      if(dict) {
-        //load existing data if any
-        if(utils.checkSR()) {
-          $('input:text#_sampleName'+gridLineCount).val(dict['sn']);
-          utils.preSelect('_parentSelect'+gridLineCount, dict['psn']);
-          $('select[name="gridList['+gridLineCount+'].samplePublic"]').val(dict['sp']);
-        } else if(utils.checkPR()) {
-          $('#_projectName'+gridLineCount).val(dict['pn']);
-          $('select[name="gridList['+gridLineCount+'].projectPublic"]').val(dict['pp']);
-        } else {
-          utils.preSelect('_sampleSelect'+gridLineCount, dict['sn']);
-        }
-      }
-
-      utils.smartDatePicker();
-      $('select[id^="_"]').combobox();
-
-      //set minimum width for date and autocomplete TDs
-      $('#gridBody .hasDatepicker').parent('td').attr('style', 'min-width:163px !important;');
-      $('#gridBody .ui-autocomplete-input').parent('td').attr('style', 'min-width:172px !important;');
-
-      gridLineCount++;
-    }
-  },
-  clear_form: function() {
-    $("#_projectSelect").val(0);
-    utils.preSelect("_projectSelect", 0);
-    changes.project(0);
-    $('#_parentProjectSelect, #_parentSampleSelect').combobox();
-    this.clear_attr();
-  },
-  clear_attr: function() {
-    utils.error.remove();
-    $("#attributeInputDiv, #gridHeader, #gridBody").html('');
-    $('[name^="beanList"], [name^="gridList"]').remove();
-    $('#_projectName, #_parentProjectSelect~input, #_sampleName, #_parentSampleSelect~input').val('');
-  }
-};
-
-function comboBoxChanged(option, id) {
-  if(id==='_projectSelect') {
-    button.clear_attr();
-    $("#eventLoadButton").attr("disabled", true);
-    $("#_eventSelect").html(vs.empty);
-    if(option.value!=null && option.value!=0 && option.text!=null && option.text!='') {
-      changes.project(option.value);
-    } else {
-      $("#_sampleSelect").html(vs.empty);
-      $("#_eventSelect").html(vs.empty);
-    }
-  } else if(id==='_eventSelect') {
-    button.clear_attr();
-    if(option.value && option.value!=0 && option.text && option.text!='') {
-      changes.event(option.text);
-    }
-  } else if(id==='_sampleSelect') {
-    /*if(option.value && option.value!=0 && option.text && option.text!='' && $('#_eventSelect').val() != 0) {
-      _utils.makeAjax(
-          'sharedAjax.action',
-          'type=ea&projectName='+utils.getProjectName()+'&eventName='+utils.getEventName(),
-          utils.getEventName(),
-          callbacks.meta
-      );
-    }*/
-  } else if(id==='a_patientSelect') {
-    var label=$('input:hidden#label').val()
-    if(label==='FM')
-      _utils.makeAjax(
-          'sharedAjax.action',
-          'type=Sample&projectId='+$('#_projectSelect').val()+'&sampleId='+option.value+'&sampleLevel=2',
-          null,
-          callbacks.sample
-      );
-    else if(label==='SM')
-      _utils.makeAjax(
-          'sharedAjax.action',
-          'type=Sample&projectId='+$('#_projectSelect').val()+'&sampleId='+option.value+'&sampleLevel=2',
-          'family',
-          callbacks.added
-      );
-  } else if(id==='a_familySelect') {
-    _utils.makeAjax(
-        'sharedAjax.action',
-        'type=Sample&projectId='+$('#_projectSelect').val()+'&sampleId='+option.value+'&sampleLevel=3',
-        null,
-        callbacks.sample
-    );
-  }
-}
-
-$(document).ready(function() {
-  //customization for labels
-  var label=$('input:hidden#label').val();
-  switch(label) {
-    case 'SR': label="SampleReceipt"; break;
-    case 'PM': label="Patient Metadata"; break;
-    case 'HM': label="Household Metadata"; break;
-    case 'FM': label="Family Metadata"; break;
-    case "SM": label="Sample Metadata"; break;
-    default: label=null;
-  }
-  if(label!=null&&label.length>0) {
-    $.each($('#_projectSelect').find('option'), function(i1,v1) {
-      if(v1.text===paramP || v1.text.indexOf(paramP)>=0) {
-        $('#_projectSelect').val(parseInt(v1.value));
-        changes.project(v1.value);
-        $.each($('#_eventSelect').find('option'), function(i2,v2) {
-          if(v2.text.indexOf(label)!=-1) {
-            $('#_eventSelect').val(parseInt(v2.value));
-            changes.event(v2.text);
-            $('#_eventSelect').attr('disabled', true);
-          }
-        });
-      }
-    });
-    if(label==='Family Metadata') {
-      _utils.addDD('patient', $('#_projectSelect').val(), 1);
-    } else if(label==='Sample Metadata') {
-      _utils.addDD('patient', $('#_projectSelect').val(), 1);
-      _utils.addDD('family', $('#_projectSelect').val(), 2);
-    }
-
-    _utils.labeling(label);
-  }
-
-  $('select[id$="Select"]').combobox();
-
-  //retrieve existing values for preload
-  var _oldProjectId = '${projectId}',
-      _oldSampleName = '${sampleName}',
-      _oldEventName = '${eventName}',
-      _oldJobType = '${jobType}';
-
-  //load type radio button change event
-  $('input[name="loadType"]').change(function() {
-    $('div[id$="InputDiv"], #gridAddLineBtn, .sampleSelectTr').hide();
-    utils.preSelect('_sampleSelect', '');
-    var _selectedType = $(this).val();
-    if(_selectedType==='grid') {
-      $('#gridInputDiv, #gridAddLineBtn').show();
-      _utils.addGridRows(utils.getProjectName(), utils.getEventName());
-    } else if(_selectedType==='file') {
-      $('#fileInputDiv').show();
-    } else {
-      $('#attributeInputDiv, .sampleSelectTr').show();
-      _utils.showPS();
+  $( "#autofill-control" ).tooltip({
+    show: {
+      effect: "slideDown",
+      delay: 250
     }
   });
 
-  //preselect load type radio button
-  var rtnJobType = (_oldJobType===''||_oldJobType==='insert'||_oldJobType==='template'?'form':_oldJobType);
-  $('input[name="loadType"][value='+rtnJobType+']').attr('checked', true);
-  $('input[name="loadType"]:checked').change();
-
-  //preload project and event type
-  if(_oldProjectId) {
-    changes.project(_oldProjectId);
-    utils.preSelect("_eventSelect", _oldEventName);
-    changes.event(_oldEventName);
-    if(_oldSampleName!=='') {
-      utils.preSelect("_sampleSelect", _oldSampleName);
-    }
+  function triggerAutofill(){
+    $("#autofill-option, #gridBody tr:first, #autofill-type-button").toggle();
   }
 
-  //preload grid body
-  if('${gridList}'!=='') {
+  $(document).ready(function() {
+    $('#dataSubmissionScope').hide();
+
+    $('input[name="submissionType"]').change(function() {
+      var _selectedType = $(this).val();
+      if(_selectedType === 'interactive') {
+        toInteractive();
+      } else {
+        toBulk();
+      }
+    });
+  });
+
+  $(function() {
+    $('#loadingImg').show();
+
+    $('#dropBoxDiv').hide();
+    $('select[id$="Select"]').combobox();
+
+    //retrieve existing values for preload
+    var oldProjectId = '${projectId}', oldJobType = '${jobType}';
+    var dataSubmissionDisplay = false;
+
+    //load type radio button change event
+    $('input[name="loadType"]').change(function() {
+      $('div[id$="InputDiv"], #gridAddLineButton, #gridRemoveLineButton, #sampleSelectRow, #dropBoxDiv, #toInteractiveP, #confirmDiv, #autofill-control').hide();
+      if(dataSubmissionDisplay) $('#dataSubmissionScope').show();
+      $('.interactiveTableInfo').show();
+      utils.preSelect('_sampleSelect', '');
+      var _selectedType = $(this).val();
+      if(_selectedType === 'grid') {
+        $('#gridInputDiv, #gridAddLineButton, #gridRemoveLineButton, #confirmDiv, #autofill-control').show();
+        $("#interactive-submission-table tr:last").hide();
+        _utils.addGridRows(utils.getProjectName(), utils.getEventName());
+        $("#autofill-option").width($('thead#gridHeader').width() + 70);
+      } else if(_selectedType==='file') {
+        $('#fileInputDiv').show();
+        $("#interactive-submission-table tr:last").hide();
+      } else if(_selectedType==='bulk') {
+        if($('#dataSubmissionScope').css('display') != 'none') dataSubmissionDisplay = true;
+        else dataSubmissionDisplay = false;
+        $('.interactiveTableInfo, #dataSubmissionScope').hide();
+        toBulk();
+      } else{
+        $('#attributeInputDiv, #sampleSelectRow').show();
+        if(utils.checkSR($("#_eventSelect").val()) || $("#_eventSelect option:selected").text().toLowerCase().indexOf('project') > -1)
+          $("#interactive-submission-table tr:last").hide();
+        else $("#interactive-submission-table tr:last").show();
+        _utils.showPS();
+      }
+    });
+    //preselect load type radio button
+    var rtnJobType = (oldJobType===''||oldJobType==='form'||oldJobType==='template'?'form':oldJobType);
+    $('input[name="loadType"][value='+rtnJobType+']').attr('checked', true);
+    $('input[name="loadType"][value='+rtnJobType+']').parent().click();
+    $('input[name="loadType"]:checked').change();
+
+    //empty project select box
+    $('#_projectSelect ~ input').click(function() {
+      var $projectSel = $('#_projectSelect');
+      if($projectSel.val() === '0') {
+        $projectSel.val('0');
+        $(this).val('');
+      }
+    });
+
+    //preload project and event type
+    if(oldProjectId) {
+      changes.project(oldProjectId);
+      var oldSampleName = '${sampleName}';
+      oldEventName = '${eventName}';
+      var ids = '${ids}';
+      var transferType = '${label}';
+      g_sampleArrIndex = '${sampleArrIndex}';
+
+      if(g_sampleArrIndex == ''){
+        g_sampleArrIndex = 0;
+      }
+      if(ids !== '' && ids.indexOf(',') > 0) { //gets sample IDs from Event Loader
+        if(ids.slice(-1) == ',') g_sampleIds = ids.substr(0, ids.length - 1);
+        else g_sampleIds = ids;
+      }
+      if(transferType !== '') {
+        g_transferType = transferType;
+      }
+      if(oldEventName !== '') {
+          $("#loadingImg").show();
+          utils.preSelect("_eventSelect", oldEventName);
+          changes.event(oldEventName, $('#_eventSelect').val());
+      }
+      if(oldSampleName !== '') {
+        utils.preSelect("_sampleSelect", oldSampleName);
+      }
+    }
+
+    //keep any existing data
+    <s:set name="oldGridList" value="gridList" />
+    <s:set name="oldBeanList" value="beanList" />
+
+    <s:if test="%{#oldGridList != null && #oldGridList.size() > 0}">
     //remove any existing dom elements
-    gridLineCount = 0;
+    g_gridLineCount = 0;
+    var $autofillRow = $("#gridBody tr:first");
     $('#gridBody').html('');
+    $('#gridBody').append($autofillRow);
     $('[name^="gridList"]').remove();
-  <s:iterator value="gridList" var="gbean" status="gstat">
+
+    <s:iterator value="#oldGridList" var="gbean" status="gstat">
     var gridLine={}, beans=[];
-  <s:iterator value="beanList" var="fbean" status="fstat">
+
+    <s:iterator value="beanList" var="fbean" status="fstat">
     beans.push(["${fbean.attributeName}", "${attributeValue}"]);
-  </s:iterator>
+    </s:iterator>
+
     gridLine['pn']="${gbean.projectName}";
     gridLine['pp']="${gbean.projectPublic}";
     gridLine['sn']="${gbean.sampleName}";
     gridLine['psn']="${gbean.parentSampleName}";
     gridLine['sp']="${gbean.samplePublic}";
     gridLine['beans']=beans;
+
     button.add_event(null,null,gridLine);
-  </s:iterator>
-    _utils.addGridRows(null,_oldEventName);
-  } else if('${beanList}'!=='') {
+    </s:iterator>
+
+    _utils.addGridRows(null,oldEventName);
+    </s:if>
+    <s:elseif test="%{#oldBeanList != null && #oldBeanList.size() >0}">
+    //preload form view
+
     //remove any existing dom elements
     //$('[name^="beanList"]').remove();
-  <s:iterator value="beanList" var="bean" status="bstat">
-    $("[name='beanList[${bstat.count-1}].attributeValue']").val("${bean.attributeValue}");
-  </s:iterator>
-  }
+    <s:iterator value="#oldBeanList" var="bean" status="bstat">
+    var currAttributeName = "${bean.attributeName}".replace(/ /g,"_").replace("'", "''");;
+    var currAttributeValue = "${bean.attributeValue}";
+    $("[id*='_" + currAttributeName + "_f']:not(:file)").val(currAttributeValue);
+    $("[id*='file_" + currAttributeName + "_f']").after("<strong>" + currAttributeValue.substring(currAttributeValue.indexOf("_") + 1) + "</strong>");
+    </s:iterator>
+    <s:set name="oldLoadingSample" value="loadingSample" />
+    <s:if test="%{#oldLoadingSample != null && #oldLoadingSample.getSampleName() != null}">
+    //$('#_sampleName').val('<s:property value="#oldLoadingSample.sampleName"/>');
+    // utils.preSelect('_parentSampleSelect', '<s:property value="#oldLoadingSample.parentSampleName"/>');
+    // utils.preSelect('_isSamplePublic', '<s:property value="#oldLoadingSample.isPublic"/>');
+    </s:if>
+    <s:else>
+    <s:set name="oldLoadingProject" value="loadingProject" />
+    <s:if test="%{#oldLoadingProject != null && #oldLoadingProject.getProjectName() != null}">
+    $('#_projectName').val('<s:property value="#oldLoadingProject.projectName"/>');
+    //utils.preSelect('_isProjectPublic', '<s:property value="#oldLoadingProject.isPublic"/>');
+    </s:if>
+    </s:else>
+    </s:elseif>
 
-  utils.error.check();
-});
-</script>
-</body>
+    utils.error.check();
 
-</html>
+    //handle Create Project
+    var filter = '${filter}';
+    if(filter === 'pr') { //project registration
+      /*$('#projectSelectRow').hide();*/
+      $('#_eventSelect').prop('disabled', true);
+      $('.page-header h1').html('Project Registration');
+      $('#saveButton, #validateButton').hide(); //hide buttons
+      $('input:radio[id^="r_"]').each(function(i,v) { //change view types to include project
+        var $label = $(this).parent().contents().last()[0];
+        $label.textContent = $label.textContent.replace('Sample', 'Project');
+      })
+      $('#breadcrumb2').text('Admin');
+      $('#interactive-submission-table tbody tr:last').hide(); //Hide sample select for project registration
+      //$('#interactive-submission-table tbody tr:first td:nth-child(2) label:not(:first)').hide(); //Hide multiple data submit for project registration
+    } else if(filter === 'su') { //edit data redirected from search and edit page
+      $('.page-header h1').html('Edit Data');
+      $('#interactive-submission-table tbody tr td:first').html('Edit Data For');
+      $('#interactive-submission-table tbody tr:first td:nth-child(2) label:not(:nth-child(2))').addClass('disabled'); //Disable data submits except web form
+    }
+
+    $('#sampleSelect').keypress(function (e) {
+      var key = e.which;
+      if(key == 13) { // the enter key code
+        $('#searchSample').click();
+        this.blur();
+        return false;
+      }
+    });
+
+    $('#s-name-autofill').on("keyup keypress change", function () {
+      if ($(this).val() == "") $("#autofill-option-button").hide();
+      else $("#autofill-option-button").show();
+    });
+
+    $('#autofill-clear').on("click", function(){
+      $('#s-name-autofill').val("");
+      $("#autofill-option-button").hide();
+    });
+
+    $('#loadingImg').hide();
+
+    var offset = 250;
+    var duration = 300;
+    $(window).scroll(function() {
+      if ($(this).scrollTop() > offset) {
+        $('.scrollToTop').fadeIn(duration);
+      } else {
+        $('.scrollToTop').fadeOut(duration);
+      }
+
+      if ((($(document).height() - $(this).height()) - $(this).scrollTop()) > offset) {
+        $('.scrollToBottom').fadeIn(duration);
+      } else {
+        $('.scrollToBottom').fadeOut(duration);
+      }
+    });
+
+    $('.scrollToTop').click(function(event) {
+      $('html, body').animate({scrollTop: 0}, duration);
+      return false;
+    })
+
+    $('.scrollToBottom').click(function(event) {
+      $('html, body').animate({scrollTop: $(document).height()}, duration);
+      return false;
+    })
+  });</script><script src="scripts/page/event.loader.js"></script></body></html>

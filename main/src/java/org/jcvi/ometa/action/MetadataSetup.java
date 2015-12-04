@@ -31,7 +31,7 @@ import org.jcvi.ometa.engine.MultiLoadParameter;
 import org.jcvi.ometa.model.*;
 import org.jcvi.ometa.model.web.EventMetaAttributeContainer;
 import org.jcvi.ometa.model.web.MetadataSetupReadBean;
-import org.jcvi.ometa.stateless_session_bean.ForbiddenResourceException;
+import org.jcvi.ometa.exception.ForbiddenResourceException;
 import org.jcvi.ometa.utils.CommonTool;
 import org.jcvi.ometa.utils.Constants;
 import org.jcvi.ometa.utils.PresentationActionDelegate;
@@ -73,6 +73,12 @@ public class MetadataSetup extends ActionSupport implements IAjaxAction, Prepara
     private String lvType;
     private List<String> dataTypes;
     private List<String> types;
+
+    //Add Dictionary
+    private String dictType;
+    private String dictValue;
+    private String dictCode;
+    private String parentDictTypeCode;
 
     public MetadataSetup() {
         getReadEJB();
@@ -136,6 +142,8 @@ public class MetadataSetup extends ActionSupport implements IAjaxAction, Prepara
                     //process meta attribute orders
                     Map<String, List<MetadataSetupReadBean>> groupedList = new HashMap<String, List<MetadataSetupReadBean>>();
                     for (MetadataSetupReadBean bean : beanList) {
+                        boolean hasError = validateBeanOptions(bean.getOptions());
+                        if(hasError) throw new Exception();
                         if(groupedList.containsKey(bean.getEt())) {
                             groupedList.get(bean.getEt()).add(bean);
                         } else {
@@ -150,7 +158,7 @@ public class MetadataSetup extends ActionSupport implements IAjaxAction, Prepara
                         List<MetadataSetupReadBean> unordered = new ArrayList<MetadataSetupReadBean>();
                         for(MetadataSetupReadBean bean : groupedList.get(et)) {
                             String order = bean.getOrder();
-                            if(order==null || order.trim().length()==0) {
+                            if(order == null || order.trim().length() == 0 || order.equals("0")) {
                                 unordered.add(bean);
                             } else {
                                 if(treeMap.containsKey(Integer.parseInt(order))) {
@@ -186,8 +194,8 @@ public class MetadataSetup extends ActionSupport implements IAjaxAction, Prepara
                             //updates existing EMA
                             ema = existingEmaMap.get(bean.getEt()).get(bean.getName());
                             //skips unchanged EMA
-                            if(this.isUnchanged(bean, ema) && bean.getSampleRequiredDB()==ema.getSampleRequiredDB()
-                                    && (ema.getOrder()!=null && ema.getOrder().equals(Integer.parseInt(bean.getOrder())))) {
+                            if(this.isUnchanged(bean, ema) && bean.getSampleRequiredDB().equals(ema.getSampleRequiredDB())
+                                    && (ema.getOrder() != null && ema.getOrder().equals(Integer.parseInt(bean.getOrder())))) {
                                 isNewOrModified = false;
                             }
                         } else { //creates new EMA
@@ -201,7 +209,7 @@ public class MetadataSetup extends ActionSupport implements IAjaxAction, Prepara
                             //sets EMA values
                             this.setMAValues(ema,
                                     bean.getActiveDB(), bean.getRequiredDB(),bean.getDesc(),
-                                    bean.getOptions(), bean.getLabel(), bean.getOntology(), loadingProject.getProjectName());
+                                    bean.getOptions(), bean.getLabel(), bean.getOntology(), loadingProject.getProjectName(), bean.getValueLength());
                             ema.setEventName(bean.getEt());
                             ema.setSampleRequiredDB(bean.getSampleRequiredDB());
                             ema.setOrder(Integer.parseInt(bean.getOrder()));
@@ -213,7 +221,7 @@ public class MetadataSetup extends ActionSupport implements IAjaxAction, Prepara
                             ProjectMetaAttribute pma = existingPmaMap.get(bean.getName());
                             this.setMAValues(pma,
                                     bean.getActiveDB(), bean.getRequiredDB(), bean.getDesc(),
-                                    bean.getOptions(), bean.getLabel(), bean.getOntology(), loadingProject.getProjectName());
+                                    bean.getOptions(), bean.getLabel(), bean.getOntology(), loadingProject.getProjectName(), bean.getValueLength());
                             pmaList.add(pma);
                         } else {
                             //handles Project Metadata checkbox by adding new project meta attribute
@@ -224,7 +232,7 @@ public class MetadataSetup extends ActionSupport implements IAjaxAction, Prepara
                                 newPma.setAttributeName(bean.getName());
                                 this.setMAValues(newPma,
                                         bean.getActiveDB(), bean.getRequiredDB(), bean.getDesc(),
-                                        bean.getOptions(), bean.getLabel(), bean.getOntology(), loadingProject.getProjectName());
+                                        bean.getOptions(), bean.getLabel(), bean.getOntology(), loadingProject.getProjectName(), bean.getValueLength());
                                 pmaList.add(newPma);
                             }
                         }
@@ -232,7 +240,7 @@ public class MetadataSetup extends ActionSupport implements IAjaxAction, Prepara
                             SampleMetaAttribute sma = existingSmaMap.get(bean.getName());
                             this.setMAValues(sma,
                                     bean.getActiveDB(), bean.getRequiredDB(), bean.getDesc(),
-                                    bean.getOptions(), bean.getLabel(), bean.getOntology(), loadingProject.getProjectName());
+                                    bean.getOptions(), bean.getLabel(), bean.getOntology(), loadingProject.getProjectName(), bean.getValueLength());
                             smaList.add(sma);
                         } else {
                             //handles Sample Metadata checkbox by adding new sample meta attribute
@@ -243,7 +251,7 @@ public class MetadataSetup extends ActionSupport implements IAjaxAction, Prepara
                                 newSma.setAttributeName(bean.getName());
                                 this.setMAValues(newSma,
                                         bean.getActiveDB(), bean.getRequiredDB(), bean.getDesc(),
-                                        bean.getOptions(), bean.getLabel(), bean.getOntology(), loadingProject.getProjectName());
+                                        bean.getOptions(), bean.getLabel(), bean.getOntology(), loadingProject.getProjectName(), bean.getValueLength());
                                 smaList.add(newSma);
                             }
                         }
@@ -338,7 +346,7 @@ public class MetadataSetup extends ActionSupport implements IAjaxAction, Prepara
 
                 }*/
 
-                projectId = null;
+               // projectId = null;
                 beanList = null;
 
                 addActionMessage("Metadata has been loaded successfully.");
@@ -404,7 +412,7 @@ public class MetadataSetup extends ActionSupport implements IAjaxAction, Prepara
                     emas = new ArrayList<EventMetaAttribute>(emas.size());
                     for(String et : groupedList.keySet()) {
                         List<EventMetaAttribute> sortedList = groupedList.get(et);
-                        CommonTool.sortEventMetaAttributeByOrder(sortedList);
+                        //CommonTool.sortEventMetaAttributeByOrder(sortedList);
                         emas.addAll(sortedList);
                     }
 
@@ -456,13 +464,13 @@ public class MetadataSetup extends ActionSupport implements IAjaxAction, Prepara
                         if(name != null && name.trim().length() > 0) {
                             if(name.contains("[") || name.contains("]")) {
                                 throw new Exception("Attribute names cannot contain '[' or ']'.");
+                            } else if(name.contains("Project Name")){
+                                throw new Exception("Attribute name cannot be Project Name!");
+                            } else if(name.contains("Sample Name")){
+                                throw new Exception("Attribute name cannot be Sample Name!");
                             }
 
-                            LookupValue lv = new LookupValue();
-                            lv.setName(name.trim());
-                            lv.setType(lvType);
-                            lv.setDataType(lvDataType);
-                            lvList.add(lv);
+                            lvList.add(CommonTool.createLookupValue(name.trim(), lvType, lvDataType));
                         }
                     }
                     psewt.loadLookupValues(lvList);
@@ -479,7 +487,23 @@ public class MetadataSetup extends ActionSupport implements IAjaxAction, Prepara
                         psewt.loadGroups(groups);
                     }
                 }
+            } else if("dict".equals(type)) {
+                UploadActionDelegate udelegate = new UploadActionDelegate();
+                ProjectSampleEventWritebackBusiness psewt = null;
+                psewt = udelegate.initializeBusinessObject(logger, psewt);
+
+                if(dictType != null && dictValue != null && parentDictTypeCode != null) {
+                    if(dictCode == null || dictCode.equals("")) dictCode = dictValue;
+                    if(parentDictTypeCode.equals("undefined")){
+                        psewt.loadDictionary(dictType, dictValue, dictCode);
+                    } else{
+                        psewt.loadDictionaryWithDependency(dictType, dictValue, dictCode, parentDictTypeCode);
+                    }
+                }
+
             } else if("g_all".equals(type)) {
+                /* Metadata Setup page selects the first event type by default
+
                 Map<String, List> listMap = new HashMap<String, List>();
                 List tempList = null;
 
@@ -541,6 +565,7 @@ public class MetadataSetup extends ActionSupport implements IAjaxAction, Prepara
                     }
                 }
                 dataMap.put("ema", tempList);
+                */
 
                 dataMap.put("et", psept.getLookupValueByType(ModelValidator.EVENT_TYPE_LV_TYPE_NAME));
                 dataMap.put("pet", psept.getEventTypesForProject(projectId));
@@ -559,6 +584,45 @@ public class MetadataSetup extends ActionSupport implements IAjaxAction, Prepara
         return rtnVal;
     }
 
+    public boolean validateBeanOptions(String options) {
+        String validationPrefix = "validate:";
+        boolean hasError = false;
+
+        if(options.contains(validationPrefix)){
+            int indexOfValidate = options.indexOf(validationPrefix);
+
+            String valStr = options.substring(indexOfValidate, options.length());
+
+            valStr = valStr.substring(validationPrefix.length(), valStr.length());
+            String[] validationRequests = valStr.split(",");
+
+            for(String valReq : validationRequests){
+                String[] classMethodVal = valReq.split("\\.");
+
+                try {
+                    Class validatorClass = Class.forName("org.jcvi.ometa.validation." + classMethodVal[0]);
+
+                    if(classMethodVal[1].contains("(") && classMethodVal[1].contains(")")){
+                        int indexOfArg = classMethodVal[1].indexOf("(");
+                        classMethodVal[1] = classMethodVal[1].substring(0, indexOfArg);
+
+                        validatorClass.getDeclaredMethod(classMethodVal[1], String.class, String.class);
+                    } else {
+                        validatorClass.getDeclaredMethod(classMethodVal[1], String.class);
+                    }
+                } catch (ClassNotFoundException e){
+                    addActionError("Error while processing meta attribute positions. Validation class:"+ classMethodVal[0] +" not found!");
+                    hasError = true;
+                } catch (NoSuchMethodException e){
+                    addActionError("Error while processing meta attribute positions. Validation method:"+ classMethodVal[1] +" not found!");
+                    hasError = true;
+                }
+            }
+        }
+
+        return hasError;
+    }
+
     public String openNewAttribute() {
         ModelValidator modelValidator = new ModelValidator();
         dataTypes = new ArrayList<String>();
@@ -575,18 +639,36 @@ public class MetadataSetup extends ActionSupport implements IAjaxAction, Prepara
         return SUCCESS;
     }
 
+    public String addDictionary() {
+        boolean isError = false;
+        try {
+            List<Object[]> typeCodePairs = psept.getAllDictionaryTypeCodePairs();
+            types = new ArrayList<String>(typeCodePairs.size());
+
+            for(Object[] pair : typeCodePairs){
+             types.add((String) pair[0] + " - " + (String) pair[1]);
+            }
+        } catch (Exception ex) {
+            logger.error("Exception in runAjax of MetadataSetup : " + ex.toString());
+            isError = true;
+        }
+
+        return (!isError) ? SUCCESS : ERROR ;
+    }
+
     private boolean isUnchanged(MetadataSetupReadBean b1, MetaAttributeModelBean b2) {
-        return b1.getActiveDB()==b2.getActiveDB()
-                && b1.getRequiredDB()==b2.getRequiredDB()
+        return b1.getActiveDB().equals(b2.getActiveDB())
+                && b1.getRequiredDB().equals(b2.getRequiredDB())
                 && (b1.getDesc()!=null && b1.getDesc().equals(b2.getDesc()))
                 && (b1.getOptions()!=null && b1.getOptions().equals(b2.getOptions()))
                 && (b1.getLabel()!=null && b1.getLabel().equals(b2.getLabel()))
-                && (b1.getOntology()!=null && b1.getOntology().equals(b2.getOntology()));
+                && (b1.getOntology()!=null && b1.getOntology().equals(b2.getOntology()))
+                && (b1.getValueLength()!=null && b1.getValueLength().equals(b2.getValueLength()));
     }
 
     private void setMAValues(MetaAttributeModelBean b,
                              Integer active, Integer required,
-                             String desc, String options, String label, String ontology, String projectName) {
+                             String desc, String options, String label, String ontology, String projectName, Integer valueLength) {
         b.setActiveDB(active);
         b.setRequiredDB(required);
         b.setDesc(desc);
@@ -594,6 +676,7 @@ public class MetadataSetup extends ActionSupport implements IAjaxAction, Prepara
         b.setLabel(label);
         b.setOntology(ontology);
         b.setProjectName(projectName);
+        b.setValueLength(valueLength);
     }
 
     private List<EventMetaAttribute> updateExistingEMA(List<EventMetaAttribute> emas, MetadataSetupReadBean bean, String projectName) {
@@ -602,7 +685,7 @@ public class MetadataSetup extends ActionSupport implements IAjaxAction, Prepara
             for(EventMetaAttribute ema : emas) {
                 if(!this.isUnchanged(bean, ema)) {
                     this.setMAValues(ema, bean.getActiveDB(), bean.getRequiredDB(),
-                            bean.getDesc(), bean.getOptions(), bean.getLabel(), bean.getOntology(), projectName);
+                            bean.getDesc(), bean.getOptions(), bean.getLabel(), bean.getOntology(), projectName, bean.getValueLength());
                     emaList.add(ema);
                 }
             }
@@ -731,5 +814,37 @@ public class MetadataSetup extends ActionSupport implements IAjaxAction, Prepara
 
     public List<String> getTypes() {
         return types;
+    }
+
+    public String getDictType() {
+        return dictType;
+    }
+
+    public void setDictType(String dictType) {
+        this.dictType = dictType;
+    }
+
+    public String getDictValue() {
+        return dictValue;
+    }
+
+    public void setDictValue(String dictValue) {
+        this.dictValue = dictValue;
+    }
+
+    public String getDictCode() {
+        return dictCode;
+    }
+
+    public void setDictCode(String dictCode) {
+        this.dictCode = dictCode;
+    }
+
+    public String getParentDictTypeCode() {
+        return parentDictTypeCode;
+    }
+
+    public void setParentDictTypeCode(String parentDictTypeCode) {
+        this.parentDictTypeCode = parentDictTypeCode;
     }
 }

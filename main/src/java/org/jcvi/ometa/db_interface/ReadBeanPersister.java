@@ -33,8 +33,8 @@ import org.jcvi.ometa.stateless_session_bean.ProjectSampleEventPresentationState
 import org.jcvi.ometa.utils.PresentationActionDelegate;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
-import java.util.Set;
 
 /**
  * Created by IntelliJ IDEA.
@@ -46,7 +46,6 @@ import java.util.Set;
  * regarding projects. Particularly useful for web-based clients.
  */
 public class ReadBeanPersister implements WebDataFacadeI {
-    private Set<String> validDataTypes;
     private ProjectSampleEventPresentationBusiness pseb;
 
     public ReadBeanPersister( Properties props ) {
@@ -58,8 +57,16 @@ public class ReadBeanPersister implements WebDataFacadeI {
         pseb = new ProjectSampleEventPresentationStateless( sessionAndTransactionManager );
     }
 
+    public ReadBeanPersister(ProjectSampleEventPresentationBusiness pseb) {
+        this.pseb = pseb;
+    }
+
     public Actor getActor(Long loginId) throws Exception {
         return pseb.getActor( loginId );
+    }
+
+    public Actor getActorByUserName(String loginName) throws Exception {
+        return pseb.getActorByUserName(loginName);
     }
 
     public String isUserAdmin(String loginName) throws Exception {
@@ -170,6 +177,14 @@ public class ReadBeanPersister implements WebDataFacadeI {
         return pseb.getSamplesForProject(projectId);
     }
 
+    public List<Sample> getSamplesForProjectBySearch(Long projectId, String sampleVal,int firstResult, int maxResult) throws Exception {
+        return pseb.getSamplesForProjectBySearch(projectId, sampleVal, firstResult, maxResult);
+    }
+
+    public Integer getSampleCountForProjectBySearch(Long projectId, String sampleVal) throws Exception {
+        return pseb.getSampleCountForProjectBySearch(projectId, sampleVal);
+    }
+
     public List<Sample> getSamplesForProjectByPublicFlag(Long projectId, boolean isPublic) throws Exception {
         return pseb.getSamplesForProjectByPublicFlag(projectId, isPublic);
     }
@@ -178,12 +193,13 @@ public class ReadBeanPersister implements WebDataFacadeI {
         return pseb.getSamplesForProjects(projectIds);
     }
 
-    public List<Sample> getAllSamples(Long flexId, String type, String sSearch, String sortCol, String sortDir) throws Exception {
-        return pseb.getAllSamples(flexId, type, sSearch, sortCol, sortDir);
+    public List<Sample> getAllSamples(Long flexId, String type, String sSearch, String sortCol, String sortDir, List<String> columnName, List<String> columnSearchArguments) throws Exception {
+        return pseb.getAllSamples(flexId, type, sSearch, sortCol, sortDir, columnName, columnSearchArguments);
     }
 
-    public List<Sample> getAllSamples(String projectIds, String attributeNames, String sSearch, String sortType, String sortCol, String sortDir) throws Exception {
-        return pseb.getAllSamplesBySearch(projectIds, attributeNames, sSearch, sortType, sortCol, sortDir);
+    public List<Sample> getAllSamples(String projectIds, String attributeNames, String sSearch, String sortType, String sortCol, String sortDir,
+                                      List<String> columnName, List<String> columnSearchArguments) throws Exception {
+        return pseb.getAllSamplesBySearch(projectIds, attributeNames, sSearch, sortType, sortCol, sortDir, columnName, columnSearchArguments);
     }
 
     @Override
@@ -213,8 +229,9 @@ public class ReadBeanPersister implements WebDataFacadeI {
         return pseb.getEventsForProjects(projectIds);
     }
 
-    public List<Event> getAllEvents(Long flexId, String type, String sSearch, String sortCol, String sortDir, int start, int count, String fromd, String tod) throws Exception {
-        return pseb.getAllEvents(flexId, type, sSearch, sortCol, sortDir, start, count, fromd, tod);
+    public List<Event> getAllEvents(Long flexId, String type, String sSearch, String sortCol, String sortDir, int start, int count,
+                                    String fromd, String tod, List<String> columnName, List<String> columnSearchArguments) throws Exception {
+        return pseb.getAllEvents(flexId, type, sSearch, sortCol, sortDir, start, count, fromd, tod, columnName, columnSearchArguments);
     }
 
     public List<Event> getEventsForSample(Long sampleId) throws Exception {
@@ -231,6 +248,14 @@ public class ReadBeanPersister implements WebDataFacadeI {
 
     public List<Event> getEventByTypeAndSample(Long sampleId, Long eventTypeId) throws Exception {
         return pseb.getEventByTypeAndSample(sampleId, eventTypeId);
+    }
+
+    public List<Event> getEventByLookupValue(Long lookupValueId, String lookupValueStr) throws Exception {
+        return pseb.getEventByLookupValue(lookupValueId, lookupValueStr);
+    }
+
+    public Event getLatestEventForSample(Long projectId, Long sampleId, Long eventTypeId) throws Exception {
+        return pseb.getLatestEventForSample(projectId, sampleId, eventTypeId);
     }
 
     public List<Event> getUniqueEventTypes() throws Exception {
@@ -299,5 +324,25 @@ public class ReadBeanPersister implements WebDataFacadeI {
 
     public List<LookupValue> getLookupValueByType(String type) throws Exception {
         return pseb.getLookupValueByType(type);
+    }
+
+    public List<Dictionary> getDictionaries(boolean includeInactive) throws Exception {
+        return pseb.getDictionaries(includeInactive);
+    }
+
+    public List<DictionaryDependency> getDictionaryDependencies() throws Exception {
+        return pseb.getDictionaryDependencies();
+    }
+
+    public List<Dictionary> getDictionaryByType(String dictType) throws Exception {
+        return pseb.getDictionaryByType(dictType);
+    }
+
+    public List<Dictionary> getDictionaryDependenciesByType(String dictType, String dictCode) throws Exception {
+        return pseb.getDictionaryDependenciesByType(dictType, dictCode);
+    }
+
+    public void updateDictionary(Long dictionaryId, boolean active) throws Exception{
+        pseb.updateDictionary(dictionaryId, active);
     }
 }

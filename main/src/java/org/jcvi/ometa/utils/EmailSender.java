@@ -24,13 +24,19 @@ package org.jcvi.ometa.utils;
 import org.apache.log4j.Logger;
 import org.jtc.common.util.property.PropertyHelper;
 
+import javax.activation.DataHandler;
+import javax.activation.DataSource;
+import javax.activation.FileDataSource;
 import javax.mail.Message;
-import javax.mail.PasswordAuthentication;
+import javax.mail.Multipart;
 import javax.mail.Session;
 import javax.mail.Transport;
 import javax.mail.internet.InternetAddress;
+import javax.mail.internet.MimeBodyPart;
 import javax.mail.internet.MimeMessage;
-import java.util.Date;
+import javax.mail.internet.MimeMultipart;
+import java.io.File;
+import java.util.List;
 import java.util.Properties;
 
 /**
@@ -43,71 +49,73 @@ import java.util.Properties;
 public class EmailSender {
     private Logger logger = Logger.getLogger( EmailSender.class );
 
-    protected static final String EMAIL_ETL_LIST_PROP = Constants.CONFIGURATION_PREFIX+".mail_etl_to_address";
-    protected static final String EMAIL_HELP_LIST_PROP = Constants.CONFIGURATION_PREFIX+".mail_help_to_address";
-    protected static final String EMAIL_JSON_LIST_PROP = Constants.CONFIGURATION_PREFIX+".mail_json_to_address";
-    protected static final String EMAIL_SERVER_HOST_PROP = Constants.CONFIGURATION_PREFIX+".mail_host";
-    protected static final String EMAIL_AUTH_USER_PROP = Constants.CONFIGURATION_PREFIX+".mail_auth_user";
-    protected static final String EMAIL_AUTH_PASSWD_PROP = Constants.CONFIGURATION_PREFIX+".mail_auth_passwd";
-    protected static final String EMAIL_REPLY_TO_PROP = Constants.CONFIGURATION_PREFIX+".mail_reply_to";
+    private final String EMAIL_HOST;
+    private final String EMAIL_USER;
+    private final String EMAIL_PASS;
+    private final String EMAIL_FROM;
+    private final String EMAIL_BCC;
 
-    public void send( String type, String subject, String body ) {
-        try {
-            Properties props = PropertyHelper.getHostnameProperties( Constants.PROPERTIES_FILE_NAME );
-            String smtpServer = props.getProperty( EMAIL_SERVER_HOST_PROP, null );
+    public EmailSender() {
+        Properties props = PropertyHelper.getHostnameProperties( Constants.PROPERTIES_FILE_NAME );
+        this.EMAIL_HOST = props.getProperty(Constants.CONFIG_SMTP_HOST);
+        this.EMAIL_USER = props.getProperty(Constants.CONFIG_SMTP_USER);
+        this.EMAIL_PASS = props.getProperty(Constants.CONFIG_SMTP_PASSWD);
+        this.EMAIL_FROM = props.getProperty(Constants.CONFIG_SMTP_FROM);
+        this.EMAIL_BCC = props.getProperty(Constants.CONFIG_SMTP_BCC);
+    }
 
-            String authUser = props.getProperty( EMAIL_AUTH_USER_PROP );
-            String authPassword = props.getProperty( EMAIL_AUTH_PASSWD_PROP );
-            String to = "";
-            if( "etl".equals( type ) ) {
-                to = props.getProperty( EMAIL_ETL_LIST_PROP );
-            } else if("help".equals(type)) {
-                to = props.getProperty(EMAIL_HELP_LIST_PROP);
-            } else {
-                to = props.getProperty( EMAIL_JSON_LIST_PROP );
-            }
-            int timeout = Integer.parseInt( props.getProperty( Constants.CONFIGURATION_PREFIX+".mail_timeout" ) );
-            String replyto = props.getProperty( EMAIL_REPLY_TO_PROP );
+    public void send(String to, String subject, String body, List<String> files) throws Exception {
+        Properties mailProps = System.getProperties();
+        mailProps.setProperty(this.EMAIL_HOST, this.EMAIL_HOST);
+        /*mailProps.put("mail.smtp.auth", "true");
+        mailProps.put("mail.smtp.ssl.enable", "true");
+        mailProps.put("mail.smtp.port", 587);
+        mailProps.put("mail.transport.protocol", "smtp");
+        mailProps.put("mail.smtp.starttls.enable", "true");
+        mailProps.put("mail.smtp.starttls.required", "true");*/
 
-            Authenticator authenticator = new Authenticator(authUser, authPassword);
-            InternetAddress[] toList  = InternetAddress.parse(to.trim(),false);
-            props.put("mail.smtp.host", smtpServer);
-            if(timeout > 0) {
-                props.put("mail.smtp.timeout",String.valueOf(timeout));
-            }
-            props.setProperty("mail.smtp.auth", "true");
-            props.setProperty("mail.smtp.port", "25");
-            props.setProperty("mail.smtp.submitter", authenticator.getPasswordAuthentication().getUserName());
-            Session session = Session.getInstance(props, authenticator);
+        Session session = Session.getDefaultInstance(mailProps);
+        MimeMessage msg = new MimeMessage(session);
+        msg.setFrom(new InternetAddress(this.EMAIL_FROM));
 
-            // -- Create a new message --
-            Message msg = new MimeMessage(session);
-            // -- Set the FROM and TO fields --
-            msg.setFrom(new InternetAddress(authenticator.getPasswordAuthentication().getUserName()+"@domain.com"));
-            msg.setReplyTo(new InternetAddress[]{new InternetAddress(replyto)});
-            msg.setRecipients(Message.RecipientType.TO, toList);
-            // -- Set the subject and body text --
-            msg.setSubject(subject);
-            msg.setText(body);
-            // -- Set some other header information --
-            msg.setHeader("X-Mailer", "LOTONtechEmail");
-            msg.setSentDate(new Date());
-            // -- Send the message --
-            Transport.send(msg);
-        } catch(Exception e) {
-            e.printStackTrace();
+        if(this.EMAIL_BCC != null && this.EMAIL_BCC.length() > 0) {
+            msg.setRecipients(Message.RecipientType.BCC, InternetAddress.parse(this.EMAIL_BCC));
         }
-    }
-}
+        msg.setRecipient(Message.RecipientType.TO, new InternetAddress(to));
+        msg.setSubject(subject);
 
-class Authenticator extends javax.mail.Authenticator {
-    private PasswordAuthentication authentication;
+        Multipart multipart = new MimeMultipart();
+        MimeBodyPart messageBodyPart = new MimeBodyPart();
+        messageBodyPart.setText(body, "UTF-8", "html");
+        multipart.addBodyPart(messageBodyPart);
 
-    public Authenticator(String username, String password) {
-        authentication = new PasswordAuthentication(username, password);
-    }
+        if(files != null && files.size() > 0) {
+            for(String filePath : files) {
+                File attachment = new File(filePath);
 
-    protected PasswordAuthentication getPasswordAuthentication() {
-        return authentication;
+                if(attachment.exists() && attachment.isFile()) {
+                    messageBodyPart = new MimeBodyPart();
+                    DataSource source = new FileDataSource(filePath);
+                    messageBodyPart.setDataHandler(new DataHandler(source));
+                    messageBodyPart.setFileName(attachment.getName());
+                    multipart.addBodyPart(messageBodyPart);
+                }
+            }
+        }
+        msg.setContent(multipart);
+
+        //Transport transport = session.getTransport();
+
+        try {
+            //transport.connect(this.EMAIL_HOST, 587, this.EMAIL_USER, this.EMAIL_PASS);
+            Transport.send(msg);
+
+            //transport.sendMessage(msg, msg.getAllRecipients());
+        } catch (Exception ex) {
+            System.out.println("Error in sending a message: " + ex.getMessage());
+        } finally {
+            // Close and terminate the connection.
+            //transport.close();
+        }
     }
 }

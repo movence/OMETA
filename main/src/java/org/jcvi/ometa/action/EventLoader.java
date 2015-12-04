@@ -23,18 +23,24 @@ package org.jcvi.ometa.action;
 
 import com.opensymphony.xwork2.ActionSupport;
 import com.opensymphony.xwork2.Preparable;
-import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
 import org.apache.log4j.Logger;
+import org.apache.struts2.ServletActionContext;
 import org.jcvi.ometa.bean_interface.ProjectSampleEventWritebackBusiness;
+import org.jcvi.ometa.configuration.AccessLevel;
 import org.jcvi.ometa.db_interface.ReadBeanPersister;
 import org.jcvi.ometa.engine.MultiLoadParameter;
+import org.jcvi.ometa.exception.DetailedException;
+import org.jcvi.ometa.exception.ForbiddenResourceException;
+import org.jcvi.ometa.helper.AttributeHelper;
+import org.jcvi.ometa.helper.AttributePair;
+import org.jcvi.ometa.helper.EventLoadHelper;
 import org.jcvi.ometa.model.*;
-import org.jcvi.ometa.stateless_session_bean.DetailedException;
-import org.jcvi.ometa.stateless_session_bean.ForbiddenResourceException;
 import org.jcvi.ometa.utils.CommonTool;
 import org.jcvi.ometa.utils.Constants;
 import org.jcvi.ometa.utils.TemplatePreProcessingUtils;
 import org.jcvi.ometa.utils.UploadActionDelegate;
+import org.jcvi.ometa.validation.ErrorMessages;
 import org.jtc.common.util.property.PropertyHelper;
 
 import javax.naming.InitialContext;
@@ -60,35 +66,45 @@ public class EventLoader extends ActionSupport implements Preparable {
     private List<Project> projectList;
     private String projectNames;
 
+    // form values
     private String projectName;
     private String sampleName;
     private String eventName;
     private Long projectId;
     private Long eventId;
 
-    private String jobType;
+    private String status; // sample status value
+    private String jobType; // form action type : insert, grid, file, template
     private String label;
+    private String filter;
 
-    private Project loadingProject;
-    private Sample loadingSample;
-    private List<FileReadAttributeBean> beanList;
-    private List<GridBean> gridList;
+    private Project loadingProject; // single project loading
+    private Sample loadingSample; // single sample loading
+    private List<FileReadAttributeBean> beanList; // form
+    private List<GridBean> gridList; // grid
 
-    private InputStream downloadStream;
-    private String downloadContentType;
-
+    // template files
     private File dataTemplate;
+    private InputStream dataTemplateStream;
     private String dataTemplateFileName;
     private String dataTemplateContentType;
-
 
     private String fileStoragePath;
     private ArrayList<String> loadedFiles;
 
-    private static final String DEFAULT_USER_MESSAGE = "Not yet entered";
-    private final String MULTIPLE_SUBJECT_IN_FILE_MESSAGE = "Multiple projects are found in the file";
-    private final String UNSUPPORTED_UPLOAD_FILE_TYPE_MESSAGE = "File type is not supported. Supported file types are JPG, JPEG, GIF and BMP.";
-    private String message = DEFAULT_USER_MESSAGE;
+    private String ids;
+    private String sampleArrIndex;
+    /*private Long defaultProjectId;*/
+
+    /* final string values from the form*/
+    private final String SUBMISSION_TYPE_GRID = "grid";
+    private final String SUBMISSION_TYPE_FILE = "file";
+    private final String SUBMISSION_TYPE_FORM = "form";
+    private final String TEMPLATE_DOWNLOAD = "template";
+
+    private final String SUBMISSION_STATUS_SAVE = "save";
+    private final String SUBMISSION_STATUS_VALIDATE = "validate";
+    private final String SUBMISSION_STATUS_SUBMIT = "submit";
 
     private Logger logger = Logger.getLogger(EventLoader.class);
 
@@ -102,6 +118,7 @@ public class EventLoader extends ActionSupport implements Preparable {
         readPersister = new ReadBeanPersister(props);
 
         fileStoragePath = props.getProperty(Constants.CONIFG_FILE_STORAGE_PATH); //file storage area
+        //defaultProjectId = Long.parseLong(props.getProperty(Constants.CONFIG_DEFAULT_PROJECT_ID));
 
         UploadActionDelegate udelegate = new UploadActionDelegate();
         psewt = udelegate.initializeBusinessObject(logger, psewt);
@@ -118,14 +135,17 @@ public class EventLoader extends ActionSupport implements Preparable {
         } else {
             projectNameList.add(projectNames);
         }
-        projectList = readPersister.getProjects(projectNameList);
+
+        String userName = ServletActionContext.getRequest().getRemoteUser();
+        projectList = readPersister.getAuthorizedProjects(userName, AccessLevel.View);
+        // projectList = readPersister.getProjects(projectNameList);
     }
 
     /**
      * Setup a download filename to fully-indicate type of event.  See also: struts.xml
      */
-    public String getDownloadFileName() {
-        return eventName + "_EventAttributes." + (jobType.endsWith("c")?"csv":"xls");
+    public String getDataTemplateFileName() {
+        return eventName.replaceAll(" ", "_") + "_template." + (jobType.endsWith("e") ? "xls" : "csv");
     }
 
     public String execute() {
@@ -133,86 +153,94 @@ public class EventLoader extends ActionSupport implements Preparable {
         UserTransaction tx = null;
 
         try {
-            sampleName = sampleName!=null && sampleName.equals("0")?null:sampleName;
+            this.sampleName = (this.sampleName == null || this.sampleName.isEmpty() || this.sampleName.equals("0") ? null : this.sampleName);
+
+            if(this.filter != null && this.filter.equals("pr")) {
+                //this.projectId = this.defaultProjectId;
+                //this.eventName = Constants.EVENT_PROJECT_REGISTRATION;
+            }
 
             if (jobType != null) {
                 boolean isProjectRegistration = eventName.contains(Constants.EVENT_PROJECT_REGISTRATION);
                 boolean isSampleRegistration = eventName.contains(Constants.EVENT_SAMPLE_REGISTRATION);
 
-                if(projectName==null || projectName.equals("0") || eventName==null || eventName.equals("0"))
-                    throw new Exception("Project or Event type is not selected.");
+                String userName = ServletActionContext.getRequest().getRemoteUser();
 
-                if (jobType.equals("insert")) { //loads single event
+                if(this.projectName==null || this.projectName.equals("0") || eventName==null || eventName.equals("0"))
+                    throw new Exception(ErrorMessages.PROJECT_OR_EVENT_NOT_SELECTED);
+
+                if (jobType.equals(SUBMISSION_TYPE_FORM)) { //loads single event
                     tx = (UserTransaction) new InitialContext().lookup("java:comp/UserTransaction");
                     tx.begin();
 
-                    gridList = null; // force grid list to be empty
+                    this.gridList = null; // force grid list to be empty
                     MultiLoadParameter loadParameter = new MultiLoadParameter();
-                    psewt.loadAll(null, this.createMultiLoadParameter(loadParameter, projectName, loadingProject, loadingSample, beanList, 1));
-                    this.reset();
+                    EventLoadHelper loadHelper = new EventLoadHelper(this.readPersister);
+                    loadHelper.setSubmissionId(Long.toString(CommonTool.getGuid()));
 
-                    addActionMessage("Event has been loaded successfully.");
-                } else if(jobType.equals("grid")) { //loads multiple events from grid view
-                    tx = (UserTransaction) new InitialContext().lookup("java:comp/UserTransaction");
-                    tx.begin();
+                    // manually create grid list then delegate it to the helper
+                    List<GridBean> singleGridList = new ArrayList<GridBean>(1);
+                    GridBean singleGridBean = new GridBean();
 
-                    MultiLoadParameter loadParameter = new MultiLoadParameter();
-
-                    int gridRowIndex = 0;
-                    for(GridBean gBean : gridList) {
-                        if(gBean!=null) {
-                            if(isProjectRegistration && gBean.getProjectName()!=null && gBean.getProjectPublic()!=null) {
-                                loadingProject = new Project();
-                                loadingProject.setProjectName(gBean.getProjectName());
-                                loadingProject.setIsPublic(Integer.valueOf(gBean.getProjectPublic()));
-                            } else if(isSampleRegistration && gBean.getSampleName()!=null && gBean.getSamplePublic()!=null) {
-                                Sample existingSample = readPersister.getSample(projectId, gBean.getSampleName());
-                                if(existingSample == null) {
-                                    loadingSample = new Sample();
-                                    loadingSample.setSampleName(gBean.getSampleName());
-                                    loadingSample.setParentSampleName(gBean.getParentSampleName());
-                                    loadingSample.setIsPublic(Integer.valueOf(gBean.getSamplePublic()));
-                                } else {
-                                    loadingSample = existingSample;
-                                }
-                            } else {
-                                if(gBean.getSampleName()!=null) {
-                                    this.sampleName = gBean.getSampleName();
-                                }
-                            }
-
-                            // process empty attribute lists events for project/sample registrations
-                            if((gBean.getBeanList() != null && gBean.getBeanList().size() > 0)
-                                    || this.eventName.contains(Constants.EVENT_PROJECT_REGISTRATION)
-                                    || this.eventName.contains(Constants.EVENT_SAMPLE_REGISTRATION)) {
-                                this.createMultiLoadParameter(loadParameter, projectName, loadingProject,  loadingSample, gBean.getBeanList(), ++gridRowIndex);
-                            }
-                        }
+                    singleGridBean.setProjectName(isProjectRegistration ? this.loadingProject.getProjectName() : this.projectName);
+                    if(isProjectRegistration) {
+                        singleGridBean.setProjectPublic(Integer.toString(this.loadingProject.getIsPublic()));
                     }
+                    singleGridBean.setSampleName(isSampleRegistration ? this.loadingSample.getSampleName() : this.sampleName);
+                    if(isSampleRegistration) {
+                        singleGridBean.setSamplePublic(Integer.toString(this.loadingSample.getIsPublic()));
+                        singleGridBean.setParentSampleName(this.loadingSample.getParentSampleName());
+                    }
+                    singleGridBean.setBeanList(this.beanList);
+                    singleGridList.add(singleGridBean);
 
+                    loadHelper.gridListToMultiLoadParameter(loadParameter, singleGridList, this.projectName, this.eventName, this.status, userName);
                     psewt.loadAll(null, loadParameter);
 
-                    this.reset();
-                    addActionMessage("Events have been loaded successfully.");
-                } else if (jobType.equals("file")) { //loads data from a CSV file to grid view
+
+                    this.pageDataReset(isProjectRegistration, isSampleRegistration, this.status);
+
+                    if(isSampleRegistration) { // set sample name for sample update form load with newly loaded sample
+                        this.sampleName = singleGridBean.getSampleName();
+                    }
+
+                    addActionMessage(this.getResultMessage());
+
+                } else if(jobType.equals(SUBMISSION_TYPE_GRID)) { //loads multiple events from grid view
+                    tx = (UserTransaction) new InitialContext().lookup("java:comp/UserTransaction");
+                    tx.begin();
+
+                    //delegate populating multiload parameter to the helper
+                    MultiLoadParameter loadParameter = new MultiLoadParameter();
+                    EventLoadHelper loadHelper = new EventLoadHelper(this.readPersister);
+
+                    loadHelper.gridListToMultiLoadParameter(loadParameter, this.gridList, this.projectName, this.eventName, this.status, userName);
+                    psewt.loadAll(null, loadParameter);
+
+                    if(!filter.equals("su"))this.pageDataReset(isProjectRegistration, isSampleRegistration, this.status);
+
+                    addActionMessage(this.getResultMessage());
+
+                } else if (jobType.equals(SUBMISSION_TYPE_FILE)) { //loads data from a CSV file to grid view
                     if(!this.dataTemplate.canRead()) {
-                        throw new Exception("Error in reading the file.");
+                        throw new Exception(ErrorMessages.EVENT_LOADER_FILE_READ);
                     } else {
                         try {
                             TemplatePreProcessingUtils templateUtil = new TemplatePreProcessingUtils();
                             gridList = templateUtil.parseEventFile(
                                     this.dataTemplateFileName, this.dataTemplate,
-                                    projectName, isProjectRegistration, isSampleRegistration
+                                    this.projectName, isProjectRegistration, isSampleRegistration
                             );
-                            jobType = "grid";
+                            jobType = SUBMISSION_TYPE_GRID;
                         } catch(Exception ex) {
                             throw ex;
                         }
                     }
-                } else if(jobType.startsWith("template")) { //download template
-                    List<EventMetaAttribute> emaList = readPersister.getEventMetaAttributes(projectName, eventName);
-                    emaList = CommonTool.filterActiveEventMetaAttribute(emaList);
-                    CommonTool.sortEventMetaAttributeByOrder(emaList);
+
+                } else if(jobType.startsWith(TEMPLATE_DOWNLOAD)) { //download template
+                    List<EventMetaAttribute> emaList = this.readPersister.getEventMetaAttributes(this.projectName, this.eventName);
+                    emaList = CommonTool.filterEventMetaAttribute(emaList, "template");
+                    //CommonTool.sortEventMetaAttributeByOrder(emaList);
 
                     /*
                      * removing the sanity check on sample requirement since multiple sample support is in action
@@ -220,14 +248,68 @@ public class EventLoader extends ActionSupport implements Preparable {
                     ModelValidator validator = new ModelValidator();
                     validator.validateEventTemplateSanity(emaList, projectName, sampleName, eventName);
                     */
-                    TemplatePreProcessingUtils cvsUtils = new TemplatePreProcessingUtils();
-                    String templateType = jobType.substring(jobType.indexOf("_")+1);
-                    downloadStream = cvsUtils.buildFileContent(templateType, emaList, projectName, sampleName, eventName);
-                    downloadContentType = templateType.equals("c")?"csv":"vnd.ms-excel";
-                    rtnVal = Constants.FILE_DOWNLOAD_MSG;
+
+                    TemplatePreProcessingUtils templateUtil = new TemplatePreProcessingUtils();
+                    String templateType = this.jobType.substring(jobType.indexOf("_")+1);
+                    this.dataTemplateStream = templateUtil.buildFileContent(templateType, emaList, this.projectName, this.sampleName, this.eventName);
+                    this.dataTemplateContentType = "application/octet-stream"; //templateType.equals("e") ? "application/vnd.ms-excel" : "text/csv";
+
+                    if(ids != null && !ids.isEmpty()) { //project or sample edit from EventDetail
+                        StringBuffer dataBuffer = new StringBuffer();
+
+                        AttributeHelper attributeHelper = new AttributeHelper(this.readPersister);
+                        List<AttributePair> pairList = attributeHelper.getAllAttributeByIDs(this.projectId, this.eventId, this.ids, "s");
+                        if(pairList != null) {
+                            for(AttributePair pair : pairList) {
+                                dataBuffer.append(pair.getProjectName() + ",");
+                                Sample currSample = pair.getSample();
+                                dataBuffer.append(currSample.getSampleName() + ",");
+                                if(isSampleRegistration) {
+                                    dataBuffer.append(currSample.getParentSampleName() + ",");
+                                    dataBuffer.append(currSample.getIsPublic() + ",");
+                                }
+                                List<FileReadAttributeBean> attributeList = pair.getAttributeList();
+                                Map<String, String> attributeMap = AttributeHelper.attributeListToMap(attributeList);
+
+                                for(EventMetaAttribute ema : emaList) {
+                                    String attributeName = ema.getLookupValue().getName();
+                                    dataBuffer.append(attributeMap.containsKey(attributeName) ? attributeMap.get(attributeName) : "");
+                                    dataBuffer.append(",");
+                                }
+                                dataBuffer.append("\n");
+                            }
+                        }
+
+                        StringBuffer newTemplateBuffer = new StringBuffer();
+                        List<String> templateLines = IOUtils.readLines(this.dataTemplateStream);
+                        for(int i = 0;i < 2;i++) { //only writes column headers and descriptions
+                            newTemplateBuffer.append(templateLines.get(i)).append("\n");
+                        }
+                        newTemplateBuffer.append(dataBuffer);
+                        this.dataTemplateStream = IOUtils.toInputStream(newTemplateBuffer.toString());
+                    }
+                    rtnVal = Constants.STRUTS_FILE_DOWNLOAD;
+
+                } else if(jobType.equals("projectedit")) {
+                    AttributeHelper attributeHelper = new AttributeHelper(this.readPersister);
+                    if(this.eventId == null && this.eventName != null) {
+                        LookupValue eventLV = this.readPersister.getLookupValue(this.eventName, Constants.LOOKUP_VALUE_TYPE_EVENT_TYPE);
+                        if(eventLV != null) {
+                            this.eventId = eventLV.getLookupValueId();
+                        }
+                    }
+                    List<AttributePair> projectPairList = attributeHelper.getAllAttributeByIDs(this.projectId, this.eventId, "" + this.projectId, "p");
+                    if(projectPairList.size() > 0) {
+                        AttributePair projectPair = projectPairList.get(0);
+                        this.beanList = projectPair.getAttributeList();
+                    }
+                    jobType = SUBMISSION_TYPE_FORM;
                 }
             }
 
+            if(ids != null && ids.length() > 0) {
+                jobType = SUBMISSION_TYPE_GRID;
+            }
         } catch (Exception ex) {
 
             if(loadedFiles!=null && loadedFiles.size()>0) { //deletes uploaded files in event of error
@@ -270,7 +352,7 @@ public class EventLoader extends ActionSupport implements Preparable {
                     tx.commit();
                 }
 
-                if(jobType != null && jobType.equals("grid") && this.dataTemplate != null) {
+                if(jobType != null && jobType.equals(SUBMISSION_TYPE_GRID) && this.dataTemplate != null) {
                     this.dataTemplate.delete();
                     this.dataTemplate = null;
                     this.dataTemplateContentType = null;
@@ -284,201 +366,51 @@ public class EventLoader extends ActionSupport implements Preparable {
         return rtnVal;
     }
 
-    private MultiLoadParameter createMultiLoadParameter(MultiLoadParameter loadParameter, String projectName, Project project, Sample sample, List<FileReadAttributeBean> frab, int index)
-            throws Exception {
-        boolean isSampleRegistration = false;
-        boolean isProjectRegistration = false;
+    private void pageDataReset(boolean isProjectRegistration, boolean isSampleRegistration, String status) {
+        boolean resetIdsAndNames = true;
+        boolean resetLists = true;
 
-        if (this.eventName.contains(Constants.EVENT_PROJECT_REGISTRATION) && project.getProjectName() != null && !project.getProjectName().isEmpty()) {
-            isProjectRegistration = true;
-        } else if (this.eventName.contains(Constants.EVENT_SAMPLE_REGISTRATION) && sample.getSampleName() != null && !sample.getSampleName().isEmpty()) {
-            isSampleRegistration = true;
-        }
-
-        List<FileReadAttributeBean> loadingList = null;
-        if (frab != null && frab.size() > 0) {
-            loadingList = processFileReadBeans(
-                    isProjectRegistration ? project.getProjectName() : projectName,
-                    isSampleRegistration ? sample.getSampleName() : this.sampleName,
-                    frab
-            );
-        }
-
-        if (isProjectRegistration) {
-            /*
-            *   loads all meta attributes from the parent
-            *   by hkim 6/11/13
-            */
-            List<EventMetaAttribute> emas = this.readPersister.getEventMetaAttributes(projectName, null); //, Constants.EVENT_PROJECT_REGISTRATION);
-            List<EventMetaAttribute> newEmas = null;
-            if (emas != null && emas.size() > 0) {
-                newEmas = new ArrayList<EventMetaAttribute>(emas.size());
-                for (EventMetaAttribute ema : emas) {
-                    EventMetaAttribute newEma = new EventMetaAttribute();
-                    newEma.setProjectName(project.getProjectName());
-                    newEma.setEventName(ema.getEventName());
-                    newEma.setEventTypeLookupId(ema.getEventTypeLookupId());
-                    newEma.setAttributeName(ema.getAttributeName());
-                    newEma.setNameLookupId(ema.getNameLookupId());
-                    newEma.setActive(ema.isActive());
-                    newEma.setRequired(ema.isRequired());
-                    newEma.setDesc(ema.getDesc());
-                    newEma.setDataType(ema.getDataType());
-                    newEma.setLabel(ema.getLabel());
-                    newEma.setOntology(ema.getOntology());
-                    newEma.setOptions(ema.getOptions());
-                    newEma.setSampleRequired(ema.isSampleRequired());
-                    newEmas.add(newEma);
-                }
+        if(status.equals(SUBMISSION_STATUS_SAVE) || status.equals(SUBMISSION_STATUS_VALIDATE)) {
+            resetIdsAndNames = false;
+            resetLists = false;
+            if(isSampleRegistration) { //update registration event to update on save requests
+                this.eventName = this.eventName.replaceAll(Constants.EVENT_SAMPLE_REGISTRATION, Constants.EVENT_SAMPLE_UPDATE);
+                this.filter = "su";
             }
-
-            List<SampleMetaAttribute> smas = this.readPersister.getSampleMetaAttributes(projectId);
-            List<SampleMetaAttribute> newSmas = null;
-            if(smas != null && smas.size() > 0) {
-                newSmas = new ArrayList<SampleMetaAttribute>(smas.size());
-                for(SampleMetaAttribute sma : smas) {
-                    SampleMetaAttribute newSma = new SampleMetaAttribute();
-                    newSma.setProjectName(project.getProjectName());
-                    newSma.setAttributeName(sma.getAttributeName());
-                    newSma.setNameLookupId(sma.getNameLookupId());
-                    newSma.setDataType(sma.getDataType());
-                    newSma.setDesc(sma.getDesc());
-                    newSma.setLabel(sma.getLabel());
-                    newSma.setOntology(sma.getOntology());
-                    newSma.setOptions(sma.getOptions());
-                    newSma.setRequired(sma.isRequired());
-                    newSma.setActive(sma.isActive());
-                    newSmas.add(newSma);
-                }
-            }
-
-            List<ProjectMetaAttribute> pmas = this.readPersister.getProjectMetaAttributes(projectName);
-            List<ProjectMetaAttribute> newPmas = null;
-            if (pmas != null && pmas.size() > 0) {
-                newPmas = new ArrayList<ProjectMetaAttribute>(pmas.size());
-                for (ProjectMetaAttribute pma : pmas) {
-                    ProjectMetaAttribute newPma = new ProjectMetaAttribute();
-                    newPma.setProjectName(project.getProjectName());
-                    newPma.setAttributeName(pma.getAttributeName());
-                    newPma.setDataType(pma.getDataType());
-                    newPma.setDesc(pma.getDesc());
-                    newPma.setLabel(pma.getLabel());
-                    newPma.setNameLookupId(pma.getNameLookupId());
-                    newPma.setOntology(pma.getOntology());
-                    newPma.setOptions(pma.getOptions());
-                    newPma.setRequired(pma.isRequired());
-                    newPma.setActive(pma.isActive());
-                    newPmas.add(newPma);
-                }
-            }
-            loadParameter.addProjectPair(feedProjectData(project), loadingList, newPmas, newSmas, newEmas, index);
-        } else if (isSampleRegistration) {
-            loadParameter.addSamplePair(feedSampleData(sample), loadingList, index);
         } else {
-            if(loadingList != null && loadingList.size() > 0)  {
-                loadParameter.addEvents(this.eventName, loadingList);
+            if(status.equals(SUBMISSION_STATUS_SUBMIT) && isProjectRegistration) { // do not reset project and event for project registration
+                resetIdsAndNames = false;
             }
         }
-        loadParameter.setEventName(this.eventName);
-        return loadParameter;
+
+        if(resetIdsAndNames) {
+            /* Filter is not necessary for internal usage
+            if((isSampleRegistration || this.eventName.contains(Constants.EVENT_SAMPLE_UPDATE)) && status.equals(SUBMISSION_STATUS_SUBMIT)) {
+                this.filter = "sr";
+            }*/
+
+            projectId = null;
+            projectName = null;
+            eventId = null;
+            eventName = null;
+            sampleName = null;
+        }
+        if(resetLists) {
+            beanList = null;
+            gridList = null;
+        }
     }
 
-    private Project feedProjectData(Project project) throws Exception {
-        project.setParentProjectName(projectName);
-
-        Project parentProject = readPersister.getProject(projectName);
-        project.setParentProjectId(parentProject.getProjectId());
-        project.setProjectLevel(parentProject.getProjectLevel()+1);
-        project.setEditGroup(parentProject.getEditGroup());
-        project.setViewGroup(parentProject.getViewGroup());
-        return project;
-    }
-
-    private Sample feedSampleData(Sample sample) throws Exception {
-        sample.setProjectId(projectId);
-        sample.setProjectName(projectName);
-
-        //set project level by adding 1 to selected parent project's level
-        if(sample.getParentSampleName()==null || sample.getParentSampleName().equals("0")) {
-            sample.setParentSampleName(null);
-            sample.setParentSampleId(null);
-            sample.setSampleLevel(1);
+    private String getResultMessage() {
+        String resultMessage;
+        if(this.status.equals(SUBMISSION_STATUS_SUBMIT)) {
+            resultMessage = "Data successfully submitted to the OMETA.";
+        } else if(this.status.equals(SUBMISSION_STATUS_VALIDATE)) {
+            resultMessage = "Data submission is validated.";
         } else {
-            String parentSampleName = sample.getParentSampleName();
-            if (parentSampleName != null && !parentSampleName.isEmpty() && !parentSampleName.equals("0")) {
-                Sample selectedParentSample = readPersister.getSample(projectId, parentSampleName);
-                if(selectedParentSample != null && selectedParentSample.getSampleId() != null) {
-                    sample.setSampleLevel(selectedParentSample.getSampleLevel() + 1);
-                    sample.setParentSampleId(selectedParentSample.getSampleId());
-                }
-            }
+            resultMessage = "Data submission is saved.";
         }
-        return sample;
-    }
-
-    private List<FileReadAttributeBean> processFileReadBeans(String _projectName, String _sampleName, List<FileReadAttributeBean> loadingList) throws Exception {
-        List<FileReadAttributeBean> processedList = new ArrayList<FileReadAttributeBean>();
-        for(FileReadAttributeBean fBean:loadingList) {
-            if(fBean.getProjectName()==null || eventName.contains(Constants.EVENT_PROJECT_REGISTRATION)) {
-                fBean.setProjectName(_projectName);
-            }
-            if(fBean.getSampleName()==null) {
-                fBean.setSampleName(_sampleName);
-            }
-
-            //handle file uploads
-            if(fBean.getUpload()!=null && fBean.getUploadFileName()!=null && !fBean.getUploadFileName().isEmpty()) {
-                fileStoragePath = fileStoragePath + (fileStoragePath.endsWith(File.separator)?"":File.separator);
-                String originalFileName = fBean.getUploadFileName();
-
-                String fileDirectoryPathProject = _projectName.replaceAll(" ", "_"); //project folder
-                String fileDirectoryPathSample = fileDirectoryPathProject + File.separator +
-                        (_sampleName!=null&&!_sampleName.isEmpty()?_sampleName.replaceAll(" ", "_"):"project"); //sample folder
-                String fileDirectoryPath = fileDirectoryPathSample + File.separator + CommonTool.convertTimestampToDate(new Date()); //date folder
-
-                String fileName = originalFileName.substring(0,originalFileName.indexOf(".")) +
-                        "_"+System.currentTimeMillis() +
-                        originalFileName.substring(originalFileName.indexOf(".")); //append "_" + current time in milliseconds to file name
-
-                File fileDirectory = new File(fileStoragePath + fileDirectoryPath);
-                if(!fileDirectory.exists() || !fileDirectory.isDirectory()) {
-                    fileDirectory.mkdirs();
-                }
-
-                File theFile = new File(fileDirectory.getPath() + File.separator + fileName);
-                FileUtils.copyFile(fBean.getUpload(), theFile);
-
-                if(theFile.exists() && theFile.isFile() && theFile.canRead()) {
-                    fBean.getUpload().delete();
-
-                    fBean.setAttributeValue(fileDirectoryPath + File.separator + fileName);
-                    if(loadedFiles==null) {
-                        loadedFiles = new ArrayList<String>();
-                    }
-                    loadedFiles.add(fBean.getAttributeValue());
-                }
-            }
-
-            if (!fBean.getAttributeName().equals("0") && fBean.getAttributeValue()!=null && !fBean.getAttributeValue().isEmpty()) { //&& !fBean.getAttributeValue().equals("0")
-                processedList.add(fBean);
-            }
-        }
-        return processedList;
-    }
-
-    private void reset() {
-        projectId = null;
-        eventId = null;
-        beanList = null;
-        gridList = null;
-    }
-
-    public void setMessage(String message) {
-        this.message = message;
-    }
-
-    public String getMessage() {
-        return message;
+        return resultMessage;
     }
 
     private String getUnknownErrorMessage() {
@@ -507,6 +439,14 @@ public class EventLoader extends ActionSupport implements Preparable {
 
     public void setEventName(String eventName) {
         this.eventName = eventName;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
     }
 
     public String getJobType() {
@@ -589,24 +529,12 @@ public class EventLoader extends ActionSupport implements Preparable {
         this.eventId = eventId;
     }
 
-    public InputStream getDownloadStream() {
-        return downloadStream;
-    }
-
-    public void setDownloadStream(InputStream downloadStream) {
-        this.downloadStream = downloadStream;
-    }
-
-    public String getDownloadContentType() {
-        return downloadContentType;
-    }
-
-    public void setDownloadContentType(String downloadContentType) {
-        this.downloadContentType = downloadContentType;
-    }
-
     public void setDataTemplateContentType(String dataTemplateContentType) {
         this.dataTemplateContentType = dataTemplateContentType;
+    }
+
+    public String getDataTemplateContentType() {
+        return dataTemplateContentType;
     }
 
     public void setDataTemplateFileName(String dataTemplateFileName) {
@@ -615,5 +543,33 @@ public class EventLoader extends ActionSupport implements Preparable {
 
     public void setDataTemplate(File dataTemplate) {
         this.dataTemplate = dataTemplate;
+    }
+
+    public InputStream getDataTemplateStream() {
+        return dataTemplateStream;
+    }
+
+    public String getIds() {
+        return ids;
+    }
+
+    public void setIds(String ids) {
+        this.ids = ids;
+    }
+
+    public String getFilter() {
+        return filter;
+    }
+
+    public void setFilter(String filter) {
+        this.filter = filter;
+    }
+
+    public String getSampleArrIndex() {
+        return sampleArrIndex;
+    }
+
+    public void setSampleArrIndex(String sampleArrIndex) {
+        this.sampleArrIndex = sampleArrIndex;
     }
 }

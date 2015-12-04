@@ -22,12 +22,13 @@
 package org.jcvi.ometa.interceptor.javaee;
 
 import org.apache.log4j.Logger;
-import org.jcvi.ometa.configuration.*;
+import org.jcvi.ometa.configuration.AccessLevel;
+import org.jcvi.ometa.configuration.ResponseToFailedAuthorization;
+import org.jcvi.ometa.exception.LoginRequiredException;
 import org.jcvi.ometa.hibernate.dao.SecurityDAO;
 import org.jcvi.ometa.interceptor.InterceptorHelper;
-import org.jcvi.ometa.stateless_session_bean.LoginRequiredException;
-import org.jcvi.ometa.stateless_session_bean.ForbiddenResourceException;
 import org.jcvi.ometa.utils.Constants;
+import org.jcvi.ometa.validation.ErrorMessages;
 import org.jtc.common.util.property.PropertyHelper;
 
 import javax.annotation.Resource;
@@ -93,14 +94,14 @@ public class ReadOnlyAllOrNothingAuthInterceptor {
             rtnVal = invocationContext.proceed();
         }
         else if ( user == null  ||  user.equals( SecurityDAO.UNLOGGED_IN_USER ) ) {
-            String message = "A requested resource is protected, but user has not yet logged in.";
+            String message = ErrorMessages.LOGIN_REQUIRED_MESSAGE;
             logger.debug( message );
             throw new LoginRequiredException( message );
         }
         else {
-            String message = "One or more projects have been denied to user " + user;
-            logger.debug( message );
-            throw new ForbiddenResourceException( message );
+            String systemError = "One or more projects have been denied to user " + user;
+            logger.debug(systemError);
+            throw new IllegalAccessError(ErrorMessages.DENIED_USER_VIEW_MESSAGE);
         }
 
         return rtnVal;

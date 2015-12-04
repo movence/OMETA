@@ -22,6 +22,9 @@
 package org.jcvi.ometa.utils;
 
 import org.jtc.common.util.guid.GuidBlock;
+import org.jtc.common.util.property.PropertyHelper;
+
+import java.util.Properties;
 
 /**
  * Created by IntelliJ IDEA.
@@ -49,20 +52,20 @@ public class GuidGetter {
     public Long getGuid() throws Exception {
         Long retVal = null;
         Exception latestException = null;
+
+        Properties props = PropertyHelper.getHostnameProperties(Constants.PROPERTIES_FILE_NAME);
+        String guidHostName = props.getProperty(Constants.CONFIG_GUID_HOST);
+        String guidPort = props.getProperty(Constants.CONFIG_GUID_PORT);
+
         for ( int i = 0; i < NUM_RETRIES; i++ ) {
             try {
                 if (guidBlock == null) {
                     guidBlock = new GuidBlock();
                 }
 
-                String hostName = java.net.InetAddress.getLocalHost().getHostName();
-                String port = hostName.contains("localhost")?"8280":"8380";
+                String hostName = (guidHostName == null ? java.net.InetAddress.getLocalHost().getHostName() : guidHostName);
+                String port = (guidPort == null ? "8380" : guidPort);
                 retVal = guidBlock.getGuidBlock(DEFAULT_GUID_NAMESPACE, String.format(DEFAULT_GUID_HTTP_PREFIX, hostName, port), 1);
-                /*
-                if(hostName.contains("dmzweb"))
-                    retVal = guidBlock.getGuidBlock(DEFAULT_GUID_NAMESPACE, DEFAULT_GUID_HTTP_PREFIX, 1);
-                else
-                    retVal = guidBlock.getGuidBlock(1);*/
             } catch ( Exception ex ) {
                 latestException = ex;
                 Thread.sleep( BETWEEN_RETRIES );

@@ -36,6 +36,7 @@ import java.util.List;
  */
 public interface ProjectSampleEventWritebackBusiness {
     void loadActor(Actor actor) throws Exception;
+    void updateActor(Actor actor) throws Exception;
 
     void loadActorGroup(List<ActorGroup> actorGroups) throws Exception;
     void deleteActorGroup(List<ActorGroup> actorGroups) throws Exception;
@@ -119,4 +120,8 @@ public interface ProjectSampleEventWritebackBusiness {
     void updateProject(Project projects) throws Exception;
 
     void updateSample(Sample sample) throws Exception;
+
+    void loadDictionaryWithDependency(String dictType, String dictValue, String dictCode, String parentDictTypeCode) throws Exception;
+
+    void loadDictionary(String dictType, String dictValue, String dictCode) throws Exception;
 }

@@ -8,10 +8,8 @@ import org.apache.poi.hssf.usermodel.HSSFDateUtil;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.hssf.util.CellRangeAddressList;
 import org.apache.poi.ss.usermodel.*;
-import org.jcvi.ometa.model.Event;
-import org.jcvi.ometa.model.EventMetaAttribute;
-import org.jcvi.ometa.model.FileReadAttributeBean;
-import org.jcvi.ometa.model.GridBean;
+import org.jcvi.ometa.model.*;
+import org.jcvi.ometa.validation.ErrorMessages;
 import org.jcvi.ometa.validation.ModelValidator;
 import org.jtc.common.util.scratch.ScratchUtils;
 
@@ -28,11 +26,9 @@ public class TemplatePreProcessingUtils {
     private final String comma = ",";
     private final String required = "*Required";
     private final String optional = "Optional";
-    private final String mutatedComment = Constants.PROMPT_IN_FILE_PREFIX.concat("%s %s");
+    private final String mutatedComment = Constants.TEMPLATE_COMMENT_INDICATOR.concat("%s %s");
 
-    public InputStream buildFileContent(
-            String type, List<EventMetaAttribute> emas,
-            String projectName, String sampleName, String eventName) throws Exception {
+    public InputStream buildFileContent(String type, List<EventMetaAttribute> emas, String projectName, String sampleName, String eventName) throws Exception {
 
         boolean isProjectRegistration = eventName.contains(Constants.EVENT_PROJECT_REGISTRATION);
         //boolean isProjectUpdate = eventName.replaceAll("\\s","").equals("ProjectUpdate");
@@ -40,14 +36,15 @@ public class TemplatePreProcessingUtils {
 
         List<HeaderDetail> headers = new ArrayList<HeaderDetail>();
 
-        headers.add(new HeaderDetail("ProjectName", true, "string", "", null));
+        headers.add(new HeaderDetail(Constants.ATTR_PROJECT_NAME, true, "string", "", null));
+
 
         if (isSampleRegistration) { // parent sample name for sample registration
-            headers.add(new HeaderDetail("ParentSample", false, "string", "", null));
+            headers.add(new HeaderDetail(Constants.ATTR_PARENT_SAMPLE_NAME, false, "string", "", null));
         }
 
         if (isProjectRegistration || isSampleRegistration) { //public flag
-            headers.add(new HeaderDetail("Public", true, "int", "", null));
+            headers.add(new HeaderDetail(Constants.ATTR_PUBLIC_FLAG, true, "int", "", null));
         }
 
         boolean sampleRequired = false;
@@ -60,25 +57,128 @@ public class TemplatePreProcessingUtils {
             ));
         }
 
+        //if(!isSampleRegistration && sampleRequired) { //remove sample name for sample registration
         if(isSampleRegistration || sampleRequired) {
-            headers.add(1, new HeaderDetail("SampleName", true, "string", "", null));
+            headers.add(1, new HeaderDetail(Constants.ATTR_SAMPLE_NAME, true, "string", "", null));
         }
 
         InputStream templateStream = null;
-        if(type.equals("c")) {
-            templateStream = this.createCSV(headers, isProjectRegistration, projectName, sampleName);
-        } else {
+        if(type.equals("e")) {
             templateStream = this.createExcel(headers, isProjectRegistration, projectName, sampleName, eventName);
+        } else {
+            templateStream = this.createCSV(headers, isProjectRegistration, projectName, sampleName, eventName);
         }
 
         return templateStream;
     }
 
-    private InputStream createCSV(
-            List<HeaderDetail> attributes, boolean isProjectRegistration,
-            String projectName, String sampleName) throws Exception {
+    public InputStream buildProjectSetupContent(Project project, List<ProjectMetaAttribute> pmaList, List<EventMetaAttribute> emaList,
+                                                List<LookupValue> eventNameList, List<SampleMetaAttribute> smaList) {
+        StringBuilder csvContents = new StringBuilder();
+        String projectName = project.getProjectName();
+
+        //Project Setup
+        csvContents.append(Constants.TEMPLATE_COMMENT_INDICATOR).append(Constants.TEMPLATE_EVENT_TYPE_IDENTIFIER).append(":").append("Project\n");
+        csvContents.append(Constants.ATTR_PROJECT_NAME).append(",")
+                .append(Constants.ATTR_PARENT_PROJECT_NAME).append(",")
+                .append(Constants.ATTR_PROJECT_LEVEL).append(",")
+                .append(Constants.ATTR_PUBLIC_FLAG).append("\n");
+        csvContents.append(projectName + "," + project.getParentProjectName() + ","
+                + project.getProjectLevel() + "," + project.getIsPublic() + "\n");
+
+        csvContents.append("\n");
+
+        //Project Meta Attributes
+        csvContents.append(Constants.TEMPLATE_COMMENT_INDICATOR).append(Constants.TEMPLATE_EVENT_TYPE_IDENTIFIER).append(":").append("ProjectMetaAttributes\n");
+        csvContents.append(Constants.ATTR_PROJECT_NAME).append(",")
+                .append(Constants.ATTR_LABEL).append(",")
+                .append(Constants.ATTR_DATA_TYPE).append(",")
+                .append(Constants.ATTR_REQUIRED).append(",")
+                .append(Constants.ATTR_ATTRIBUTE_NAME).append(",")
+                .append(Constants.ATTR_DESCRIPTION).append(",")
+                .append(Constants.ATTR_OPTIONS).append(",")
+                .append(Constants.ATTR_ORDER).append("\n");
+        int i = 0;
+        for(ProjectMetaAttribute pma : pmaList){
+            csvContents.append("\"").append(projectName).append("\",")
+                    .append("\"").append(pma.getLabel()).append("\",")
+                    .append("\"").append(pma.getDataType()).append("\",")
+                    .append("\"").append(pma.isRequired() ? "T" : "F").append("\",")
+                    .append("\"").append(pma.getAttributeName()).append("\",")
+                    .append("\"").append(pma.getDesc()).append("\",")
+                    .append("\"").append(pma.getOptions()).append("\",")
+                    .append(++i).append("\n");
+        }
+
+        csvContents.append("\n");
+
+        //Sample Meta Attributes
+        csvContents.append(Constants.TEMPLATE_COMMENT_INDICATOR).append(Constants.TEMPLATE_EVENT_TYPE_IDENTIFIER).append(":").append("SampleMetaAttributes\n");
+        csvContents.append(Constants.ATTR_PROJECT_NAME).append(",")
+                .append(Constants.ATTR_LABEL).append(",")
+                .append(Constants.ATTR_DATA_TYPE).append(",")
+                .append(Constants.ATTR_REQUIRED).append(",")
+                .append(Constants.ATTR_ATTRIBUTE_NAME).append(",")
+                .append(Constants.ATTR_DESCRIPTION).append(",")
+                .append(Constants.ATTR_OPTIONS).append(",")
+                .append(Constants.ATTR_ORDER).append("\n");
+        i=0;
+        for(SampleMetaAttribute sma : smaList){
+            csvContents.append("\"").append(projectName).append("\",")
+                    .append("\"").append(sma.getLabel()).append("\",")
+                    .append("\"").append(sma.getDataType()).append("\",")
+                    .append("\"").append(sma.isRequired() ? "T" : "F").append("\",")
+                    .append("\"").append(sma.getAttributeName()).append("\",")
+                    .append("\"").append(sma.getDesc()).append("\",")
+                    .append("\"").append(sma.getOptions()).append("\",")
+                    .append(++i).append("\n");
+        }
+
+        csvContents.append("\n");
+
+        //Project Meta Attributes
+        csvContents.append(Constants.TEMPLATE_COMMENT_INDICATOR).append(Constants.TEMPLATE_EVENT_TYPE_IDENTIFIER).append(":").append("EventMetaAttributes\n");
+        csvContents.append(Constants.ATTR_PROJECT_NAME).append(",")
+                .append(Constants.ATTR_EVENT_NAME).append(",")
+                .append(Constants.ATTR_SAMPLE_REQUIRED).append(",")
+                .append(Constants.ATTR_LABEL).append(",")
+                .append(Constants.ATTR_DATA_TYPE).append(",")
+                .append(Constants.ATTR_REQUIRED).append(",")
+                .append(Constants.ATTR_ATTRIBUTE_NAME).append(",")
+                .append(Constants.ATTR_DESCRIPTION).append(",")
+                .append(Constants.ATTR_OPTIONS).append(",")
+                .append(Constants.ATTR_ORDER).append("\n");
+        Map<String, StringBuilder> emaMap = new HashMap<String, StringBuilder>(eventNameList.size());
+        for(LookupValue lv : eventNameList){
+            emaMap.put(lv.getName(), new StringBuilder());
+        }
+
+        for(EventMetaAttribute ema : emaList){
+            String eventName = ema.getEventName();
+            emaMap.get(eventName).append("\"").append(projectName).append("\",")
+                    .append("\"").append(eventName).append("\",")
+                    .append("\"").append(ema.isSampleRequired() ? "T" : "F").append("\",")
+                    .append("\"").append(ema.getLabel()).append("\",")
+                    .append("\"").append(ema.getDataType()).append("\",")
+                    .append("\"").append(ema.isRequired() ? "T" : "F").append("\",")
+                    .append("\"").append(ema.getAttributeName()).append("\",")
+                    .append("\"").append(ema.getDesc()).append("\",")
+                    .append("\"").append(ema.getOptions()).append("\",")
+                    .append(ema.getOrder()).append("\n");
+        }
+
+        for(LookupValue lv : eventNameList){
+            csvContents.append(emaMap.get(lv.getName()));
+        }
+
+        return IOUtils.toInputStream(csvContents.toString().replaceAll("null", ""));
+    }
+
+    private InputStream createCSV(List<HeaderDetail> attributes, boolean isProjectRegistration, String projectName, String sampleName, String eventName) throws Exception {
         StringBuilder csvContents = new StringBuilder();
         StringBuilder comments = new StringBuilder();
+
+        csvContents.append(Constants.TEMPLATE_COMMENT_INDICATOR).append(Constants.TEMPLATE_EVENT_TYPE_IDENTIFIER).append(":").append(eventName).append("\n"); //write the event name with the identifier
 
         int i = 0;
         for(HeaderDetail detail : attributes) {
@@ -92,9 +192,10 @@ public class TemplatePreProcessingUtils {
         }
 
         csvContents.append("\n" + comments.toString());
+
         csvContents.append("\n" +
-                (!isProjectRegistration ? projectName : "") +
-                (sampleName != null && !sampleName.trim().isEmpty() ? "," + sampleName : "")
+                        (!isProjectRegistration ? projectName : "") +
+                        (sampleName != null && !sampleName.trim().isEmpty() ? "," + sampleName : "")
         );
         return IOUtils.toInputStream(csvContents.toString());
     }
@@ -131,7 +232,6 @@ public class TemplatePreProcessingUtils {
             cell.setCellStyle(redCS);
 
             if(detail.getDataType().equals(ModelValidator.DATE_DATA_TYPE)) {
-                DataFormat df = wb.createDataFormat();
                 CellStyle dateCS = wb.createCellStyle();
                 CreationHelper createHelper = wb.getCreationHelper();
                 dateCS.setDataFormat(createHelper.createDataFormat().getFormat(Constants.DATE_DEFAULT_FORMAT));
@@ -163,7 +263,7 @@ public class TemplatePreProcessingUtils {
     }
 
     private String getComment(HeaderDetail detail) {
-        return String.format(this.mutatedComment, detail.getDataType(), detail.isRequired()?"*Required":"optional");
+        return String.format(this.mutatedComment, detail.getDataType(), detail.isRequired() ? "*Required" : "optional");
     }
 
     private void addValidations(int headerIndex, HeaderDetail detail, Sheet sheet) {
@@ -217,8 +317,12 @@ public class TemplatePreProcessingUtils {
         String fileType = originalFileName.substring(originalFileName.lastIndexOf(".") + 1);
 
         List<String> columns = new ArrayList<String>();
+
         String currProjectName = null;
+
         boolean hasSampleName = false;
+        boolean hasParentSampleName = false;
+        boolean hasPublicFlag = false;
 
         //Excel or CSV
         if(fileType.startsWith("xls")) {
@@ -233,12 +337,14 @@ public class TemplatePreProcessingUtils {
                     for(int i = 0; i < attributeNames.getLastCellNum(); i++) {
                         columns.add(this.extractRealAttributeName(attributeNames.getCell(i).getStringCellValue()));
                     }
-                    hasSampleName = columns.indexOf("SampleName") >= 0;
+                    hasSampleName = columns.indexOf(Constants.ATTR_SAMPLE_NAME) >= 0;
+                    hasParentSampleName = columns.indexOf(Constants.ATTR_PARENT_SAMPLE_NAME) >= 0;
+                    hasPublicFlag = columns.indexOf(Constants.ATTR_PUBLIC_FLAG) >= 0;
 
                     int startingRow = 1;
                     Row metaRow = sheet.getRow(startingRow);
                     String firstMetaColumn = metaRow.getCell(0).getStringCellValue();
-                    if(!firstMetaColumn.isEmpty() && firstMetaColumn.startsWith("#") && firstMetaColumn.indexOf("string") > 0) {
+                    if(!firstMetaColumn.isEmpty() && firstMetaColumn.startsWith(Constants.TEMPLATE_COMMENT_INDICATOR) && firstMetaColumn.indexOf("string") > 0) {
                         startingRow = 2; //skip the second line that holds metadata of each column
                     }
 
@@ -249,7 +355,7 @@ public class TemplatePreProcessingUtils {
 
                         currProjectName = row.getCell(colIndex++).getStringCellValue();
                         if(!isProjectRegistration && !currProjectName.equals(projectName)) {
-                            throw new Exception("Multiple projects are found in the file");
+                            throw new Exception(ErrorMessages.TEMPLATE_MULTIPLE_PROJECT);
                         }
 
                         GridBean gBean = new GridBean();
@@ -261,10 +367,18 @@ public class TemplatePreProcessingUtils {
 
                         if(isProjectRegistration) {
                             gBean.setProjectName(currProjectName);
-                            gBean.setProjectPublic(this.getExcelCellValue(row.getCell(colIndex++)));
+                            if(hasPublicFlag) {
+                                gBean.setProjectPublic(this.getExcelCellValue(row.getCell(colIndex++)));
+                            }
                         } else if(isSampleRegistration) {
-                            gBean.setParentSampleName(this.getExcelCellValue(row.getCell(colIndex++)));
-                            gBean.setSamplePublic(this.getExcelCellValue(row.getCell(colIndex++)));
+                            if(hasSampleName){
+                                if(hasParentSampleName) {
+                                    gBean.setParentSampleName(this.getExcelCellValue(row.getCell(colIndex++)));
+                                }
+                                if(hasPublicFlag) {
+                                    gBean.setSamplePublic(this.getExcelCellValue(row.getCell(colIndex++)));
+                                }
+                            }
                         }
 
                         gBean.setBeanList(new ArrayList<FileReadAttributeBean>());
@@ -286,29 +400,60 @@ public class TemplatePreProcessingUtils {
             int lineCount = 0;
 
             while ((line = reader.readNext()) != null) {
-                if(lineCount == 0) { //headers
+                ++lineCount;
+
+                if(lineCount == 1) { // event name header
+                    if(line[0].startsWith(Constants.TEMPLATE_COMMENT_INDICATOR) && line[0].contains(Constants.TEMPLATE_EVENT_TYPE_IDENTIFIER)) { //skip event type line
+                        continue;
+                    } else {
+                        throw new Exception(ErrorMessages.TEMPLATE_MISSING_HEADER_EVENT);
+                    }
+
+                } else if(lineCount == 2) { // attribute headers
                     Collections.addAll(columns, line);
-                    hasSampleName = columns.indexOf(Event.SAMPLE_NAME_HEADER) >= 0;
-                } else {
+                    hasSampleName = columns.indexOf(Constants.ATTR_SAMPLE_NAME) >= 0;
+                    hasParentSampleName = columns.indexOf(Constants.ATTR_PARENT_SAMPLE_NAME) >= 0;
+                    hasPublicFlag = columns.indexOf(Constants.ATTR_PUBLIC_FLAG) >= 0;
+
+                } else { // data lines
                     int colIndex = 0;
 
-                    if(lineCount == 1) {
+                    if (line.length < 1 ) { // skip empty line
+                        continue;
+                    }
+
+                    if(lineCount > Constants.TEMPLATE_MAX_ROW_LIMIT) { // oversize template check
+                        throw new Exception(ErrorMessages.TEMPLATE_OVERSIZE);
+                    }
+
+                    if(line[0].startsWith(Constants.TEMPLATE_COMMENT_INDICATOR) || line[0].startsWith("\"" + Constants.TEMPLATE_COMMENT_INDICATOR)) { //skip comment line
+                        continue;
+                    }
+
+                    if(lineCount == 3) {
                         //skip the second line that holds metadata of each column
                         String firstMetaColumn = line[colIndex];
-                        if(!firstMetaColumn.isEmpty() && firstMetaColumn.startsWith("#") && firstMetaColumn.indexOf("string") > 0) {
-                            lineCount++;
+                        if(!firstMetaColumn.isEmpty() && firstMetaColumn.startsWith(Constants.TEMPLATE_COMMENT_INDICATOR) && firstMetaColumn.indexOf("string") > 0) {
                             continue;
                         }
                     }
 
+                    if(line.length != columns.size()) {
+                        throw new Exception(ErrorMessages.TEMPLATE_COLUMN_COUNT_MISMATCH);
+                    }
+
                     currProjectName = line[colIndex++];
+                    if(currProjectName == null || currProjectName.isEmpty()) {
+                        throw new Exception(ErrorMessages.TEMPLATE_PROJECT_MISSING);
+                    }
+
                     if(projectName == null) { //assign the first project
                         projectName = currProjectName;
                     }
 
                     if(!currProjectName.isEmpty()) {
                         if(!isProjectRegistration && !currProjectName.equals(projectName)) {
-                            throw new Exception("Multiple projects are found in the file");
+                            throw new Exception(ErrorMessages.TEMPLATE_MULTIPLE_PROJECT);
                         }
 
                         GridBean gBean = new GridBean();
@@ -320,10 +465,18 @@ public class TemplatePreProcessingUtils {
 
                         if(isProjectRegistration) {
                             gBean.setProjectName(currProjectName);
-                            gBean.setProjectPublic(line[(colIndex++)]);
+                            if(hasPublicFlag) {
+                                gBean.setProjectPublic(line[(colIndex++)]);
+                            }
                         } else if(isSampleRegistration) {
-                            gBean.setParentSampleName(line[(colIndex++)]);
-                            gBean.setSamplePublic(line[(colIndex++)]);
+                            if(hasSampleName){
+                                if(hasParentSampleName) {
+                                    gBean.setParentSampleName(line[(colIndex++)]);
+                                }
+                                if(hasPublicFlag) {
+                                    gBean.setSamplePublic(line[(colIndex++)]);
+                                }
+                            }
                         }
 
                         gBean.setBeanList(new ArrayList<FileReadAttributeBean>());
@@ -335,10 +488,12 @@ public class TemplatePreProcessingUtils {
                             fBean.setAttributeValue(line[colIndex]);
                             gBean.getBeanList().add(fBean);
                         }
+
+                        gBean.setParsedRowData(line);
+
                         gridBeans.add(gBean);
                     }
                 }
-                lineCount++;
             }
         }
 
@@ -471,7 +626,7 @@ public class TemplatePreProcessingUtils {
     }
 
     private String extractRealAttributeName(String attributeHeader) {
-        String realAttributeName = attributeHeader;
+        String realAttributeName = attributeHeader.trim();
         if(attributeHeader.contains("[") && attributeHeader.endsWith("]")) {
             realAttributeName = attributeHeader.substring(attributeHeader.indexOf("[") + 1, attributeHeader.indexOf("]"));
         }
@@ -517,9 +672,10 @@ public class TemplatePreProcessingUtils {
 
         public String getDisplayHeader() { //append square brackets wrapped attribute name with a label
             String displayHeader = this.getName();
-            if(this.getLabel() != null && !this.getLabel().isEmpty()) {
-                displayHeader = this.getLabel() + "[" + displayHeader + "]";
-            }
+            //            Following lines commented for DPCC
+            //            if(this.getLabel() != null && !this.getLabel().isEmpty()) {
+            //                displayHeader = this.getLabel() + "[" + displayHeader + "]";
+            //            }
             return displayHeader;
         }
     }

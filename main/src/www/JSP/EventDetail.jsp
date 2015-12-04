@@ -19,451 +19,278 @@
   ~ along with this program.  If not, see <http://www.gnu.org/licenses/>.
   --%>
 
-<!DOCTYPE HTML>
+<!doctype html>
+
 <%@ page contentType="text/html; charset=UTF-8" %>
 <%@ taglib uri="/struts-tags" prefix="s" %>
 <%@ page isELIgnored="false" %>
 
-<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
 <head>
-  <link rel="stylesheet" href="style/dataTables.css" />
-  <link rel="stylesheet" href="style/cupertino/jquery-ui-1.8.18.custom.css" />
+  <jsp:include page="header.jsp" />
+  <link rel="stylesheet" href="style/dataTables.css" type='text/css' media='all' />
+  <link rel="stylesheet" href="style/cupertino/jquery-ui-1.8.18.custom.css" type='text/css' media='all' />
+  <%--
+  <link rel="stylesheet" href="style/version01.css" />--%>
   <style>
-    #popup {
-      height: 100%;
-      width: 100%;
-      background: #000000;
-      position: absolute;
-      top: 0;
-      -moz-opacity:0.75;
-      -khtml-opacity: 0.75;
-      opacity: 0.75;
-      filter:alpha(opacity=75);
-    }
-
-    #window {
-      width: 600px;
-      height: 300px;
-      margin: 0 auto;
-      border: 1px solid #000000;
-      background: #ffffff;
-      position: absolute;
-      top: 200px;
-      left: 25%;
-    }
     td._details {
       text-align:left;
       padding:0 0 0 35px;
       border: 1px gray dotted;
     }
-    td._details div { position: relative; overflow: auto; overflow-y: hidden; }
-    td._details table td { border:1px solid white; }
+    td._details div {
+      position: relative; overflow: auto; overflow-y: hidden;
+    }
+    td._details table td {
+      border:1px solid white;
+    }
 
-    .datatable_top, .datatable_table, .datatable_bottom { float:left; clear:both; width:100%;}
+    .datatable_top, .datatable_table, .datatable_bottom {
+      float:left;
+      clear:both;
+      width:100%;
+      min-width: 165px;
+    }
+    .datatable_table{width: 1500px;overflow-x: scroll;}
+    .dataTables_length {
+      height: 29px;
+      vertical-align: middle;
+      min-width: 165px !important;
+      margin-top: 2px;
+    }
+    .dataTables_filter {
+      width: 260px !important;
+    }
+    .dataTables_info {
+      padding-top: 0 !important;
+    }
+    .dataTables_paginate {
+      float: left !important;
+    }
+
+    #refreshDataBtn {position:absolute;height:24px;width:34px;margin-left:10px;border:1px solid #aed0ea;background:#d7ebf9;font-weight:bold;color:#2779aa;}
+    #columnFilterBtn:hover:after, #refreshDataBtn:hover:after{ background: #333; background: rgba(0,0,0,.8);
+      border-radius: 5px; bottom: 0px; color: #fff; content: attr(data-tooltip);
+      left: 140%; padding: 5px 15px; position: absolute; z-index: 98; width: auto; display: inline-table; }
+    #columnFilterBtn:hover:before, #refreshDataBtn:hover:before{border: solid; border-color: transparent #333;border-width: 6px 6px 6px 0px;
+      bottom: 8px; content: ""; left: 125%; position: absolute; z-index: 99;}
+
+    #column_filter{padding-bottom: 8px;margin: 10px 0 18px;}
+    #col_filter_border_l{border-left: 2px solid #333333;position: absolute;margin-left: 5px;left: 0;top: 45px;bottom: 0;}
+    #col_filter_border_b{border-bottom: 2px solid #333333;position: absolute;right: 95.1%;margin-left: 5px;left: 0;bottom: 0;}
+    .column_filter_box{margin: 5px 0 5px 15px;}
+    #columnSearchBtn{margin:10px 0 0 15px;width: 59px;}
+    .select_column, .select_operation, .filter_text, .removeColumnFilter{margin-left: 4px;}
+    .select_logicgate{width: 59px;}
+    .scrollButton{padding:10px;text-align:center;font-weight: bold;color: #FFFAFA;text-decoration: none;position:fixed;right:40px;background: rgb(0, 129, 179);display: none;}
   </style>
 </head>
-<body>
-<s:form id="eventDetailPage" name="eventDetailPage" namespace="/" action="eventDetail" method="post" theme="simple">
-  <s:hidden id="editable" name="editable" value="0" />
-  <s:include value="TopMenu.jsp" />
-  <div id="HeaderPane" style="margin:15px 0 0 30px;">
-    <div class="panelHeader">Event Detail</div>
-    <div id="errorMessagesPanel" style="margin-top:15px;"></div>
-    <s:if test="hasActionErrors()">
-      <input type="hidden" id="error_messages" value="<s:iterator value='actionErrors'><s:property/><br/></s:iterator>"/>
-    </s:if>
-    <s:if test="hasActionMessages()">
-      <div class="alert_info" onclick="$('.alert_info').remove();">
-        <strong><s:iterator value='actionMessages'><s:property/><br/></s:iterator></strong>
-      </div>
-    </s:if>
-  </div>
-  <div id="middle_content_template">
-    <!--<div id="columnsTable"></div>  for column listing-->
-    <div id="statusTableDiv">
-      <div id="tableTop">
-        <table>
-          <tr>
-            <td align="right">Project</td>
-            <td class="ui-combobox">
-              <s:select label="Project" id="_projectSelect" cssStyle="width:150px;margin:0 5 0 10;"
-                        list="projectList" name="selectedProjectId" headerKey="0" headerValue=""
-                        listValue="projectName" listKey="projectId" required="true"/>
-            </td>
-          </tr>
-          <tr>
-            <td align="right">Sample</td>
-            <td class="ui-combobox">
-              <s:select id="_sampleSelect" cssStyle="margin:0 5 0 10;" list="#{'0':''}"
-                        name="selectedSampleId" required="true"/>
-            </td>
-          </tr>
-        </table>
-      </div>
-      <div style="margin:25px 10px 0 0;"><h1 class="csc-firstHeader">Project Details</h1></div>
-      <div id="projectTableDiv" style="margin:0 10px 5px 0;">
-        <table name="projectTable" id="projectTable" class="contenttable" style="width:95%;">
-          <tbody id="projectTableBody">
-          </tbody>
-        </table>
-        <input onclick="_page.popup.project();" style="margin-top:10px;" disabled="true" type="button" value="Edit Project" id="editProjectBtn" />
-      </div>
-      <div style="margin:25px 10px 0 0;">
 
-        <h1 class="csc-firstHeader">Sample Details
-          <a href="javascript:$('#sampleTableDiv').toggle(400);buttonSwitch(null, 'sampleToggleImage');">
-            <img id="sampleToggleImage"/>
-          </a>
-        </h1>
-      </div>
-      <div id="sampleTableDiv" style="margin:0 10px 5px 0;clear:both">
-        <table name="sampleTable" id="sampleTable" class="contenttable" style="width:95%;">
-          <thead id="sampleTableHeader">
-          <tr>
-            <th style="width:23px !important;text-align:center"><img id="table_openBtn"/></th>
-            <th class="tableHeaderStyle">Sample Name</th>
-            <th class="tableHeaderStyle">Parent</th>
-            <th class="tableHeaderStyle">User</th>
-            <th class="tableHeaderStyle">Date</th>
-            <th>Hidden</th>
-          </tr>
-          </thead>
-          <tbody id="sampleTableBody"/>
-        </table>
-      </div>
-      <div style="margin:25px 10px 0 0;">
-        <h1 class="csc-firstHeader">Event Details
-          <a href="javascript:$('#eventDateDiv').toggle(400);$('#eventTableDiv').toggle(400);buttonSwitch(null,'eventToggleImage');">
-            <img id="eventToggleImage"/>
-          </a>
-        </h1>
-      </div>
-      <div id="eventDateDiv" style="margin:3px 10px 0 0;">
-        Date Range:
-        <s:textfield id="fromDate" name="fromDate"/> ~ <s:textfield id="toDate" name = "toDate"/>
-      </div>
-      <div id="eventTableDiv" style="margin:10px 10px 5px 0;clear:both">
-        <table name="eventTable" id="eventTable" class="contenttable" style="width:95%;">
-          <thead id="eventTableHeader">
-          <tr>
-            <th style="width:23px !important;text-align:center"><img id="table_openBtn"/></th>
-            <th class="tableHeaderStyle">Event Type</th>
-            <th class="tableHeaderStyle">Sample Name</th>
-            <th class="tableHeaderStyle">Date</th>
-            <th class="tableHeaderStyle">User</th>
-            <th class="tableHeaderStyle">Status</th>
-            <th>Hidden</th>
-          </tr>
-          </thead>
-          <tbody id="eventTableBody" />
-        </table>
-        <div/>
+<body class="smart-style-2">
+<div id="container">
+
+  <jsp:include page="top.jsp" />
+
+  <div id="main" class="">
+    <a href="#" class="scrollButton scrollToTop" style="top:75px;"><i class="glyphicon glyphicon-chevron-up"></i></a>
+    <a href="#" class="scrollButton scrollToBottom" style="top:125px;"><i class="glyphicon glyphicon-chevron-down"></i></a>
+    <div id="inner-content" class="">
+      <div id="content" class="container max-container" role="main">
+        <div id="ribbon">
+          <ol class="breadcrumb">
+            <li>
+              <a href="/ometa/secureIndex.action">Dashboard</a>
+            </li>
+            <li>Data Submission</li>
+            <li>Search and Edit Data</li>
+          </ol>
+        </div>
+
+        <s:form id="eventDetailPage" name="eventDetailPage" namespace="/" action="eventDetail" method="post" theme="simple">
+          <s:hidden id="editable" name="editable" value="0" />
+          <div class="page-header">
+            <h1>Search and Edit Data</h1>
+          </div>
+          <div id="HeaderPane">
+            <div id="errorMessagesPanel" style="margin-top:15px;margin-bottom: 15px; color: #ffffff;background-color: #a90329;border-color: #900323;width: auto;display: inline-block;"></div>
+            <s:if test="hasActionErrors()">
+              <input type="hidden" id="error_messages" value="<s:iterator value='actionErrors'><s:property/><br/></s:iterator>"/>
+            </s:if>
+            <s:if test="hasActionMessages()">
+              <div class="alert_info" onclick="$('.alert_info').remove();" style="margin-bottom: 15px;">
+                <div class="alert_info" onclick="$('.alert_info').remove();">
+                  <strong style="color: #31708f;background-color: #d9edf7;padding: 3px;border-color: #bce8f1;border: 1px solid transparent;padding: 6px 12px;"><s:iterator value='actionMessages'><s:property/></s:iterator></strong>
+                </div>
+              </div>
+            </s:if>
+          </div>
+          <div id="mainContent">
+            <!--<div id="columnsTable"></div>  for column listing-->
+            <div id="statusTableDiv">
+              <div id="tableTop">
+                <div class="row">
+                  <div class="col-md-2">Project Name</div>
+                  <div class="col-md-5 combobox" style="display: inline-flex;">
+                    <s:select label="Project" id="_projectSelect" cssStyle="width:150px;margin:0 5 0 10;"
+                              list="projectList" name="projectId" headerKey="0" headerValue="Select by Project Name"
+                              listValue="projectName" listKey="projectId" required="true"/>
+                    <button type="button" class="btn btn-default btn-xs" id="refreshDataBtn" onclick="refreshData();" data-tooltip="Refresh Data">
+                      <span class="glyphicon glyphicon-refresh" aria-hidden="true"></span>
+                    </button>
+                  </div>
+                  <div id="loadingImg" style="display: none;">
+                    <div class="container">
+                      <img src="images/loading.gif" style="width: 24px;"/>
+                    </div>
+                  </div>
+                </div>
+                  <%--<div class="row row_spacer">
+                    <div class="col-md-2">Sample</div>
+                    <div class="col-md-10 combobox">
+                      <s:select id="_sampleSelect" cssStyle="margin:0 5 0 10;" list="#{'0':'Select by Sample'}"
+                                name="selectedSampleId" required="true"/>
+                    </div>
+                  </div>--%>
+              </div>
+
+              <!-- project -->
+              <div id="projectTableDivHeader" style="margin:25px 10px 0 0;">
+                <h2 class="csc-firstHeader middle-header">Project Details <img id="toggleProjectDetails" src="images/dataTables/details_open.png"></h2>
+              </div>
+
+              <div id="projectTableDiv" style="margin:0 10px 5px 0;">
+                <table name="projectTable" id="projectTable" class="contenttable" style="width:95%;">
+                  <tbody id="projectTableBody">
+                  </tbody>
+                </table>
+                <!-- <input onclick="_page.edit.project();" style="margin-top:10px;" disabled="true" type="button" value="Edit Project" id="editProjectBtn" /> -->
+              </div>
+
+              <!-- sample -->
+              <div id="sampleTableDivHeader" style="margin:25px 10px 0 0;">
+                <h2 class="csc-firstHeader middle-header">Sample Details</h2>
+              </div>
+              <div id="sampleTableDiv" style="margin:0 10px 5px 0;clear:both;">
+                <table name="sampleTable" id="sampleTable" class="contenttable" style="min-width: 2000px;">
+                  <thead id="sampleTableHeader">
+                  <tr>
+                  </tr>
+                  </thead>
+                  <tfoot id="sampleTableFooter" style="display: none;">
+                  <tr>
+                  </tr>
+                  </tfoot>
+                  <tbody id="sampleTableBody"/>
+                </table>
+                <input onclick="_page.edit.sampleEvent();" class="btn btn-primary" disabled="true" type="button" value="Edit Sample" id="editSampleBtn" style="margin-top: 20px;" />
+              </div>
+
+            </div>
+          </div>
+
+        </s:form>
+
       </div>
     </div>
   </div>
+</div>
 
-</s:form>
+<jsp:include page="../html/footer.html" />
 
 <script src="scripts/jquery/jquery.dataTables.js"></script>
+<script src="scripts/jquery/jquery.dataTables.columnFilter.js"></script>
+<%--<script src="scripts/jquery/jquery.tableTools.js"></script>--%>
+<script src="scripts/jquery/jquery.colReorderWithResize.js"></script>
+<script src="scripts/page/event.detail.js"></script>
 <script>
-var openBtn = "images/dataTables/details_open.png",
-    closeBtn = "images/dataTables/details_close.png",
-    subrow_html='<div><table cellpadding="6" cellspacing="0">$d$</table></div>';
+  $(document).ready(function() {
+    $('#projectTableDivHeader').hide();
+    $('#projectTableDiv').hide();
+    $('#sampleTableDivHeader').hide();
+    $('#sampleTableDiv').hide();
+    $('#refreshDataBtn').hide();
 
-var sDT, //sample detail table
-    eDT; //event detail table
+    utils.combonize('statusTableDiv');
+    utils.initDatePicker();
 
-//dataTables functions
-$.fn.dataTableExt.afnFiltering.push(
-    function( oSettings, aData, iDataIndex ) {
-      var fromDate = $('#fromDate').val(), toDate = $('#toDate').val();
-      if ( fromDate == "" && toDate == "" ) { return true; }
-      var iMin = parseInt(fromDate===''?'0':fromDate.split("-").join("")),
-          iMax = parseInt(toDate===''?'0':toDate.split("-").join("")),
-          iDate = parseInt(aData[3].split("-").join(""));
-      if ((iMin===0 && iDate<=iMax) || (iMin<=iDate && 0===iMax) || (iMin<=iDate && iDate<=iMax))
-        return true;
-      else
-        return false;
-    }
-);
-$.fn.dataTableExt.oApi.fnFilterOnReturn = function (oSettings) {
-  var _settings = this, anControl = $('input', _settings.fnSettings().aanFeatures.f);
-  $('img[id^="dosearch_'+oSettings.sTableId+'"]').live('click', function(e) {
-    if(anControl.val()!=null && anControl.val().trim()!=='')
-      _settings.fnFilter(anControl.val());
-  });
-
-  _settings.each(function (i) {
-    $.fn.dataTableExt.iApiIndex = i;
-    anControl.unbind('keyup').bind('keypress', function (e) {
-      if (e.which == 13) {
-        $.fn.dataTableExt.iApiIndex = i;
-        _settings.fnFilter(anControl.val());
+    //empty project select box
+    $('#_projectSelect ~ input').click(function() {
+      var $projectNode = $('#_projectSelect');
+      if($projectNode.val() === '0') {
+        $(this).val('');
+        $projectNode.val('0');
       }
     });
-    return this;
-  });
-  return _settings;
-};
-$.fn.dataTableExt.oApi.fnNewAjax = function (oSettings, sNewSource) {
-  if (sNewSource != null) {
-    oSettings.sAjaxSource = sNewSource;
-  }
-  $('input', this.fnSettings().aanFeatures.f).val('');
-  oSettings.oPreviousSearch.sSearch='';
-  this.fnDraw();
-};
 
-var _page = {
-      change: {
-        project: function(projectId, sampleId) {
-          if(_page.get.project(projectId) == true) {
-            _page.get.sample(projectId);
-            _page.change.sample(projectId, sampleId?sampleId:0)
-            $("#editProjectBtn").attr("disabled", ($("#editable").val()!=1));
-          } else {
-            //reset
-            $("#_sampleSelect").html(vs.empty);
-            $("tbody#projectTableBody").empty();
-            if(sDT && eDT) {
-                sDT.fnNewAjax("eventDetailAjax.action?type=sdt&projectId=0");
-                eDT.fnNewAjax("eventDetailAjax.action?type=sdt&projectId=0");
-            }
-            $("#editProjectBtn").attr("disabled", "true");
-            utils.error.add("You do not have permission to access the project.");
-          }
-        },
-        sample: function(projectId, sampleId) {
-          _page.get.sdt(projectId, sampleId);
-          _page.get.edt(projectId, sampleId, 0);
-        },
-        event: function(eventId) {
-          gethtmlByType("ces", 0, 0, eventId);
-        }
-      },
-      popup: {
-        project: function() {
-          $.openPopupLayer({
-            name: "LPopupProjectEdit",
-            width: 450,
-            url: "projectEditOpen.action?projectId="+$('#_projectSelect').val()
-          });
-        },
-        sample: function(sampleId) {
-          $.openPopupLayer({
-            name: "LPopupSampleEdit",
-            width: 450,
-            url: "sampleEditOpen.action?projectId="+$('#_projectSelect').val()+"&sampleId="+sampleId
-          });
-        }
-      },
-      get: {
-        project: function(projectId) {
-          return gethtmlByType("Project", projectId, 0, 0);
-        },
-        sample: function(projectId) {
-          return gethtmlByType("Sample", projectId, 0, 0);
-        },
-        sdt: function(projectId, sampleId) {
-          $('#fromDate, #toDate').val('');
-          sDT.fnNewAjax("eventDetailAjax.action?type=sdt&projectId="+projectId+"&sampleId="+sampleId+"&eventId=0");
-        },
-        edt: function(projectId, sampleId, eventId) {
-          var dates = "&fd="+$('input[name="fromDate"]').val()+"&td="+$('input[name="toDate"]').val();
-          eDT.fnNewAjax("eventDetailAjax.action?type=edt&projectId="+projectId+"&sampleId="+sampleId+"&eventId=0"+dates);
-        }
-      },
-      callbacks: {
-        project: function() {},
-        sample: function() {},
-        event: function() {}
+    $('#fromDate, #toDate').change( function() {
+      _page.get.edt($('#_projectSelect').val(), $('#_sampleSelect').val());
+    });
+    $('#eventToggleImage, #sampleToggleImage, #table_openBtn').attr('src', openBtn);
+
+    //add click listener on row expander
+    $('tbody td #rowDetail_openBtn').live('click', function () {
+      var _row = this.parentNode.parentNode, _is_event=(_row.parentNode.id.indexOf('event')>=0), _table=_is_event?eDT:sDT;
+      if(this.src.indexOf('details_close')>=0){
+        this.src = openBtn;
+        _table.fnClose(_row);
+      } else {
+        this.src = closeBtn;
+        _table.fnOpen(_row, subrow_html.replace(/\\$d\\$/, _table.fnGetData(_row)[(_is_event?6:5)]), '_details');
+        $('td._details').attr('colspan', 7); //fix misalignment issue in chrome by incresing colspan by 1
+        $('td._details>div').css('width', $('#projectTableDiv').width()-90);
       }
-    },
-    openSampleEditPopup = function(sampleId) {
-      _page.popup.sample(sampleId);
-    },
-    changeEventStatus = function(eventId) {
-      _page.change.event(eventId);
-    },
-    buttonSwitch = function(node, name) {
-      if(node==null) { node = document.getElementById(name); }
-      if(node.src.match('details_close')){ node.src = openBtn; } else { node.src = closeBtn; }
-    };
+    });
 
+    $('thead #table_openBtn').live('click', function () {
+      var _is_event=this.parentNode.parentNode.parentNode.id.indexOf('event')>=0;
+      $('#'+(_is_event?'eventTable':'sampleTable')+' #rowDetail_openBtn').click();
+      buttonSwitch(this);
+    });
 
-function comboBoxChanged(option, id) {
-  if(id==='_projectSelect') {
-    document.getElementById('sampleTable').getElementsByTagName('img')[0].src = openBtn;
-    document.getElementById('eventTable').getElementsByTagName('img')[0].src = openBtn;
-    if(option.value!=null && option.value!=0 && option.text!=null && option.text!='') {
-      _page.change.project(option.value, 0);
-      $('.ui-autocomplete-input').val('');
-    } else {
-      $("#_sampleSelect").html(vs.empty);
-    }
-  } else if(id==='_sampleSelect') {
-    if(option.value!=null && option.text!=null && option.text!='') {
-      _page.change.sample($('#_projectSelect').val(), option.value);
-    }
-  }
-}
+    $('#toggleProjectDetails').live('click', function () {
+      $('#projectTableDiv').toggle();
+      buttonSwitch(this);
+    });
 
-<!-- Generate html content using Ajax by type -->
-function gethtmlByType(ajaxType, projectId, sampleId, eventId) {
-  var content = '', rtnVal = false;
-  $.ajax({
-    url:"sharedAjax.action",
-    cache: false,
-    async: ajaxType==='Project'?false:true,
-    data: "type="+ajaxType+"&projectId="+projectId+"&sampleId="+sampleId+"&eventId="+eventId,
-    success: function(html){
-      if(html.aaData) {
-        if(ajaxType == "Project") {
-          $(html.aaData).each(function(i1,v1) {
-            if(v1) {
-              $.each(v1, function(i2,v2) {
-                if(v2) {
-                  if(i2==="editable") { $("#editable").val(v2); }
-                  else { content += '<tr class="even"><td width="25%">'+i2+'</td><td>'+v2+'</td></tr>'; }
-                }
-              });
-              rtnVal = true;
-            }
-          });
-          $("tbody#projectTableBody").html(content);
-        } else if(ajaxType == "Sample") {
-          var list = vs.alloption;
-          $(html.aaData).each(function(i1,v1) {
-            if(v1) { list += vs.vnoption.replace("$v$",v1.id).replace("$n$",v1.name); }
-          });
-          if(sampleId == null || sampleId == 0) { $("#_sampleSelect").html(list); }
-
-        } else if(ajaxType == "ces") {
-          if(html.aaData && html.aaData[0]==='success') {
-            _page.get.edt($('#_projectSelect').val(), $('#_sampleSelect').val(), 0);
-            rtnVal = true;
-          }
-        }
+    //preload page with data if available
+    var projectId = '${projectId}', sampleId='${sampleId}';
+    if(projectId && projectId != 0) {
+      utils.preSelect('_projectSelect', projectId);
+      _page.change.project(projectId, 0);
+      if(sampleId && sampleId != 0) {
+        utils.preSelect('_sampleSelect', sampleId);
       }
+
+      $('#refreshDataBtn').show();
     }
-  });
-  return rtnVal;
-}
+    utils.error.check();
 
-$(document).ready(function() {
 
-  utils.combonize('statusTableDiv');
-  utils.initDatePicker();
-  $('#fromDate, #toDate').change( function() {
-    _page.get.edt($('#_projectSelect').val(), $('#_sampleSelect').val());
-  });
-  $('#eventToggleImage, #sampleToggleImage, #table_openBtn').attr('src', openBtn);
-
-  <!-- SAMPLE TABLE -->
-  sDT = $("#sampleTable").dataTable({
-    "sDom": '<"datatable_top"lf><"datatable_table"rt><"datatable_bottom"ip>',
-    "bProcessing": true,
-    "bServerSide": true,
-    "sPaginationType": "full_numbers",
-    "sAjaxSource": "",
-    "fnServerData": function (sSource, aoData, fnCallback) {
-      if(sSource!=='') {
-        $.ajax({
-          dataType: 'json',
-          type: "POST",
-          url: sSource,
-          data: aoData,
-          success: function(json) {
-            fnCallback(json);
-          }
-        });
+    var offset = 250;
+    var duration = 300;
+    $(window).scroll(function() {
+      if ($(this).scrollTop() > offset) {
+        $('.scrollToTop').fadeIn(duration);
+      } else {
+        $('.scrollToTop').fadeOut(duration);
       }
-    },
-    "bAutoWidth" : false,
-    "aoColumnDefs": [
-      {"sWidth": "23px", "bSortable": false, "aTargets": [ 0 ]},
-      {"sWidth": "30%", "aTargets":[1]},
-      {"sWidth": "30%", "aTargets":[2]},
-      {"sWidth": "20%", "aTargets":[3]},
-      {"sWidth": "20%", "aTargets":[4]},
-      {"bSearchable": true, "bVisible": false, "aTargets": [ 5 ]}
-    ]
-  }).fnFilterOnReturn();
 
-  <!-- EVENT TABLE -->
-  eDT =  $("#eventTable").dataTable({
-    "sDom": '<"datatable_top"lf><"datatable_table"rt><"datatable_bottom"ip>',
-    "bProcessing": true,
-    "bServerSide": true,
-    "sPaginationType": "full_numbers",
-    "sAjaxSource": "",  
-    "fnServerData": function ( sSource, aoData, fnCallback ) {
-      if(sSource!=='') {
-        $.ajax({
-          dataType: 'json',
-          type: "POST",
-          url: sSource,
-          data: aoData,
-          success: function(json) {
-            fnCallback(json);
-          }
-        });
+      if ((($(document).height() - $(this).height()) - $(this).scrollTop()) > offset) {
+        $('.scrollToBottom').fadeIn(duration);
+      } else {
+        $('.scrollToBottom').fadeOut(duration);
       }
-    },
-    "bAutoWidth" : false,
-    "aoColumnDefs": [
-      {"sWidth": "23px", "bSortable": false, "aTargets": [ 0 ]},
-      {"sWidth": "20%", "aTargets":[1]},
-      {"sWidth": "30%", "aTargets":[2]},
-      {"sWidth": "20%", "aTargets":[3]},
-      {"sWidth": "20%", "aTargets":[4]},
-      {"sWidth": "10%", "aTargets":[5]},
-      {"bSearchable": true, "bVisible": false, "aTargets": [ 6 ]}
-    ]
-  }).fnFilterOnReturn();
+    });
 
-  //add click listener on row expander
-  $('tbody td #rowDetail_openBtn').live('click', function () {
-    var _row = this.parentNode.parentNode, _is_event=(_row.parentNode.id.indexOf('event')>=0), _table=_is_event?eDT:sDT;
-    if(this.src.indexOf('details_close')>=0){
-      this.src = openBtn;
-      _table.fnClose(_row);
-    } else {
-      this.src = closeBtn;
-      _table.fnOpen(_row, subrow_html.replace(/\\$d\\$/, _table.fnGetData(_row)[(_is_event?6:5)]), '_details');
-      $('td._details').attr('colspan', 7); //fix misalignment issue in chrome by incresing colspan by 1
-      $('td._details>div').css('width', $('#projectTableDiv').width()-90);
-    }
+    $('.scrollToTop').click(function(event) {
+      $('html, body').animate({scrollTop: 0}, duration);
+      return false;
+    })
+
+    $('.scrollToBottom').click(function(event) {
+      $('html, body').animate({scrollTop: $(document).height()}, duration);
+      return false;
+    })
   });
-
-  $('thead #table_openBtn').live('click', function () {
-    var _is_event=this.parentNode.parentNode.parentNode.id.indexOf('event')>=0;
-    $('#'+(_is_event?'eventTable':'sampleTable')+' #rowDetail_openBtn').click();
-    buttonSwitch(this);
-  });
-
-  //preload page with data if available
-  var projectId = '${projectId}', sampleId='${sampleId}';
-  if(projectId && projectId != 0) {
-    utils.preSelect('_projectSelect', projectId);
-    _page.change.project(projectId, 0);
-    if(sampleId && sampleId != 0) {
-      utils.preSelect('_sampleSelect', sampleId);
-    }
-  }
-
-  //add search button to filter box
-  $('.dataTables_filter[id$="_filter"]').each(function(i1) {
-    $(this).append('<img id="dosearch_'+this.id+'" style="float:right;" class="ui-icon ui-icon-search" title="Search" />&nbsp;');
-  });
-  $('#sampleTableDiv, #eventTableDiv, #eventDateDiv').toggle(300);
-
-  utils.error.check();
-});
-
-
 </script>
 </body>
 </html>
-

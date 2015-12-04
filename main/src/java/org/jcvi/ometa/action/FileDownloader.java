@@ -22,12 +22,19 @@
 package org.jcvi.ometa.action;
 
 import com.opensymphony.xwork2.ActionSupport;
+import org.apache.log4j.Logger;
+import org.apache.struts2.ServletActionContext;
+import org.jcvi.ometa.db_interface.ReadBeanPersister;
+import org.jcvi.ometa.model.Actor;
+import org.jcvi.ometa.model.ActorGroup;
+import org.jcvi.ometa.model.Project;
 import org.jcvi.ometa.utils.Constants;
 import org.jtc.common.util.property.PropertyHelper;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
+import java.util.List;
 import java.util.Properties;
 
 /**
@@ -37,28 +44,66 @@ import java.util.Properties;
  * Time: 10:54 AM
  */
 public class FileDownloader extends ActionSupport {
+    private static Logger logger = Logger.getLogger(FileDownloader.class);
+
+    private final String PROJECT_FILE_STORAGE;
+
+    private String fp;
+
     private InputStream fileInputStream;
-    private String fileStoragePath;
-    private String fn;
+    private String fileType;
+    private String fileName;
+
+    private ReadBeanPersister readPersister;
 
     public FileDownloader() {
         Properties props = PropertyHelper.getHostnameProperties(Constants.PROPERTIES_FILE_NAME);
-        fileStoragePath = props.getProperty(Constants.CONIFG_FILE_STORAGE_PATH); //file storage area
+        this.PROJECT_FILE_STORAGE = props.getProperty(Constants.CONIFG_FILE_STORAGE_PATH) + File.separator + Constants.DIRECTORY_PROJECT;
+
+        this.readPersister = new ReadBeanPersister(props);
     }
 
     public String download() {
         String rtnVal = ERROR;
         try {
-            File file = new File(fileStoragePath + File.separator + fn);
-            if(file.exists() && file.canRead()) {
-                fileInputStream = new FileInputStream(file);
-                fn = fn.substring(fn.lastIndexOf(File.separator)+1);
-                rtnVal = SUCCESS;
+            String userName = ServletActionContext.getRequest().getRemoteUser();
+            Actor actor = this.readPersister.getActorByUserName(userName);
+            List<ActorGroup> actorGroups = this.readPersister.getActorGroup(actor.getLoginId());
+
+            String currProjectId = this.fp.substring(0, this.fp.indexOf(File.separator));
+            Project currProject = this.readPersister.getProject(Long.parseLong(currProjectId));
+            Long projectViewGroup= currProject.getViewGroup();
+
+            boolean hasAccess = false;
+
+            for(ActorGroup actorGroup : actorGroups) {
+                if(projectViewGroup.equals(actorGroup.getGroupId())) {
+                    hasAccess = true;
+                    break;
+                }
+            }
+
+            if(hasAccess) {
+                File file = new File(this.PROJECT_FILE_STORAGE + File.separator + this.fp);
+                if(file.exists() && file.canRead()) {
+                    this.fileInputStream = new FileInputStream(file);
+                    this.fileName = file.getName();
+                    this.fileType = "application/octet-stream";
+                    rtnVal = SUCCESS;
+                }
             }
         } catch (Exception ex) {
             ex.printStackTrace();
         }
         return rtnVal;
+    }
+
+    public String getFp() {
+        return fp;
+    }
+
+    public void setFp(String fp) {
+        this.fp = fp;
     }
 
     public InputStream getFileInputStream() {
@@ -69,11 +114,19 @@ public class FileDownloader extends ActionSupport {
         this.fileInputStream = fileInputStream;
     }
 
-    public String getFn() {
-        return fn;
+    public String getFileType() {
+        return fileType;
     }
 
-    public void setFn(String fn) {
-        this.fn = fn;
+    public void setFileType(String fileType) {
+        this.fileType = fileType;
+    }
+
+    public String getFileName() {
+        return fileName;
+    }
+
+    public void setFileName(String fileName) {
+        this.fileName = fileName;
     }
 }

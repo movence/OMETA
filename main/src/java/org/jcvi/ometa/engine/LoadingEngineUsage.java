@@ -49,6 +49,7 @@ public class LoadingEngineUsage {
     protected static final String BATCH_SIZE_PARAM_NAME = "b";
     protected static final String MAKE_EVENT_PARAM_NAME = "template";
     protected static final String BATCH_PARAM_NAME = "batch";
+    protected static final String DOWNLOAD_DATA_PARAM_NAME = "dd";
     protected static final String DATABASE_ENVIRONMENT_PARAM_NAME = "server";
 
     private OptionParameter usernameParam;
@@ -63,8 +64,20 @@ public class LoadingEngineUsage {
     private OptionParameter batchSizeParam;
     private FlagParameter makeTemplateFlag;
     private FlagParameter batchFlag;
+    private FlagParameter downloadDataFlag;
     private OptionParameter serverUrlParam;
     private StringBuilder errors;
+
+    //bulk load variables
+    private String submitter;
+    private String submitterName;
+    private String submitterEmail;
+    private int totalCount;
+    private int successCount;
+    private int failCount;
+    private String logFileName;
+    private String failFileName;
+    private String outputDirectory;
 
 
     /**
@@ -108,9 +121,9 @@ public class LoadingEngineUsage {
         errors = new StringBuilder();
 
         try {
-            if(isMakeEventTemplate() || (isBatchLoad() && outputLocationParam.getValue() != null)) { //validate on an output location
+            if(isMakeEventTemplate() || isBatchLoad() || isDownloadData()) { //validate on an output location
                 validateOutputLocation(outputLocationParam.getValue(), rtnVal);
-                if(isEmpty(projectNameParam) || isEmpty(eventNameParam)) {
+                if(isMakeEventTemplate() && (isEmpty(projectNameParam) || isEmpty(eventNameParam))) {
                     errors.append("need values for project and event.\n");
                     rtnVal = false;
                 }
@@ -147,7 +160,7 @@ public class LoadingEngineUsage {
             }
 
             if(isEmpty(serverUrlParam)) {
-                errors.append("Value must be provided for ").append(serverUrlParam.getName()).append("\n");
+                errors.append(serverUrlParam.getName()).append("is required.\n");
                 rtnVal = false;
             }
 
@@ -156,7 +169,7 @@ public class LoadingEngineUsage {
                 if(isEmpty(usernameParam)) {
                     Console console = System.console();
                     if(console == null) {
-                        errors.append("No " + usernameParam.getName() + " given, and no console available.\n");
+                        errors.append(usernameParam.getName()).append(" required, and no console available.\n");
                     } else {
                         usernameParam.setValue(console.readLine("Enter your USERNAME, please: "));
                     }
@@ -164,16 +177,14 @@ public class LoadingEngineUsage {
                 if(isEmpty(passwordParam)) {
                     Console console = System.console();
                     if(console == null) {
-                        errors.append("No " + passwordParam.getName() + " given, and no console available.\n");
+                        errors.append(passwordParam.getName()).append(" required, and no console available.\n");
                     } else {
                         char[] passwordArr = console.readPassword("Enter your PASSWORD, please: ");
                         passwordParam.setValue(new String(passwordArr));
                     }
                 }
                 if(isEmpty(usernameParam) || isEmpty(passwordParam)) {
-                    errors.append("For the combination of parameters given, you must either provide both a " +
-                            usernameParam.getName() + " value and a " + passwordParam.getName() +
-                            " value, or you must respond with them when prompted.\n");
+                    errors.append("Both ").append(usernameParam.getName()).append(" and ").append(passwordParam.getName()).append(" are required or you must respond with them when prompted.\n");
                     rtnVal = false;
                 }
             }
@@ -204,11 +215,12 @@ public class LoadingEngineUsage {
                 batchSizeParam,
                 makeTemplateFlag,
                 batchFlag,
+                downloadDataFlag,
                 serverUrlParam
         };
 
         String blurb = "Loading engine: loads files of events and settings, to be written to the events database.  " +
-                " To make events, and get more detailed information, get a template with " +
+                " To load events, and get more detailed information, get a template with " +
                 "-" + MAKE_EVENT_PARAM_NAME + ",  -" + PROJECT_NAME_PARAM_NAME  + ", -" + EVENT_NAME_PARAM_NAME + "(, -" + SAMPLE_NAME_PARAM_NAME + ").";
         return CommandLineHandler.getGeneralJavaUsage(LoadingEngine.class, "", allParams, blurb, false);
 
@@ -223,31 +235,33 @@ public class LoadingEngineUsage {
     private CommandLineHandler initCommandLineHandler() throws Exception {
         CommandLineHandler commandLineHandler = new CommandLineHandler();
         usernameParam = commandLineHandler.addOptionParameter(USERNAME_PARAM_NAME);
-        usernameParam.setUsageInfo("If username not given here, you will be prompted.");
+        usernameParam.setUsageInfo("username not given here, you will be prompted.");
         passwordParam = commandLineHandler.addOptionParameter(PASSWORD_PARAM_NAME);
-        passwordParam.setUsageInfo("Password not given here, you will be prompted.");
+        passwordParam.setUsageInfo("password not given here, you will be prompted.");
         inputFileNameParam = commandLineHandler.addOptionParameter(INPUTFILE_PARAM_NAME);
-        inputFileNameParam.setUsageInfo("Input file to be loaded, which applies to only one Project, Sample or Event.");
+        inputFileNameParam.setUsageInfo("input file to be loaded, which applies to only one Project, Sample or Event.");
         multiInputFileParam = commandLineHandler.addOptionParameter(MULTIPART_INPUTFILE_PARAM_NAME);
-        multiInputFileParam.setUsageInfo("Input file to be loaded, which applies multiple types of settings.");
+        multiInputFileParam.setUsageInfo("input file to be loaded, which applies multiple types of settings.");
         multiDirectoryParam = commandLineHandler.addOptionParameter(MULTIPART_DIRECTORY_PARAM_NAME);
-        multiDirectoryParam.setUsageInfo("Directory that has files to be loaded, which applies multiple types of settings.");
+        multiDirectoryParam.setUsageInfo("directory that has files to be loaded, which applies multiple types of settings.");
         projectNameParam = commandLineHandler.addOptionParameter(PROJECT_NAME_PARAM_NAME);
-        projectNameParam.setUsageInfo("Project name to be used when generating template. Use with -" + MAKE_EVENT_PARAM_NAME);
+        projectNameParam.setUsageInfo("project name for loading or creating a template.");
         sampleNameParam = commandLineHandler.addOptionParameter(SAMPLE_NAME_PARAM_NAME);
-        sampleNameParam.setUsageInfo("Optional sample name to be used when generating template. Use with -" + MAKE_EVENT_PARAM_NAME);
+        sampleNameParam.setUsageInfo("Optional sample name for events that require a sample.");
         eventNameParam = commandLineHandler.addOptionParameter(EVENT_NAME_PARAM_NAME);
-        eventNameParam.setUsageInfo("Event Name for loading or creating a template.");
+        eventNameParam.setUsageInfo("event name for loading or creating a template.");
         outputLocationParam = commandLineHandler.addOptionParameter(OUTPUTLOC_PARAM_NAME);
-        outputLocationParam.setUsageInfo("Output directory for use with -" + MAKE_EVENT_PARAM_NAME + " only.");
+        outputLocationParam.setUsageInfo("Output directory for a template and logs.");
         batchSizeParam = commandLineHandler.addOptionParameter(BATCH_SIZE_PARAM_NAME);
-        batchSizeParam.setUsageInfo("User configurable batch size per transaction. default is 1.");
+        batchSizeParam.setUsageInfo("user configurable batch size per transaction. default is 1.");
         makeTemplateFlag = commandLineHandler.addFlagParameter(MAKE_EVENT_PARAM_NAME);
-        makeTemplateFlag.setUsageInfo("Output file template of the event name given will be created, with headers and prompts to help fill it in.");
+        makeTemplateFlag.setUsageInfo("flag for creating an event template.");
         batchFlag = commandLineHandler.addFlagParameter(BATCH_PARAM_NAME);
-        batchFlag.setUsageInfo("Load large event file line by line with a log file.");
+        batchFlag.setUsageInfo("flag for batch load.");
+        downloadDataFlag = commandLineHandler.addFlagParameter(DOWNLOAD_DATA_PARAM_NAME);
+        downloadDataFlag.setUsageInfo("flag for download project data");
         serverUrlParam = commandLineHandler.addOptionParameter(DATABASE_ENVIRONMENT_PARAM_NAME);
-        serverUrlParam.setUsageInfo("Specify server host/port(hostname.domain:port) to be used. please check with Project Websites team for values");
+        serverUrlParam.setUsageInfo("server host/port(hostname.domain:port).");
 
         return commandLineHandler;
     }
@@ -388,7 +402,83 @@ public class LoadingEngineUsage {
         return batchFlag.getValue();
     }
 
+    public boolean isDownloadData() {
+        return downloadDataFlag.getValue();
+    }
+
     public String getBatchSize() {
         return batchSizeParam.getValue();
+    }
+
+    public String getSubmitter() {
+        return submitter;
+    }
+
+    public void setSubmitter(String submitter) {
+        this.submitter = submitter;
+    }
+
+    public int getTotalCount() {
+        return totalCount;
+    }
+
+    public void setTotalCount(int totalCount) {
+        this.totalCount = totalCount;
+    }
+
+    public int getSuccessCount() {
+        return successCount;
+    }
+
+    public void setSuccessCount(int successCount) {
+        this.successCount = successCount;
+    }
+
+    public int getFailCount() {
+        return failCount;
+    }
+
+    public void setFailCount(int failCount) {
+        this.failCount = failCount;
+    }
+
+    public String getOutputDirectory() {
+        return outputDirectory;
+    }
+
+    public void setOutputDirectory(String outputDirectory) {
+        this.outputDirectory = outputDirectory;
+    }
+
+    public String getFailFileName() {
+        return failFileName;
+    }
+
+    public void setFailFileName(String failFileName) {
+        this.failFileName = failFileName;
+    }
+
+    public String getLogFileName() {
+        return logFileName;
+    }
+
+    public void setLogFileName(String logFileName) {
+        this.logFileName = logFileName;
+    }
+
+    public String getSubmitterName() {
+        return submitterName;
+    }
+
+    public void setSubmitterName(String submitterName) {
+        this.submitterName = submitterName;
+    }
+
+    public String getSubmitterEmail() {
+        return submitterEmail;
+    }
+
+    public void setSubmitterEmail(String submitterEmail) {
+        this.submitterEmail = submitterEmail;
     }
 }
