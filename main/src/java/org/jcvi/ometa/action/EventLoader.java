@@ -47,10 +47,11 @@ import javax.naming.InitialContext;
 import javax.transaction.Status;
 import javax.transaction.SystemException;
 import javax.transaction.UserTransaction;
-import java.io.File;
-import java.io.InputStream;
+import java.io.*;
 import java.text.DateFormat;
 import java.util.*;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 /**
  * Created by IntelliJ IDEA.
@@ -101,6 +102,7 @@ public class EventLoader extends ActionSupport implements Preparable {
     private final String SUBMISSION_TYPE_FILE = "file";
     private final String SUBMISSION_TYPE_FORM = "form";
     private final String TEMPLATE_DOWNLOAD = "template";
+    private final String EXPORT_SAMPLE = "export";
 
     private final String SUBMISSION_STATUS_SAVE = "save";
     private final String SUBMISSION_STATUS_VALIDATE = "validate";
@@ -145,7 +147,7 @@ public class EventLoader extends ActionSupport implements Preparable {
      * Setup a download filename to fully-indicate type of event.  See also: struts.xml
      */
     public String getDataTemplateFileName() {
-        return eventName.replaceAll(" ", "_") + "_template." + (jobType.endsWith("e") ? "xls" : "csv");
+        return this.dataTemplateFileName;
     }
 
     public String execute() {
@@ -253,6 +255,24 @@ public class EventLoader extends ActionSupport implements Preparable {
                     String templateType = this.jobType.substring(jobType.indexOf("_")+1);
                     this.dataTemplateStream = templateUtil.buildFileContent(templateType, emaList, this.projectName, this.sampleName, this.eventName);
                     this.dataTemplateContentType = "application/octet-stream"; //templateType.equals("e") ? "application/vnd.ms-excel" : "text/csv";
+                    this.dataTemplateFileName = eventName.replaceAll(" ", "_") + "_template." + (jobType.endsWith("e") ? "xls" : "csv");
+
+                    rtnVal = Constants.STRUTS_FILE_DOWNLOAD;
+                } else if(jobType.startsWith(EXPORT_SAMPLE)) { //export sample
+                    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                    ZipOutputStream zos = new ZipOutputStream(baos);
+                    List<EventMetaAttribute> emaList = this.readPersister.getEventMetaAttributes(this.projectName, this.eventName);
+                    emaList = CommonTool.filterEventMetaAttribute(emaList, "template");
+
+                    TemplatePreProcessingUtils templateUtil = new TemplatePreProcessingUtils();
+                    List<String> templateLines = IOUtils.readLines(templateUtil.buildFileContent("c", emaList, this.projectName, this.sampleName, this.eventName));
+                    StringBuffer newTemplateBuffer = new StringBuffer();
+
+                    for(int i = 0;i < 2;i++) { //only writes column headers and descriptions
+                        newTemplateBuffer.append(templateLines.get(i)).append("\n");
+                    }
+
+                    this.dataTemplateContentType = "application/zip";
 
                     if(ids != null && !ids.isEmpty()) { //project or sample edit from EventDetail
                         StringBuffer dataBuffer = new StringBuffer();
@@ -271,23 +291,74 @@ public class EventLoader extends ActionSupport implements Preparable {
                                 List<FileReadAttributeBean> attributeList = pair.getAttributeList();
                                 Map<String, String> attributeMap = AttributeHelper.attributeListToMap(attributeList);
 
+                                boolean sampleFolderCreated = false;
+
                                 for(EventMetaAttribute ema : emaList) {
                                     String attributeName = ema.getLookupValue().getName();
-                                    dataBuffer.append(attributeMap.containsKey(attributeName) ? attributeMap.get(attributeName) : "");
+                                    if(ema.getLookupValue().getDataType().equals("file")){
+                                        if(attributeMap.containsKey(attributeName)) {
+                                            String[] paths = attributeMap.get(attributeName).split(",");
+
+                                            if(!paths[0].equals("")) {
+                                                File file = null;
+                                                byte[] bytes;
+                                                FileInputStream fis;
+
+                                                if (!sampleFolderCreated) {
+                                                    zos.putNextEntry(new ZipEntry(currSample.getSampleName() + "/"));
+                                                    sampleFolderCreated = true;
+                                                }
+
+                                                zos.putNextEntry(new ZipEntry(currSample.getSampleName() + "/" + attributeName + "/"));
+
+                                                StringBuilder dataBufferFilePath = new StringBuilder();
+                                                String delim = "";
+
+                                                for (String path : paths) {
+                                                    String absoluteFilePath = this.fileStoragePath + File.separator + Constants.DIRECTORY_PROJECT + File.separator + File.separator + path;
+                                                    String name = path.substring(path.lastIndexOf(File.separator) + 1);
+
+                                                    file = new File(absoluteFilePath);
+
+                                                    if (file.exists()) {
+                                                        String zipPath = currSample.getSampleName() + "/" + attributeName + "/" + name;
+                                                        fis = new FileInputStream(file);
+                                                        bytes = IOUtils.toByteArray(fis);
+                                                        zos.putNextEntry(new ZipEntry(zipPath));
+                                                        zos.write(bytes);
+
+                                                        dataBufferFilePath.append(delim).append("/" + zipPath);
+                                                        delim = ",";
+                                                    }
+                                                }
+
+                                                zos.closeEntry();
+
+                                                dataBuffer.append("\"" + dataBufferFilePath.toString() + "\"");
+                                            }
+                                        } else{
+                                            dataBuffer.append("");
+                                        }
+                                    } else {
+                                        dataBuffer.append(attributeMap.containsKey(attributeName) ? "\"" + attributeMap.get(attributeName) + "\"" : "");
+                                    }
                                     dataBuffer.append(",");
                                 }
                                 dataBuffer.append("\n");
                             }
                         }
 
-                        StringBuffer newTemplateBuffer = new StringBuffer();
-                        List<String> templateLines = IOUtils.readLines(this.dataTemplateStream);
-                        for(int i = 0;i < 2;i++) { //only writes column headers and descriptions
-                            newTemplateBuffer.append(templateLines.get(i)).append("\n");
-                        }
                         newTemplateBuffer.append(dataBuffer);
-                        this.dataTemplateStream = IOUtils.toInputStream(newTemplateBuffer.toString());
                     }
+
+                    zos.putNextEntry(new ZipEntry(this.eventName + "_samples.csv"));
+                    zos.write(newTemplateBuffer.toString().getBytes());
+                    zos.closeEntry();
+                    zos.flush();
+                    zos.close();
+                    this.dataTemplateStream = new ByteArrayInputStream(baos.toByteArray());
+                    this.dataTemplateFileName = eventName.replaceAll(" ", "_") + "_export.zip";
+
                     rtnVal = Constants.STRUTS_FILE_DOWNLOAD;
 
                 } else if(jobType.equals("projectedit")) {
