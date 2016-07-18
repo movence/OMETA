@@ -42,6 +42,8 @@ import javax.naming.InitialContext;
 import javax.transaction.Status;
 import javax.transaction.SystemException;
 import javax.transaction.UserTransaction;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.*;
 
 /**
@@ -79,6 +81,8 @@ public class MetadataSetup extends ActionSupport implements IAjaxAction, Prepara
     private String dictValue;
     private String dictCode;
     private String parentDictTypeCode;
+
+    String uniqueAttributeMethodName = "CheckFieldUniqueness";
 
     public MetadataSetup() {
         getReadEJB();
@@ -130,6 +134,15 @@ public class MetadataSetup extends ActionSupport implements IAjaxAction, Prepara
                 if("e".equals(type)) {  //event metadata setup
                     Map<String, Map<String, EventMetaAttribute>> existingEmaMap = new HashMap<String, Map<String, EventMetaAttribute>>();
                     for(EventMetaAttribute ema : refEmaList) {
+                        // check unique attribute
+                        if (ema.getOptions() != null && ema.getOptions().toLowerCase()
+                                .contains(uniqueAttributeMethodName.toLowerCase())) {
+                            if(!ModelValidator.checkFieldUniqueness(ema.getAttributeName(), null, beanList, ema.getEventTypeLookupValue().getName())){
+                                addActionError("Error while processing meta attribute positions. " + ema.getAttributeName() + " is a unique attribute!");
+                                throw new Exception();
+                            }
+                        }
+
                         if(existingEmaMap.containsKey(ema.getEventName())) {
                             existingEmaMap.get(ema.getEventName()).put(ema.getAttributeName(), ema);
                         } else {
@@ -142,7 +155,7 @@ public class MetadataSetup extends ActionSupport implements IAjaxAction, Prepara
                     //process meta attribute orders
                     Map<String, List<MetadataSetupReadBean>> groupedList = new HashMap<String, List<MetadataSetupReadBean>>();
                     for (MetadataSetupReadBean bean : beanList) {
-                        boolean hasError = validateBeanOptions(bean.getOptions());
+                        boolean hasError = validateBeanOptions(bean.getOptions(), bean.getName(), refEmaList, bean.getEt());
                         if(hasError) throw new Exception();
                         if(groupedList.containsKey(bean.getEt())) {
                             groupedList.get(bean.getEt()).add(bean);
@@ -584,7 +597,7 @@ public class MetadataSetup extends ActionSupport implements IAjaxAction, Prepara
         return rtnVal;
     }
 
-    public boolean validateBeanOptions(String options) {
+    public boolean validateBeanOptions(String options, String attributeName, List<EventMetaAttribute> refEmaList, String eventName) {
         String validationPrefix = "validate:";
         boolean hasError = false;
 
@@ -608,13 +621,31 @@ public class MetadataSetup extends ActionSupport implements IAjaxAction, Prepara
 
                         validatorClass.getDeclaredMethod(classMethodVal[1], String.class, String.class);
                     } else {
-                        validatorClass.getDeclaredMethod(classMethodVal[1], String.class);
+                        if(classMethodVal[1].equalsIgnoreCase(uniqueAttributeMethodName)) {
+                            Method validatorMethod = validatorClass.getDeclaredMethod(classMethodVal[1], String.class, List.class, List.class, String.class);
+
+                            if(!((Boolean) validatorMethod.invoke(validatorClass.newInstance(), attributeName, refEmaList, null, eventName))){
+                                addActionError("Error while processing meta attribute positions. " + attributeName + " is a unique attribute!");
+                                hasError = true;
+                            }
+                        } else {
+                            validatorClass.getDeclaredMethod(classMethodVal[1], String.class);
+                        }
                     }
                 } catch (ClassNotFoundException e){
                     addActionError("Error while processing meta attribute positions. Validation class:"+ classMethodVal[0] +" not found!");
                     hasError = true;
                 } catch (NoSuchMethodException e){
                     addActionError("Error while processing meta attribute positions. Validation method:"+ classMethodVal[1] +" not found!");
+                    hasError = true;
+                } catch (IllegalAccessException e) {
+                    addActionError("Error while processing meta attribute positions. Validation class/method:"+ classMethodVal[0] +"."+ classMethodVal[1] +" not found!");
+                    hasError = true;
+                } catch (InstantiationException e) {
+                    addActionError("Error while processing meta attribute positions. Validation class/method:"+ classMethodVal[0] +"."+ classMethodVal[1] +" not found!");
+                    hasError = true;
+                } catch (InvocationTargetException e) {
+                    addActionError("Error while processing meta attribute positions. Validation class/method:"+ classMethodVal[0] +"."+ classMethodVal[1] +" not found!");
                     hasError = true;
                 }
             }

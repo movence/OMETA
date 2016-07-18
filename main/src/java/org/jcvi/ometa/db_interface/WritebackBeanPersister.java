@@ -54,6 +54,7 @@ public class WritebackBeanPersister implements BeanPersistenceFacadeI {
     protected static final String INCOMPATIBLE_DICTIONARY_MSG = "Dictionary already exists. (%s, %s, %s)";//, and is not compatible.";
     protected static final String UNKNOWN_SAMPLE_FOR_PROJECT_MSG = "Project '%s' does not have sample '%s'.";;
     protected static final String VALIDATION_PREFIX = "validate:";
+    String uniqueAttributeMethodName = "CheckFieldUniqueness";
 
     private SessionAndTransactionManagerI sessionAndTransactionManager;
     private Session session;
@@ -1007,23 +1008,25 @@ public class WritebackBeanPersister implements BeanPersistenceFacadeI {
         String[] validationRequests = valStr.split(",");
 
         for(String valReq : validationRequests){
-            String[] classMethodVal = valReq.split("\\.");
+            if(!valReq.toLowerCase().contains(uniqueAttributeMethodName.toLowerCase())) {
+                String[] classMethodVal = valReq.split("\\.");
 
-            try {
-                Class validatorClass = Class.forName("org.jcvi.ometa.validation." + classMethodVal[0]);
+                try {
+                    Class validatorClass = Class.forName("org.jcvi.ometa.validation." + classMethodVal[0]);
 
-                if(classMethodVal[1].contains("(") && classMethodVal[1].contains(")")){
-                    int indexOfArg = classMethodVal[1].indexOf("(");
-                    classMethodVal[1] = classMethodVal[1].substring(0, indexOfArg);
+                    if (classMethodVal[1].contains("(") && classMethodVal[1].contains(")")) {
+                        int indexOfArg = classMethodVal[1].indexOf("(");
+                        classMethodVal[1] = classMethodVal[1].substring(0, indexOfArg);
 
-                    validatorClass.getDeclaredMethod(classMethodVal[1], String.class, String.class);
-                } else {
-                    validatorClass.getDeclaredMethod(classMethodVal[1], String.class);
+                        validatorClass.getDeclaredMethod(classMethodVal[1], String.class, String.class);
+                    } else {
+                        validatorClass.getDeclaredMethod(classMethodVal[1], String.class);
+                    }
+                } catch (ClassNotFoundException e) {
+                    throw new ClassNotFoundException("Error while processing meta attribute positions. Validation class:" + classMethodVal[0] + " not found!");
+                } catch (NoSuchMethodException e) {
+                    throw new NoSuchMethodException("Error while processing meta attribute positions. Validation method:" + classMethodVal[1] + " not found!");
                 }
-            } catch (ClassNotFoundException e){
-                throw new ClassNotFoundException("Error while processing meta attribute positions. Validation class:" + classMethodVal[0] + " not found!");
-            } catch (NoSuchMethodException e){
-                throw new NoSuchMethodException("Error while processing meta attribute positions. Validation method:"+ classMethodVal[1] +" not found!");
             }
         }
     }
