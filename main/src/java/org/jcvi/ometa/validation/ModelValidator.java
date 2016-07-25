@@ -22,7 +22,6 @@
 package org.jcvi.ometa.validation;
 
 import org.jcvi.ometa.model.*;
-import org.jcvi.ometa.model.web.MetadataSetupReadBean;
 import org.jcvi.ometa.utils.CommonTool;
 import org.jcvi.ometa.utils.Constants;
 
@@ -325,33 +324,5 @@ public class ModelValidator {
             rtnValue = model.getAttributeFloatValue();
         }
         return rtnValue;
-    }
-
-    public static boolean checkFieldUniqueness(String attributeName, List<EventMetaAttribute> refEmaList,
-                                               List<MetadataSetupReadBean> beanList, String eventName) {
-        boolean result = true;
-
-        if(beanList == null) {
-            for (EventMetaAttribute ema : refEmaList) {
-                if(!ema.getEventTypeLookupValue().getName().equals(eventName)) {
-                    if (ema.getAttributeName().equals(attributeName)) {
-                        result = false;
-                        break;
-                    }
-                }
-            }
-        } else {
-            for (MetadataSetupReadBean bean : beanList) {
-                if(!bean.getEt().equals(eventName)) {
-                    if (bean.getName().equals(attributeName)) {
-                        result = false;
-                        break;
-                    }
-                }
-            }
-
-        }
-
-        return result;
     }
 }
