@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="FacetManager">
+    <facet type="web" name="Web">
+      <configuration>
+        <descriptors>
+          <deploymentDescriptor name="web.xml" url="file://$MODULE_DIR$/main/src/www/WEB-INF/web.xml" />
+        </descriptors>
+        <webroots>
+          <root url="file://$MODULE_DIR$/main/src/www" relative="/" />
+        </webroots>
+        <sourceRoots />
+      </configuration>
+      <facet type="Struts2" name="Struts 2">
+        <configuration>
+          <fileset id="s2fileset" name="Default File Set " removed="false">
+            <file>file://$MODULE_DIR$/src/struts.xml</file>
+            <file>jar://$MODULE_DIR$/common/thirdparty/Struts-2.5.2/struts2-osgi-demo-bundle-2.5.2.jar!/struts.xml</file>
+            <file>jar://$MODULE_DIR$/common/thirdparty/Struts-2.5.2/struts2-osgi-admin-bundle-2.5.2.jar!/struts.xml</file>
+          </fileset>
+          <propertiesKeys disabled="false" />
+        </configuration>
+      </facet>
+    </facet>
+    <facet type="hibernate" name="Hibernate">
+      <configuration>
+        <datasource-map>
+          <unit-entry name="build:hibernate:standalone_dev_hibernate.cfg.xml" />
+          <unit-entry name="build:hibernate:standalone_prod_hibernate.cfg.xml" />
+        </datasource-map>
+        <naming-strategy-map />
+        <deploymentDescriptor name="hibernate.cfg.xml" url="file://$MODULE_DIR$/build/hibernate/service-hibernate.xml" />
+        <deploymentDescriptor name="hibernate.cfg.xml" url="file://$MODULE_DIR$/build/hibernate/standalone_dev_hibernate.cfg.xml" />
+        <deploymentDescriptor name="hibernate.cfg.xml" url="file://$MODULE_DIR$/build/hibernate/standalone_prod_hibernate.cfg.xml" />
+      </configuration>
+    </facet>
+    <facet type="jpa" name="JPA">
+      <configuration>
+        <setting name="validation-enabled" value="true" />
+        <setting name="provider-name" value="" />
+        <datasource-mapping>
+          <factory-entry name="OMETAPersistenceUnit" />
+          <factory-entry name="identity" />
+        </datasource-mapping>
+        <deploymentDescriptor name="persistence.xml" url="file://$MODULE_DIR$/build/META-INF/persistence.xml" />
+      </configuration>
+    </facet>
+    <facet type="javaeeApplication" name="javaEEApplication">
+      <configuration>
+        <descriptors>
+          <deploymentDescriptor name="application.xml" url="file://$MODULE_DIR$/build/META-INF/application.xml" />
+        </descriptors>
+      </configuration>
+    </facet>
+  </component>
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/common" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/main/src/java" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/main/src/www" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/main/src/test" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/build/resource" type="java-resource" />
+      <excludeFolder url="file://$MODULE_DIR$/resources" />
+    </content>
+    <orderEntry type="jdk" jdkName="1.8" jdkType="JavaSDK" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="library" name="thirdparty" level="project" />
+    <orderEntry type="library" name="wildfly-module-jars" level="project" />
+    <orderEntry type="library" name="CommonUtils" level="project" />
+  </component>
+</module>
