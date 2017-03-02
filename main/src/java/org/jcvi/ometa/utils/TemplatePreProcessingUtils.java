@@ -394,12 +394,11 @@ public class TemplatePreProcessingUtils {
                 }
             }
         } else {
-            CSVReader reader = new CSVReader(new FileReader(uploadedFile));
 
             String[] line;
             int lineCount = 0;
 
-            try {
+            try (CSVReader reader = new CSVReader(new FileReader(uploadedFile))) {
                 while ((line = reader.readNext()) != null) {
                     ++lineCount;
 
@@ -496,8 +495,6 @@ public class TemplatePreProcessingUtils {
                         }
                     }
                 }
-            } finally {
-                reader.close();
             }
         }
 
