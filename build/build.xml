@@ -35,7 +35,7 @@
     <!--jboss location from user build file -->
     <property file="./user_build_properties/${user.name}-build.properties" />
     <property name="jboss.deploy.local.dir" value="${jboss.local.server}/deploy"/>
-    <property name="compile.target" value="1.7" />
+    <property name="compile.target" value="1.8" />
 
     <!-- set global properties for this build -->
     <property name="base.dir" value="${basedir}/.."/>
