@@ -86,8 +86,8 @@ public class ActorRole extends ActionSupport implements IAjaxAction, Preparable 
 
                     List<ActorGroup> currentGroups = readPersister.getActorGroup(this.actorId);
 
-                    List<Long> currentGroupsList = new ArrayList<Long>(currentGroups.size());
-                    List<ActorGroup> removedActorGroups = new ArrayList<ActorGroup>();
+                    List<Long> currentGroupsList = new ArrayList<>(currentGroups.size());
+                    List<ActorGroup> removedActorGroups = new ArrayList<>();
 
                     for(ActorGroup actorGroup : currentGroups) {
                         if(!groupIds.contains(Long.toString(actorGroup.getGroupId()))) { //actor groups to be removed
@@ -98,12 +98,12 @@ public class ActorRole extends ActionSupport implements IAjaxAction, Preparable 
                     }
 
                     List<Group> availableGroups = readPersister.getAllGroup();
-                    Map<Long, Group> availableGroupsMap = new HashMap<Long, Group>(availableGroups.size());
+                    Map<Long, Group> availableGroupsMap = new HashMap<>(availableGroups.size());
                     for(Group group : availableGroups) {
                         availableGroupsMap.put(group.getGroupId(), group);
                     }
 
-                    List<ActorGroup> newActorGroups = new ArrayList<ActorGroup>();
+                    List<ActorGroup> newActorGroups = new ArrayList<>();
                     for(String id : groupIds) {
                         Long groupId = Long.parseLong(id);
                         if(!currentGroupsList.contains(groupId)) {

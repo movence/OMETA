@@ -76,8 +76,8 @@ public class GCIDMetadata extends ActionSupport {
                 this.generateAttrMapping();
             }
 
-            List<Long> projectIds = new ArrayList<Long>();
-            List<Project> projects = new ArrayList<Project>();
+            List<Long> projectIds = new ArrayList<>();
+            List<Project> projects = new ArrayList<>();
             this.getOutputAttributes();
             LookupValue tempLookupValue;
 
@@ -90,33 +90,33 @@ public class GCIDMetadata extends ActionSupport {
             }
 
             List<ProjectAttribute> allProjectAttributes = readPersister.getProjectAttributes(projectIds);
-            Map<Long, List<ProjectAttribute>> projIdVsAttributes = new LinkedHashMap<Long, List<ProjectAttribute>>();
+            Map<Long, List<ProjectAttribute>> projIdVsAttributes = new LinkedHashMap<>();
             for (ProjectAttribute pa : allProjectAttributes) {
                 List<ProjectAttribute> paList = projIdVsAttributes.get(pa.getProjectId());
                 if (paList == null) {
-                    paList = new ArrayList<ProjectAttribute>();
+                    paList = new ArrayList<>();
                     projIdVsAttributes.put(pa.getProjectId(), paList);
                 }
                 paList.add(pa);
             }
 
             List<Sample> allSamplesAllProjects = readPersister.getSamplesForProjects(projectIds);
-            Map<Long, List<Sample>> projectIdVsSampleList = new LinkedHashMap<Long, List<Sample>>();
+            Map<Long, List<Sample>> projectIdVsSampleList = new LinkedHashMap<>();
             for (Sample sample : allSamplesAllProjects) {
                 List<Sample> thisProjectsSamples = projectIdVsSampleList.get(sample.getProjectId());
                 if (thisProjectsSamples == null) {
-                    thisProjectsSamples = new ArrayList<Sample>();
+                    thisProjectsSamples = new ArrayList<>();
                     projectIdVsSampleList.put(sample.getProjectId(), thisProjectsSamples);
                 }
                 thisProjectsSamples.add(sample);
             }
 
-            List<Map> tempSampleAttrList = new ArrayList<Map>();
+            List<Map> tempSampleAttrList = new ArrayList<>();
 
             for (Project project : projects) {
                 //project attributes
                 List<ProjectAttribute> paList = projIdVsAttributes.get(project.getProjectId());
-                Map<String, Object> projectAttrMap = new LinkedHashMap<String, Object>();
+                Map<String, Object> projectAttrMap = new LinkedHashMap<>();
                 if (paList != null) {
                     for (ProjectAttribute pa : paList) {
                         tempLookupValue = pa.getMetaAttribute().getLookupValue();
@@ -130,7 +130,7 @@ public class GCIDMetadata extends ActionSupport {
 
                 List<Sample> samples = projectIdVsSampleList.get(project.getProjectId());
                 if(samples!=null && samples.size()>0) {
-                    List<Long> sampleIdList = new ArrayList<Long>();
+                    List<Long> sampleIdList = new ArrayList<>();
                     for (Sample sample : samples) {
                         sampleIdList.add(sample.getSampleId());
                     }
@@ -139,7 +139,7 @@ public class GCIDMetadata extends ActionSupport {
                     Map<Long, List<Event>> sampleIdVsEventList = getSampleIdVsEventList(sampleIdList);
 
                     for (Sample sample : samples) {
-                        Map<String, Object> sampleAttrMap = new TreeMap<String, Object>(String.CASE_INSENSITIVE_ORDER);
+                        Map<String, Object> sampleAttrMap = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
                         sampleAttrMap.putAll(projectAttrMap);
                         sampleAttrMap.put(Constants.ATTR_SAMPLE_NAME, sample.getSampleName());
                         sampleAttrMap.put("sampleId", sample.getSampleId());
@@ -183,7 +183,7 @@ public class GCIDMetadata extends ActionSupport {
             }
 
             if(tempSampleAttrList.isEmpty()){
-                Map<String, Object> noDataMap = new LinkedHashMap<String, Object>();
+                Map<String, Object> noDataMap = new LinkedHashMap<>();
                 noDataMap.put("NO DATA!", "NO DATA");
                 tempSampleAttrList.add(noDataMap);
             }
@@ -218,7 +218,7 @@ public class GCIDMetadata extends ActionSupport {
     }
 
     public void getOutputAttributes(){
-        this.outputAttributes = new ArrayList<String>(0);
+        this.outputAttributes = new ArrayList<>(0);
         BufferedReader br = null;
 
         try {
@@ -339,7 +339,7 @@ public class GCIDMetadata extends ActionSupport {
     }
 
     private void generateAttrMapping(){
-        this.attrNameMapping = new LinkedHashMap<String, String>();
+        this.attrNameMapping = new LinkedHashMap<>();
         BufferedReader br = null;
 
         try {
@@ -420,11 +420,11 @@ public class GCIDMetadata extends ActionSupport {
     private Map<Long, List<SampleAttribute>> getSampleVsAttributeList(List<Long> sampleIdList) throws Exception {
         // Get all sample attributes for all samples, and remarshal them into a map of sample vs attributes.
         List<SampleAttribute> allSampleAttributes = readPersister.getSampleAttributes(sampleIdList);
-        Map<Long, List<SampleAttribute>> sampleIdVsAttributeList = new LinkedHashMap<Long, List<SampleAttribute>>();
+        Map<Long, List<SampleAttribute>> sampleIdVsAttributeList = new LinkedHashMap<>();
         for (SampleAttribute att : allSampleAttributes) {
             List<SampleAttribute> atts = sampleIdVsAttributeList.get(att.getSampleId());
             if (atts == null) {
-                atts = new ArrayList<SampleAttribute>();
+                atts = new ArrayList<>();
                 sampleIdVsAttributeList.put(att.getSampleId(), atts);
             }
             atts.add(att);
@@ -435,11 +435,11 @@ public class GCIDMetadata extends ActionSupport {
     private Map<Long, List<Event>> getSampleIdVsEventList(List<Long> sampleIdList) throws Exception {
         // Get all events for all samples, and remarshal them into a map of sample vs event.
         List<Event> allSampleEvents = readPersister.getEventsForSamples(sampleIdList);
-        Map<Long, List<Event>> sampleIdVsEventList = new LinkedHashMap<Long, List<Event>>();
+        Map<Long, List<Event>> sampleIdVsEventList = new LinkedHashMap<>();
         for (Event att : allSampleEvents) {
             List<Event> atts = sampleIdVsEventList.get(att.getSampleId());
             if (atts == null) {
-                atts = new ArrayList<Event>();
+                atts = new ArrayList<>();
                 sampleIdVsEventList.put(att.getSampleId(), atts);
             }
             atts.add(att);
@@ -449,7 +449,7 @@ public class GCIDMetadata extends ActionSupport {
     }
     private Map<Long, List<EventAttribute>> getEventIdVsAttributeList(List<Event> sampleEvents, Long projectId) throws Exception {
         // Corral the ids of the events from the list of events.
-        List<Long> allEventIds = new ArrayList<Long>();
+        List<Long> allEventIds = new ArrayList<>();
         for (Event evt : sampleEvents) {
             allEventIds.add(evt.getEventId());
         }
@@ -460,11 +460,11 @@ public class GCIDMetadata extends ActionSupport {
         }
         List<EventAttribute> allEventAttributes = readPersister.getEventAttributes(allEventIds, projectId);
         logger.debug("Got " + allEventAttributes.size() + " event attributes in getEventIdVsAttributeList ");
-        Map<Long, List<EventAttribute>> eventIdVsAttributes = new LinkedHashMap<Long, List<EventAttribute>>();
+        Map<Long, List<EventAttribute>> eventIdVsAttributes = new LinkedHashMap<>();
         for (EventAttribute ea : allEventAttributes) {
             List<EventAttribute> lea = eventIdVsAttributes.get(ea.getEventId());
             if (lea == null) {
-                lea = new ArrayList<EventAttribute>();
+                lea = new ArrayList<>();
                 eventIdVsAttributes.put(ea.getEventId(), lea);
             }
             lea.add(ea);

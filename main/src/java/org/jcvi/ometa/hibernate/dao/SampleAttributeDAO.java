@@ -131,7 +131,7 @@ public class SampleAttributeDAO extends HibernateDAO {
     }
 
     public List<SampleAttribute> getAllAttributes( Long sampleId, Session session ) throws DAOException {
-        List<SampleAttribute> attributeList = new ArrayList<SampleAttribute>();
+        List<SampleAttribute> attributeList = new ArrayList<>();
         try {
             Criteria crit = session.createCriteria( SampleAttribute.class );
             crit.add( Restrictions.eq("sampleId", sampleId) );
@@ -145,7 +145,7 @@ public class SampleAttributeDAO extends HibernateDAO {
     }
 
     public List<SampleAttribute> getAllAttributes( List<Long> sampleIds, Session session ) throws DAOException {
-        List<SampleAttribute> attributeList = new ArrayList<SampleAttribute>();
+        List<SampleAttribute> attributeList = new ArrayList<>();
 
         try {
             if ( sampleIds != null  &&  sampleIds.size() > 0 ) {

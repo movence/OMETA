@@ -72,7 +72,7 @@ public class ProjectMetaAttributeDAO extends HibernateDAO {
      * get all meta-attributes associated with project.
      */
     public List<ProjectMetaAttribute> readAll(Long projectId, Session session) throws DAOException {
-        List<ProjectMetaAttribute> attributeList = new ArrayList<ProjectMetaAttribute>();
+        List<ProjectMetaAttribute> attributeList = new ArrayList<>();
         try {
             Criteria crit = session.createCriteria(ProjectMetaAttribute.class);
             crit.add(Restrictions.eq("projectId", projectId));
@@ -90,7 +90,7 @@ public class ProjectMetaAttributeDAO extends HibernateDAO {
      * get all meta-attributes associated with project.
      */
     public List<ProjectMetaAttribute> readAll(List<Long> projectIds, Session session) throws DAOException {
-        List<ProjectMetaAttribute> attributeList = new ArrayList<ProjectMetaAttribute>();
+        List<ProjectMetaAttribute> attributeList = new ArrayList<>();
         try {
             if (projectIds.size() > 0) {
                 Criteria crit = session.createCriteria(ProjectMetaAttribute.class);
@@ -111,7 +111,7 @@ public class ProjectMetaAttributeDAO extends HibernateDAO {
      * get all unique meta-attributes
      */
     public List<ProjectMetaAttribute> readAllUnique(Session session) throws DAOException {
-        List<ProjectMetaAttribute> attributeList = new ArrayList<ProjectMetaAttribute>();
+        List<ProjectMetaAttribute> attributeList = new ArrayList<>();
         try {
             String sql =
                     " select PMA.* from project_meta_attribute PMA, " +

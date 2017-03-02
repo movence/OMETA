@@ -75,7 +75,7 @@ public class SampleLoader extends ActionSupport {
         UserTransaction tx = null;
 
         try {
-            projectNameList = new ArrayList<String>();
+            projectNameList = new ArrayList<>();
             projectNameList.add("ALL");
             projectList = readPersister.getProjects(projectNameList);
 
@@ -99,17 +99,17 @@ public class SampleLoader extends ActionSupport {
                     loadingSample.setSampleLevel(1);
                 }
 
-                List<Sample> sampleList = new ArrayList<Sample>();
+                List<Sample> sampleList = new ArrayList<>();
                 sampleList.add(loadingSample);
 
                 List<SampleMetaAttribute> smaList = readPersister.getSampleMetaAttributes(loadingSample.getProjectId());
                 //create projectMetaAttribute hashmap for quick lookup
-                HashMap<String, SampleMetaAttribute> nameToMetaAttributeMap = new HashMap<String, SampleMetaAttribute>();
+                HashMap<String, SampleMetaAttribute> nameToMetaAttributeMap = new HashMap<>();
                 for (SampleMetaAttribute sma : smaList) {
                     nameToMetaAttributeMap.put(sma.getAttributeName(), sma);
                 }
 
-                List<FileReadAttributeBean> loadedBeanList = new ArrayList<FileReadAttributeBean>();
+                List<FileReadAttributeBean> loadedBeanList = new ArrayList<>();
                 if (beanList != null && beanList.size() > 0) {
                     for (FileReadAttributeBean sBean : beanList) {
                         if (!sBean.getAttributeName().equals("0") && sBean.getAttributeValue() != null && !sBean.getAttributeValue().isEmpty()

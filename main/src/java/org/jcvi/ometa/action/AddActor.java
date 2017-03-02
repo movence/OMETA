@@ -70,7 +70,7 @@ public class AddActor extends ActionSupport {
             String userName = ServletActionContext.getRequest().getRemoteUser();
 
             boolean isActorAdmin = false;
-            Set<String> dataRoleSet = new HashSet<String>(Arrays.asList(this.ACTOR_ADMINS));
+            Set<String> dataRoleSet = new HashSet<>(Arrays.asList(this.ACTOR_ADMINS));
             // check if current user has proper role
             Actor adminActor = this.readPersister.getActorByUserName(userName);
             List<ActorGroup> actorGroups = this.readPersister.getActorGroup(adminActor.getLoginId());

@@ -86,7 +86,7 @@ public class OntologyAjax extends ActionSupport implements IAjaxAction {
                 List<org.jcvi.ometa.ontology.OntologyTerm> terms = bioportal.search(sw, tid, ot); //get all descendants from a term
                 if(terms!=null && terms.size()>0) {
                     for(OntologyTerm term : terms) {
-                        Map<String, Object> ot = new HashMap<String, Object>();
+                        Map<String, Object> ot = new HashMap<>();
                         ot.put("ontology", term.getOntologyFull());
                         ot.put("ontolabel", term.getOntologyAbbr());
                         ot.put("taccession", term.getTermId());
@@ -149,7 +149,7 @@ public class OntologyAjax extends ActionSupport implements IAjaxAction {
                 List<org.jcvi.ometa.ontology.OntologyTerm> terms = bioportal.search(sw, null, null);
                 if(terms!=null && terms.size()>0) {
                     for(OntologyTerm term : terms) {
-                        Map<String, Object> ot = new HashMap<String, Object>();
+                        Map<String, Object> ot = new HashMap<>();
                         ot.put("ontology", term.getOntologyFull());
                         ot.put("ontolabel", term.getOntologyAbbr());
                         ot.put("taccession", term.getTermId());
@@ -191,7 +191,7 @@ public class OntologyAjax extends ActionSupport implements IAjaxAction {
 
         try {
             Set<Map.Entry<String, String>> sTerms = qs.getPrefixedTermsByName(sw, false).entrySet();
-            List<uk.ac.ebi.ontocat.OntologyTerm> result = new ArrayList<uk.ac.ebi.ontocat.OntologyTerm>();
+            List<uk.ac.ebi.ontocat.OntologyTerm> result = new ArrayList<>();
             for (Map.Entry<String, String> entry : sTerms) {
                 // splitting e.g. 228975=NEWT:Thymus magnus
                 String termAccession = entry.getKey();

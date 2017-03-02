@@ -259,7 +259,7 @@ public class ProjectSampleEventPresentationStateless implements ProjectSampleEve
     @WebMethod
     public List<ProjectMetaAttribute> getProjectMetaAttributes( @JCVI_Project List<Long> projectIds ) throws Exception {
 
-        List<ProjectMetaAttribute> pmaBeans = new ArrayList<ProjectMetaAttribute>();
+        List<ProjectMetaAttribute> pmaBeans = new ArrayList<>();
         try {
             ProjectMetaAttributeDAO pmaDao = daoFactory.getProjectMetaAttributeDAO();
             Session session = this.startTransactedSession();
@@ -587,7 +587,7 @@ public class ProjectSampleEventPresentationStateless implements ProjectSampleEve
 
     @WebMethod
     public List<SampleMetaAttribute> getSampleMetaAttributes( @JCVI_Project List<Long> projectIds ) throws Exception {
-        List<SampleMetaAttribute> smaBeans = new ArrayList<SampleMetaAttribute>();
+        List<SampleMetaAttribute> smaBeans = new ArrayList<>();
         try {
             SampleMetaAttributeDAO smaDao = daoFactory.getSampleMetaAttributeDAO();
             Session session = this.startTransactedSession();
@@ -605,7 +605,7 @@ public class ProjectSampleEventPresentationStateless implements ProjectSampleEve
 
     @WebMethod(exclude=true)
     public List<SampleMetaAttribute> getSampleMetaAttributes( @JCVI_Project Long projectId ) throws Exception {
-        List<SampleMetaAttribute> smaBeans = new ArrayList<SampleMetaAttribute>();
+        List<SampleMetaAttribute> smaBeans = new ArrayList<>();
         try {
             SampleMetaAttributeDAO smaDao = daoFactory.getSampleMetaAttributeDAO();
             Session session = this.startTransactedSession();
@@ -623,7 +623,7 @@ public class ProjectSampleEventPresentationStateless implements ProjectSampleEve
 
     @WebMethod
     public List<SampleMetaAttribute> getUniqueSampleMetaAttributes() throws Exception {
-        List<SampleMetaAttribute> smaBeans = new ArrayList<SampleMetaAttribute>();
+        List<SampleMetaAttribute> smaBeans = new ArrayList<>();
         try {
             SampleMetaAttributeDAO smaDao = daoFactory.getSampleMetaAttributeDAO();
             Session session = this.startTransactedSession();
@@ -1003,7 +1003,7 @@ public class ProjectSampleEventPresentationStateless implements ProjectSampleEve
     @WebMethod(exclude=true)
     public List<EventMetaAttribute> getEventMetaAttributes(@JCVI_Project String projectName, String eventTypeName ) throws Exception {
 
-        List<EventMetaAttribute> emaBeans = new ArrayList<EventMetaAttribute>();
+        List<EventMetaAttribute> emaBeans = new ArrayList<>();
         try {
             Session session = this.startTransactedSession();
             // Get expansions of project and lookup value-for-event.
@@ -1022,7 +1022,7 @@ public class ProjectSampleEventPresentationStateless implements ProjectSampleEve
                 }
 
                 EventMetaAttributeDAO emaDao = daoFactory.getEventMetaAttributeDAO();
-                List<Long> projectIds = new ArrayList<Long>();
+                List<Long> projectIds = new ArrayList<>();
                 projectIds.add( projectId );
                 emaBeans.addAll( emaDao.readAll( projectIds, eventTypeLookupId, session ) );
 
@@ -1042,7 +1042,7 @@ public class ProjectSampleEventPresentationStateless implements ProjectSampleEve
     public List<EventMetaAttribute> getEventMetaAttributes( @JCVI_Project List<Long> projectIds ) throws Exception {
         Session session = startTransactedSession();
 
-        List<EventMetaAttribute> emaBeans = new ArrayList<EventMetaAttribute>();
+        List<EventMetaAttribute> emaBeans = new ArrayList<>();
         try {
             EventMetaAttributeDAO emaDao = daoFactory.getEventMetaAttributeDAO();
             emaBeans.addAll( emaDao.readAll(projectIds, null, session) );
@@ -1061,7 +1061,7 @@ public class ProjectSampleEventPresentationStateless implements ProjectSampleEve
     public List<EventMetaAttribute> getUniqueEventMetaAttributes() throws Exception {
         Session session = startTransactedSession();
 
-        List<EventMetaAttribute> emaBeans = new ArrayList<EventMetaAttribute>();
+        List<EventMetaAttribute> emaBeans = new ArrayList<>();
         try {
             EventMetaAttributeDAO emaDao = daoFactory.getEventMetaAttributeDAO();
             emaBeans = emaDao.readAllUnique( session );

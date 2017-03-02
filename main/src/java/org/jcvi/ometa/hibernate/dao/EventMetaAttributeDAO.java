@@ -93,7 +93,7 @@ public class EventMetaAttributeDAO extends HibernateDAO {
     /** Find all the required event attributes (by meta attribute) for the event type/project combination. */
     public List<EventMetaAttribute> readAll( Long projectId, Long eventTypeLookupId, Session session )
             throws DAOException {
-        List<EventMetaAttribute> attributeList = new ArrayList<EventMetaAttribute>();
+        List<EventMetaAttribute> attributeList = new ArrayList<>();
         try {
             Criteria crit = session.createCriteria( EventMetaAttribute.class );
             crit.add( Restrictions.eq( "projectId", projectId ) );
@@ -124,7 +124,7 @@ public class EventMetaAttributeDAO extends HibernateDAO {
     /** Find all the required event attributes (by meta attribute) for each event type/project combination. */
     public List<EventMetaAttribute> readAll( List<Long> projectIds, Long eventTypeLookupId, Session session )
             throws DAOException {
-        List<EventMetaAttribute> attributeList = new ArrayList<EventMetaAttribute>();
+        List<EventMetaAttribute> attributeList = new ArrayList<>();
         try {
             if(projectIds.size() > 0) {
                 Criteria crit = session.createCriteria(EventMetaAttribute.class);
@@ -154,7 +154,7 @@ public class EventMetaAttributeDAO extends HibernateDAO {
 
     /** get all unique meta-attributes */
     public List<EventMetaAttribute> readAllUnique( Session session ) throws DAOException {
-        List<EventMetaAttribute> attributeList = new ArrayList<EventMetaAttribute>();
+        List<EventMetaAttribute> attributeList = new ArrayList<>();
         try {
             String sql = " select EMA.*,LV.lkuvlu_name " +
                     " from event_meta_attribute EMA, " +

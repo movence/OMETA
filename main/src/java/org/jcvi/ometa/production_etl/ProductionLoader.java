@@ -128,7 +128,7 @@ public class ProductionLoader {
      * the table data.
      */
     private List<InputStream> getTableInsertStreams() throws Exception {
-        List<InputStream> rtnList = new ArrayList<InputStream>();
+        List<InputStream> rtnList = new ArrayList<>();
         for (String table : dbInterface.getTableList()) {
             String resourceName = createResourceName(table);
             InputStream is = this.getClass().getClassLoader().getResourceAsStream(resourceName);

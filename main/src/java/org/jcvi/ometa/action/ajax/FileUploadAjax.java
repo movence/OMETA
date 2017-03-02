@@ -59,9 +59,9 @@ public class FileUploadAjax extends ActionSupport implements IAjaxAction {
 
                 FileUtils.copyFile(this.upload, destFile);
 
-                result = new HashMap<String, Object>(1);
-                List<Map<String, String>> files = new ArrayList<Map<String, String>>(1);
-                Map<String, String> fileInfo = new HashMap<String, String>();
+                result = new HashMap<>(1);
+                List<Map<String, String>> files = new ArrayList<>(1);
+                Map<String, String> fileInfo = new HashMap<>();
                 fileInfo.put("name", uploadFileName);
                 fileInfo.put("size", Long.toString(this.upload.length()));
                 fileInfo.put("path", storagePath);
@@ -82,7 +82,7 @@ public class FileUploadAjax extends ActionSupport implements IAjaxAction {
         String returnCode = SUCCESS;
         String currTime = CommonTool.currentDateToDefaultFormat();
         try {
-            result = new HashMap<String, Object>(this.temporaryFiles.length);
+            result = new HashMap<>(this.temporaryFiles.length);
             String userName = ServletActionContext.getRequest().getRemoteUser();
 
             for(int i = 0; i < this.temporaryFiles.length; i++) {

@@ -267,7 +267,7 @@ public abstract class HibernateDAO {
             return;
 
         // Get mapping of all lookup value ids for query.
-        List<Long> lookupValueIds = new ArrayList<Long>();
+        List<Long> lookupValueIds = new ArrayList<>();
         for (B model : models) {
             Long lkuvluId = model.getNameLookupId();
             lookupValueIds.add(lkuvluId);
@@ -277,7 +277,7 @@ public abstract class HibernateDAO {
         Criteria crit = session.createCriteria(LookupValue.class);
         crit.add(Restrictions.in("lookupValueId", lookupValueIds));
         List<LookupValue> results = crit.list();
-        Map<Long, LookupValue> idVsValue = new HashMap<Long, LookupValue>();
+        Map<Long, LookupValue> idVsValue = new HashMap<>();
         for (LookupValue lv : results) {
             idVsValue.put(lv.getLookupValueId(), lv);
         }

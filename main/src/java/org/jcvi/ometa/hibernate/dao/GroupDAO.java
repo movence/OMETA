@@ -38,7 +38,7 @@ import java.util.List;
  */
 public class GroupDAO extends HibernateDAO {
     public List<Group> getAllGroup( Session session ) throws DAOException {
-        List<Group> returnVal = new ArrayList<Group>();
+        List<Group> returnVal = new ArrayList<>();
         try {
             Criteria crit = session.createCriteria( Group.class );
             returnVal.addAll( crit.list() );

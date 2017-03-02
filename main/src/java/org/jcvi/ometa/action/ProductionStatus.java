@@ -94,7 +94,7 @@ public class ProductionStatus extends ActionSupport implements IAjaxAction {
         String rtnVal = SUCCESS;
         try {
 
-            List<String> projectNameList = new ArrayList<String>();
+            List<String> projectNameList = new ArrayList<>();
             if (projectNames.contains(",")) {
                 projectNameList.addAll(Arrays.asList(projectNames.split(",")));
             } else {
@@ -116,16 +116,16 @@ public class ProductionStatus extends ActionSupport implements IAjaxAction {
 
             // Obtain collections of data for all projects.
             List<Project> projects = readPersister.getProjects(projectNameList);
-            List<Long> projectIds = new ArrayList<Long>();
-            Map<String, Long> projectNameVsId = new HashMap<String, Long>();
+            List<Long> projectIds = new ArrayList<>();
+            Map<String, Long> projectNameVsId = new HashMap<>();
             for (Project project : projects) {
                 projectIds.add(project.getProjectId());
                 projectNameVsId.put(project.getProjectName(), project.getProjectId());
             }
 
             //attributes
-            List<String> availableAttributes = new ArrayList<String>();
-            attributeTypeMap = new LinkedHashMap<String, String>(0);
+            List<String> availableAttributes = new ArrayList<>();
+            attributeTypeMap = new LinkedHashMap<>(0);
             attributeTypeMap.put("Project Name", "string");
             attributeTypeMap.put("Sample Name", "string");
             attributeTypeMap.put("Parent Sample", "string");
@@ -192,16 +192,16 @@ public class ProductionStatus extends ActionSupport implements IAjaxAction {
             isExcel = true;
             LookupValue tempLookupValue;
 
-            List<String> tokenizedOnScreenAttribute = new ArrayList<String>(Arrays.asList(attributesOnScreen.trim().replaceAll(",\\s+", ",").split(",")));
+            List<String> tokenizedOnScreenAttribute = new ArrayList<>(Arrays.asList(attributesOnScreen.trim().replaceAll(",\\s+", ",").split(",")));
             if (tokenizedOnScreenAttribute.contains("") || tokenizedOnScreenAttribute.contains(" ")) {
-                List<String> emptyList = new ArrayList<String>();
+                List<String> emptyList = new ArrayList<>();
                 emptyList.add("");
                 tokenizedOnScreenAttribute.removeAll(emptyList);
             }
 
             this.setParameterizedAttributes(tokenizedOnScreenAttribute);
 
-            List<String> projectNameList = new ArrayList<String>();
+            List<String> projectNameList = new ArrayList<>();
             if (projectNames.contains(","))
                 projectNameList.addAll(Arrays.asList(projectNames.split(",")));
             else
@@ -209,39 +209,39 @@ public class ProductionStatus extends ActionSupport implements IAjaxAction {
 
             // Obtain collections of data for all projects.
             List<Project> projects = readPersister.getProjects(projectNameList);
-            List<Long> projectIds = new ArrayList<Long>();
+            List<Long> projectIds = new ArrayList<>();
             for (Project project : projects) {
                 projectIds.add(project.getProjectId());
             }
 
             List<ProjectAttribute> allProjectAttributes = readPersister.getProjectAttributes(projectIds);
-            Map<Long, List<ProjectAttribute>> projIdVsAttributes = new HashMap<Long, List<ProjectAttribute>>();
+            Map<Long, List<ProjectAttribute>> projIdVsAttributes = new HashMap<>();
             for (ProjectAttribute pa : allProjectAttributes) {
                 List<ProjectAttribute> paList = projIdVsAttributes.get(pa.getProjectId());
                 if (paList == null) {
-                    paList = new ArrayList<ProjectAttribute>();
+                    paList = new ArrayList<>();
                     projIdVsAttributes.put(pa.getProjectId(), paList);
                 }
                 paList.add(pa);
             }
 
             List<Sample> allSamplesAllProjects = readPersister.getSamplesForProjects(projectIds);
-            Map<Long, List<Sample>> projectIdVsSampleList = new HashMap<Long, List<Sample>>();
+            Map<Long, List<Sample>> projectIdVsSampleList = new HashMap<>();
             for (Sample sample : allSamplesAllProjects) {
                 List<Sample> thisProjectsSamples = projectIdVsSampleList.get(sample.getProjectId());
                 if (thisProjectsSamples == null) {
-                    thisProjectsSamples = new ArrayList<Sample>();
+                    thisProjectsSamples = new ArrayList<>();
                     projectIdVsSampleList.put(sample.getProjectId(), thisProjectsSamples);
                 }
                 thisProjectsSamples.add(sample);
             }
 
-            List<Map> tempSampleAttrList = new ArrayList<Map>();
+            List<Map> tempSampleAttrList = new ArrayList<>();
 
             for (Project project : projects) {
                 //project attributes
                 List<ProjectAttribute> paList = projIdVsAttributes.get(project.getProjectId());
-                Map<String, Object> projectAttrMap = new HashMap<String, Object>();
+                Map<String, Object> projectAttrMap = new HashMap<>();
                 if (paList != null) {
                     for (ProjectAttribute pa : paList) {
                         tempLookupValue = pa.getMetaAttribute().getLookupValue();
@@ -257,7 +257,7 @@ public class ProductionStatus extends ActionSupport implements IAjaxAction {
 
                 List<Sample> samples = projectIdVsSampleList.get(project.getProjectId());
                 if(samples!=null && samples.size()>0) {
-                    List<Long> sampleIdList = new ArrayList<Long>();
+                    List<Long> sampleIdList = new ArrayList<>();
                     for (Sample sample : samples) {
                         sampleIdList.add(sample.getSampleId());
                     }
@@ -266,7 +266,7 @@ public class ProductionStatus extends ActionSupport implements IAjaxAction {
                     Map<Long, List<Event>> sampleIdVsEventList = getSampleIdVsEventList(sampleIdList);
 
                     for (Sample sample : samples) {
-                        Map<String, Object> sampleAttrMap = new HashMap<String, Object>();
+                        Map<String, Object> sampleAttrMap = new HashMap<>();
                         sampleAttrMap.putAll(projectAttrMap);
                         sampleAttrMap.put(Constants.ATTR_SAMPLE_NAME, sample.getSampleName());
                         if(!Constants.ATTR_SAMPLE_NAME.equals("Sample Name"))
@@ -339,7 +339,7 @@ public class ProductionStatus extends ActionSupport implements IAjaxAction {
 
             //get all project for given project names
             List<Project> projectList = readPersister.getProjects(Arrays.asList(projectNames.split(",")));
-            List<Long> projectIds = new ArrayList<Long>();
+            List<Long> projectIds = new ArrayList<>();
             String projectIds_str = "";
             for(Project project:projectList) {
                 projectIds.add(project.getProjectId());
@@ -354,7 +354,7 @@ public class ProductionStatus extends ActionSupport implements IAjaxAction {
             boolean hasSampleAttribute = false;
 
             String tempMetaName = null;
-            List<String> attributeList = new ArrayList<String>();
+            List<String> attributeList = new ArrayList<>();
             List<ProjectMetaAttribute> allProjectMetaAttributes = readPersister.getProjectMetaAttributes(projectIds);
             for (ProjectMetaAttribute pma : allProjectMetaAttributes) {
                 tempMetaName = pma.getLookupValue().getName();
@@ -391,8 +391,8 @@ public class ProductionStatus extends ActionSupport implements IAjaxAction {
                 }
             }
             if (attributesGiven) {
-                List<String> tokenizedAttribute = new ArrayList<String>(Arrays.asList(attributes.split(",")));
-                List<String> existingAttributes = new ArrayList<String>();
+                List<String> tokenizedAttribute = new ArrayList<>(Arrays.asList(attributes.split(",")));
+                List<String> existingAttributes = new ArrayList<>();
                 for (String tempAttribute : tokenizedAttribute) {
                     if (attributeList.contains(tempAttribute) || tempAttribute.equals("Project Name"))
                         existingAttributes.add(tempAttribute);
@@ -426,7 +426,7 @@ public class ProductionStatus extends ActionSupport implements IAjaxAction {
             iTotalDisplayRecords=iTotalRecords=samples.size();
             samples = samples.subList(iDisplayStart, iDisplayStart+iDisplayLength>samples.size()?samples.size():iDisplayLength+iDisplayStart);
 
-            List<Long> sampleIdList = new ArrayList<Long>();
+            List<Long> sampleIdList = new ArrayList<>();
             for (Sample sample : samples) {
                 sampleIdList.add(sample.getSampleId());
             }
@@ -435,18 +435,18 @@ public class ProductionStatus extends ActionSupport implements IAjaxAction {
 
             Project currProject = null;
 
-            Map<Long, Project> projects = new HashMap<Long, Project>(); //for caching projects
-            Map<Long, Map<String, Object>> projectAttributes = new HashMap<Long, Map<String, Object>>(); // for caching project's attribute value map
-            Map<Long, Sample> parentSamples = new HashMap<Long, Sample>(); //for caching retrieved parent samples
+            Map<Long, Project> projects = new HashMap<>(); //for caching projects
+            Map<Long, Map<String, Object>> projectAttributes = new HashMap<>(); // for caching project's attribute value map
+            Map<Long, Sample> parentSamples = new HashMap<>(); //for caching retrieved parent samples
 
             for (Sample sample : samples) {
-                Map<String, Object> sampleAttrMap = new HashMap<String, Object>();
+                Map<String, Object> sampleAttrMap = new HashMap<>();
                 if(!projects.containsKey(sample.getProjectId())) { //recycle or get project data with attributes
                     currProject = readPersister.getProject(sample.getProjectId());
                     projects.put(currProject.getProjectId(), currProject);
 
                     List<ProjectAttribute> projectAttributesList = readPersister.getProjectAttributes(currProject.getProjectId());
-                    Map<String, Object> projectAttrMap = new HashMap<String, Object>();
+                    Map<String, Object> projectAttrMap = new HashMap<>();
                     projectAttrMap.putAll(CommonTool.getAttributeValueMap(projectAttributesList, sample.getProjectId(), sample.getSampleName(), true, null));
 
                     if(!projectAttrMap.containsKey(Constants.ATTR_PROJECT_NAME)) { //if there is no project name attribute, use project name from project object
@@ -508,11 +508,11 @@ public class ProductionStatus extends ActionSupport implements IAjaxAction {
     private Map<Long, List<SampleAttribute>> getSampleVsAttributeList(List<Long> sampleIdList) throws Exception {
         // Get all sample attributes for all samples, and remarshal them into a map of sample vs attributes.
         List<SampleAttribute> allSampleAttributes = readPersister.getSampleAttributes(sampleIdList);
-        Map<Long, List<SampleAttribute>> sampleIdVsAttributeList = new HashMap<Long, List<SampleAttribute>>();
+        Map<Long, List<SampleAttribute>> sampleIdVsAttributeList = new HashMap<>();
         for (SampleAttribute att : allSampleAttributes) {
             List<SampleAttribute> atts = sampleIdVsAttributeList.get(att.getSampleId());
             if (atts == null) {
-                atts = new ArrayList<SampleAttribute>();
+                atts = new ArrayList<>();
                 sampleIdVsAttributeList.put(att.getSampleId(), atts);
             }
             atts.add(att);
@@ -523,11 +523,11 @@ public class ProductionStatus extends ActionSupport implements IAjaxAction {
     private Map<Long, List<Event>> getSampleIdVsEventList(List<Long> sampleIdList) throws Exception {
         // Get all events for all samples, and remarshal them into a map of sample vs event.
         List<Event> allSampleEvents = readPersister.getEventsForSamples(sampleIdList);
-        Map<Long, List<Event>> sampleIdVsEventList = new HashMap<Long, List<Event>>();
+        Map<Long, List<Event>> sampleIdVsEventList = new HashMap<>();
         for (Event att : allSampleEvents) {
             List<Event> atts = sampleIdVsEventList.get(att.getSampleId());
             if (atts == null) {
-                atts = new ArrayList<Event>();
+                atts = new ArrayList<>();
                 sampleIdVsEventList.put(att.getSampleId(), atts);
             }
             atts.add(att);
@@ -537,7 +537,7 @@ public class ProductionStatus extends ActionSupport implements IAjaxAction {
     }
     private Map<Long, List<EventAttribute>> getEventIdVsAttributeList(List<Event> sampleEvents, Long projectId) throws Exception {
         // Corral the ids of the events from the list of events.
-        List<Long> allEventIds = new ArrayList<Long>();
+        List<Long> allEventIds = new ArrayList<>();
         for (Event evt : sampleEvents) {
             allEventIds.add(evt.getEventId());
         }
@@ -548,11 +548,11 @@ public class ProductionStatus extends ActionSupport implements IAjaxAction {
         }
         List<EventAttribute> allEventAttributes = readPersister.getEventAttributes(allEventIds, projectId);
         logger.debug("Got " + allEventAttributes.size() + " event attributes in getEventIdVsAttributeList ");
-        Map<Long, List<EventAttribute>> eventIdVsAttributes = new HashMap<Long, List<EventAttribute>>();
+        Map<Long, List<EventAttribute>> eventIdVsAttributes = new HashMap<>();
         for (EventAttribute ea : allEventAttributes) {
             List<EventAttribute> lea = eventIdVsAttributes.get(ea.getEventId());
             if (lea == null) {
-                lea = new ArrayList<EventAttribute>();
+                lea = new ArrayList<>();
                 eventIdVsAttributes.put(ea.getEventId(), lea);
             }
             lea.add(ea);

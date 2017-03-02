@@ -57,14 +57,14 @@ public class MultiLoadParameter implements Serializable {
      */
     public void addLookupValues( List<LookupValue> lvs ) {
         if ( getLookupValues() == null ) {
-            lookupValues = new ArrayList<List<LookupValue>>();
+            lookupValues = new ArrayList<>();
         }
         getLookupValues().add(lvs);
     }
 
     public void addDictionaries( List<Dictionary> dicts) {
         if( getDictionaries() == null) {
-            dictionaries = new ArrayList<List<Dictionary>>();
+            dictionaries = new ArrayList<>();
         }
 
         getDictionaries().add(dicts);
@@ -72,42 +72,42 @@ public class MultiLoadParameter implements Serializable {
 
     public void addProjects( List<Project> newProjects ) {
         if ( getProjects() == null ) {
-            projects = new ArrayList<List<Project>>();
+            projects = new ArrayList<>();
         }
         getProjects().add(newProjects);
     }
 
     public void addSamples( List<Sample> newSamples ) {
         if ( getSamples() == null ) {
-            samples = new ArrayList<List<Sample>>();
+            samples = new ArrayList<>();
         }
         getSamples().add(newSamples);
     }
 
     public void addSampleMetaAttributes( List<SampleMetaAttribute> newMetaAttributes ) {
         if ( getSmas() == null ) {
-            smas = new ArrayList<List<SampleMetaAttribute>>();
+            smas = new ArrayList<>();
         }
         getSmas().add(newMetaAttributes);
     }
 
     public void addProjectMetaAttributes( List<ProjectMetaAttribute> newMetaAttributes ) {
         if ( getPmas() == null ) {
-            pmas = new ArrayList<List<ProjectMetaAttribute>>();
+            pmas = new ArrayList<>();
         }
         getPmas().add(newMetaAttributes);
     }
 
     public void addEventMetaAttributes( List<EventMetaAttribute> newMetaAttributes ) {
         if ( getEmas() == null ) {
-            emas = new ArrayList<List<EventMetaAttribute>>();
+            emas = new ArrayList<>();
         }
         getEmas().add(newMetaAttributes);
     }
 
     public void addEvents(String eventName, List<FileReadAttributeBean> eventAttributes, int rowIndex) {
         if ( getOtherEvents() == null ) {
-            otherEvents = new ArrayList<LoadableEventBean>();
+            otherEvents = new ArrayList<>();
         }
         LoadableEventBean leBean = new LoadableEventBean();
         leBean.setAttributes( eventAttributes );
@@ -135,7 +135,7 @@ public class MultiLoadParameter implements Serializable {
 
     public void addProjectPair(Project project, List<FileReadAttributeBean> attributes, List<ProjectMetaAttribute> pmas, List<SampleMetaAttribute> smas, List<EventMetaAttribute> emas, int rowIndex) {
         if(this.getProjectPairs() == null) {
-            projectPairs = new ArrayList<ProjectPair>();
+            projectPairs = new ArrayList<>();
         }
         ProjectPair projectPair = new ProjectPair();
         projectPair.setProject(project);
@@ -153,7 +153,7 @@ public class MultiLoadParameter implements Serializable {
 
     public void addSamplePair(Sample sample, List<FileReadAttributeBean> attributes, int rowIndex) {
         if(this.getSamplePairs() == null) {
-            samplePairs = new ArrayList<SamplePair>();
+            samplePairs = new ArrayList<>();
         }
         SamplePair samplePair = new SamplePair();
         samplePair.setSample(sample);

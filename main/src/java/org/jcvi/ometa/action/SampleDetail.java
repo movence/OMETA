@@ -73,7 +73,7 @@ public class SampleDetail extends ActionSupport {
         try {
             LookupValue tempLookupValue = null;
 
-            detailMap = new HashMap<String, Object> ();
+            detailMap = new HashMap<>();
 
             this.setProject(readPersister.getProject(projectName));
             this.setSample(readPersister.getSample(sampleId));
@@ -89,17 +89,17 @@ public class SampleDetail extends ActionSupport {
                 detailMap.put(tempLookupValue.getName(), ModelValidator.getModelValue(tempLookupValue, sa));
             }
 
-            List<Map> eventList = new ArrayList<Map>();
+            List<Map> eventList = new ArrayList<>();
 
             List<Event> sampleEvents = readPersister.getEventsForSample( sample.getSampleId() );
             for(Event evt : sampleEvents) {
                 String tempEventName = evt.getEventTypeLookupValue().getName();
 
-                Map<String, Object> eventMap = new HashMap<String, Object> ();
+                Map<String, Object> eventMap = new HashMap<>();
                 eventMap.put("eventName", tempEventName);
                 eventMap.put("date", CommonTool.convertTimestampToDate(evt.getCreationDate()));
 
-                List<Map<String, Object>> attrList = new ArrayList<Map<String, Object>>();
+                List<Map<String, Object>> attrList = new ArrayList<>();
                 Map<String, Object> attrMap;
                 List<EventAttribute> eventAttributes = readPersister.getEventAttributes( evt.getEventId() , projectId);
 
@@ -108,7 +108,7 @@ public class SampleDetail extends ActionSupport {
                         tempLookupValue = ea.getMetaAttribute().getLookupValue();
                         Object eventAttrValue = ModelValidator.getModelValue( tempLookupValue, ea );
                         String attributeName = tempLookupValue.getName();
-                        attrMap = new HashMap<String, Object>();
+                        attrMap = new HashMap<>();
 
                         if(attributeName.equals("Organism"))
                             detailMap.put("Organism", eventAttrValue);
@@ -149,15 +149,15 @@ public class SampleDetail extends ActionSupport {
             }
 
             if(detailMap.containsKey(TAXONOMY_ID)) {
-                Map<String, Object> eventMap = new HashMap<String, Object> ();
+                Map<String, Object> eventMap = new HashMap<>();
                 eventMap.put( "eventName", "Taxonomy" );
                 eventMap.put( "eventStatus", "Available" );
 
-                Map<String, Object> eventAttr = new HashMap<String, Object> ();
+                Map<String, Object> eventAttr = new HashMap<>();
                 eventAttr.put("name", TAXONOMY_ID );
                 eventAttr.put("value", String.format(Constants.A_TAG_HTML, "#", String.format(Constants.NEW_WINDOW_LINK_HTML, Constants.TAXON_URL + detailMap.get("Taxonomy ID") + Constants.TAXON_URL_PARAM)) + detailMap.get("Taxonomy ID") + Constants.A_TAG_CLOSING_HTML);
 
-                List<Map<String, Object>> attrList = new ArrayList<Map<String, Object>>();
+                List<Map<String, Object>> attrList = new ArrayList<>();
                 attrList.add(eventAttr);
                 eventMap.put("eventAttr", attrList);
                 eventList.add(eventMap);

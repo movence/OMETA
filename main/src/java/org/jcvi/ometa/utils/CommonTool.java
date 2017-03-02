@@ -46,10 +46,10 @@ public class CommonTool {
     private static Logger logger = Logger.getLogger(CommonTool.class);
 
     public static Map<String, String> decorateAttributeMap(Map<String, Object> attributeMap, List<String> attributeList, Project project) {
-        Map<String, String> newSampleAttrMap = new HashMap<String, String>();
+        Map<String, String> newSampleAttrMap = new HashMap<>();
 
         if(attributeList==null) { //when attribute list is not available, utilizes keyset from the map
-            attributeList = new ArrayList<String>(attributeMap.size());
+            attributeList = new ArrayList<>(attributeMap.size());
             attributeList.addAll(attributeMap.keySet());
         } else if(attributeList.contains("Project Name") && !attributeMap.containsKey("Project Name")){
             attributeMap.put("Project Name", project.getProjectName());
@@ -172,7 +172,7 @@ public class CommonTool {
 
     public static <M extends AttributeModelBean> Map<String, Object> getAttributeValueMap(List<M> attributeList,
                                                                                           Long projectId, String sampleName, boolean decorate, String[] skipArr) throws Exception {
-        Map<String, Object> valueMap = new HashMap<String, Object>();
+        Map<String, Object> valueMap = new HashMap<>();
         List<String> skipList = (skipArr!=null && skipArr.length>0) ? Arrays.asList(skipArr) : null;
 
         for(M attribute : attributeList) {
@@ -226,10 +226,10 @@ public class CommonTool {
     }
 
     public static List<EventMetaAttribute> filterEventMetaAttribute(List<EventMetaAttribute> list, String action) {
-        List<EventMetaAttribute> filtered = new ArrayList<EventMetaAttribute>(list.size());
+        List<EventMetaAttribute> filtered = new ArrayList<>(list.size());
 
         List<String> hiddenAttributes = Arrays.asList(Constants.HIDDEN_ATTRIBUTES);
-        Map<String, String> dictTypeMap = new HashMap<String, String>(0);
+        Map<String, String> dictTypeMap = new HashMap<>(0);
 
         for(EventMetaAttribute ema : list) {
             if(ema.isActive() && !hiddenAttributes.contains(ema.getLookupValue().getName())) {

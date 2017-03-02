@@ -328,17 +328,17 @@ public class SecurityDAO extends HibernateDAO {
     }
 
     private List<String> uniquifyNames(List<String> names) {
-        Set<String> uniqueNames = new HashSet<String>();
+        Set<String> uniqueNames = new HashSet<>();
         uniqueNames.addAll( names );
-        List<String> rtnList = new ArrayList<String>();
+        List<String> rtnList = new ArrayList<>();
         rtnList.addAll( uniqueNames );
         return rtnList;
     }
 
     private List<Long> uniquifyIds( List<Long> names ) {
-        Set<Long> uniqueNames = new HashSet<Long>();
+        Set<Long> uniqueNames = new HashSet<>();
         uniqueNames.addAll( names );
-        List<Long> rtnList = new ArrayList<Long>();
+        List<Long> rtnList = new ArrayList<>();
         rtnList.addAll( uniqueNames );
         return rtnList;
     }

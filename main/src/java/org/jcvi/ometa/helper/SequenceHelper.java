@@ -73,7 +73,7 @@ public class SequenceHelper {
             // parse data file
             TemplatePreProcessingUtils templateUtils = new TemplatePreProcessingUtils();
             List<GridBean> dataRows = templateUtils.parseEventFile(dataFile.getName(), dataFile, null, false, true);
-            Map<String, GridBean> sampleIdToGridBeanMap = new HashMap<String, GridBean>(dataRows.size());
+            Map<String, GridBean> sampleIdToGridBeanMap = new HashMap<>(dataRows.size());
 
             String projectName = null;
             int gridLoopIndex = 1;
@@ -84,7 +84,7 @@ public class SequenceHelper {
                     projectName = gridBean.getProjectName();
                 }
 
-                Map<String, String> attributeKeyValueMap = new HashMap<String, String>(gridBean.getBeanList().size());
+                Map<String, String> attributeKeyValueMap = new HashMap<>(gridBean.getBeanList().size());
 
                 for(FileReadAttributeBean bean : gridBean.getBeanList()) {
                     attributeKeyValueMap.put(bean.getAttributeName(), bean.getAttributeValue());
@@ -321,7 +321,7 @@ public class SequenceHelper {
     private String getSampleIdentifierFromAttributes(List<FileReadAttributeBean> beans) {
         String sampleIdentifier = null;
 
-        Map<String, String> attributeKeyValueMap = new HashMap<String, String>(beans.size());
+        Map<String, String> attributeKeyValueMap = new HashMap<>(beans.size());
 
         for(FileReadAttributeBean bean : beans) {
             attributeKeyValueMap.put(bean.getAttributeName(), bean.getAttributeValue());
@@ -349,7 +349,7 @@ public class SequenceHelper {
     }
 
     public Map<String, List<String>> parseSequenceFileIntoMapBySI(File sequenceFile) throws Exception {
-        Map<String, List<String>> sequenceGroupedBySI = new HashMap<String, List<String>>();
+        Map<String, List<String>> sequenceGroupedBySI = new HashMap<>();
 
         LineIterator sequenceIterator = FileUtils.lineIterator(sequenceFile);
         String currentSampleIdentifier = null;
@@ -380,7 +380,7 @@ public class SequenceHelper {
                             String.format(ErrorMessages.SEQUENCE_DUPLICATED_ATTRIBUTE, Constants.ATTR_SAMPLE_IDENTIFIER, currentSampleIdentifier, sequencePair.getName())
                     );*/
                 } else {
-                    List<String> sequenceLines = new ArrayList<String>();
+                    List<String> sequenceLines = new ArrayList<>();
                     sequenceLines.add(currLine);
 
                     sequenceGroupedBySI.put(currentSampleIdentifier, sequenceLines);
@@ -416,7 +416,7 @@ public class SequenceHelper {
         bodyBuilder.append("Thank you for your data contribution,<br/>The CEIRS DPCC Team<br/><br/>");
         bodyBuilder.append(Constants.DPCC_MAIL_SIGNATURE_HELP);
 
-        List<String> files = new ArrayList<String>(1);
+        List<String> files = new ArrayList<>(1);
         files.add(dataFile.getAbsolutePath());
 
         EmailSender mailer = new EmailSender();

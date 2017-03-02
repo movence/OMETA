@@ -64,7 +64,7 @@ public class EventReport extends ActionSupport {
         String returnValue = ERROR;
 
         try {
-            projectNameList = new ArrayList<String>();
+            projectNameList = new ArrayList<>();
             if( projectNames == null || projectNames.equals( "" ))
                 projectNameList.add("ALL");
             else if( projectNames.contains(","))

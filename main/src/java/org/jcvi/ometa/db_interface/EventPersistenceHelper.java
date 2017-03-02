@@ -110,7 +110,7 @@ public class EventPersistenceHelper {
     /** Construct with tools for dealing with session, DAOs and GUIDs. */
     public EventPersistenceHelper(
             DAOFactory daoFactory, Date transactionStartDate, GuidGetter guidGetter ) {
-        attributeNamesPermitted = new ArrayList<String>();
+        attributeNamesPermitted = new ArrayList<>();
         this.daoFactory = daoFactory;
         this.transactionStartDate = transactionStartDate;
         this.guidGetter = guidGetter;
@@ -244,7 +244,7 @@ public class EventPersistenceHelper {
             }
         }
 
-        dictParentValueMap = new HashMap<String, String>(0);
+        dictParentValueMap = new HashMap<>(0);
         String parentDef = "Parent:";
         for( Map.Entry<String, String> entry : controlMap.entrySet()){
             String value = entry.getValue();
@@ -668,8 +668,8 @@ public class EventPersistenceHelper {
         Map<String, Boolean> rtnMap = null;
         if ( attributeType == AttributeType.project ) {
 
-            requiredPmaToSatisfied = new HashMap<String,Boolean>();
-            pmaNameToControls = new HashMap<String,String>();
+            requiredPmaToSatisfied = new HashMap<>();
+            pmaNameToControls = new HashMap<>();
             rtnMap = requiredPmaToSatisfied;
             List<ProjectMetaAttribute> pmaList = getProjectMetaAttributes( projectName );
             for ( ProjectMetaAttribute pma: pmaList ) {
@@ -689,8 +689,8 @@ public class EventPersistenceHelper {
         }
         else if ( attributeType == AttributeType.sample ) {
 
-            requiredSmaToSatisfied = new HashMap<String,Boolean>();
-            smaNameToControls = new HashMap<String,String>();
+            requiredSmaToSatisfied = new HashMap<>();
+            smaNameToControls = new HashMap<>();
 
             rtnMap = requiredSmaToSatisfied;
             List<SampleMetaAttribute> smaList = getSampleMetaAttributes( projectName );
@@ -711,8 +711,8 @@ public class EventPersistenceHelper {
     private void getAttributeInclusionAndValueRequirements(String projectName, String eventType)
         throws DAOException {
 
-        requiredEmaToSatisfied = new HashMap<String,Boolean>();
-        emaNameToControls = new HashMap<String,String>();
+        requiredEmaToSatisfied = new HashMap<>();
+        emaNameToControls = new HashMap<>();
 
         List<EventMetaAttribute> emaList = getEventMetaAttributes( projectName, eventType );
         for ( EventMetaAttribute ema: emaList ) {

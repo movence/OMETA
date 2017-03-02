@@ -186,7 +186,7 @@ public class InterceptorHelper implements Serializable {
                     }
                     // Not attempting to cast to specific type at generic level. That would force
                     // parameters to be typed <ProjectNamerOnFileRead> or <? extends ProjectNamerOnFileRead>
-                    List<String> projectNames = new ArrayList<String>();
+                    List<String> projectNames = new ArrayList<>();
                     List namers = (List)o;
                     for ( Object nextO: namers ) {
                         String projectName = ((ProjectNamerOnFileRead)nextO).getProjectName();
@@ -215,23 +215,23 @@ public class InterceptorHelper implements Serializable {
     }
 
     public List<Long> getApprovedSingleById( QueryEntityType queryEntityType, Object o, String user ) {
-        List<Long> approved = new ArrayList<Long>();
-        List<Long> requested = new ArrayList<Long>();
+        List<Long> approved = new ArrayList<>();
+        List<Long> requested = new ArrayList<>();
         requested.add((Long) o);
         return this.getApprovedById(
                 user, approved, requested, queryEntityType);
     }
 
     public List<String> getApprovedSingleByName( QueryEntityType queryEntityType, Object o, String user ) {
-        List<String> requested = new ArrayList<String>();
+        List<String> requested = new ArrayList<>();
         requested.add((String) o);
-        List<String> approved = new ArrayList<String>();
+        List<String> approved = new ArrayList<>();
         return this.getApprovedByName(
                 user, approved, requested, queryEntityType);
     }
 
     public List<Long> getApprovedById(QueryEntityType queryEntityType, Object o, String user) {
-        List<Long> approved = new ArrayList<Long>();
+        List<Long> approved = new ArrayList<>();
         List<Long> requested =
                 (List<Long>) o;
         return this.getApprovedById(
@@ -239,7 +239,7 @@ public class InterceptorHelper implements Serializable {
     }
 
     public List<String> getApprovedByName(QueryEntityType queryEntityType, Object o, String user) {
-        List<String> approved = new ArrayList<String>();
+        List<String> approved = new ArrayList<>();
         List<String> requested =
                 (List<String>) o;
         return this.getApprovedByName(
@@ -267,7 +267,7 @@ public class InterceptorHelper implements Serializable {
      * @return list of approved project names.
      */
     public List<String> getApprovedProjects(String user, Map<String, Object> parameters) {
-        List<String> approvedProjects = new ArrayList<String>();
+        List<String> approvedProjects = new ArrayList<>();
         String[] requestedProjectsArray = (String[]) parameters.get("projectNames");
         if ( requestedProjectsArray == null || requestedProjectsArray.length == 0 ) {
             requestedProjectsArray = (String[]) parameters.get("projectName");
@@ -439,7 +439,7 @@ public class InterceptorHelper implements Serializable {
 
     /** Helper to turn parameter/multivalued into a list. */
     private List<String> makeListOfMultivaluedParameters(String[] requestedParameterArray) {
-        List<String> rtnVal = new ArrayList<String>();
+        List<String> rtnVal = new ArrayList<>();
         // Can both have multiple entries in the array, and multiple, comma-separated entries in each array member.
         for ( String commaSepParamList: requestedParameterArray ) {
             String[] projectNamesPerRequestParm = commaSepParamList.split(",");

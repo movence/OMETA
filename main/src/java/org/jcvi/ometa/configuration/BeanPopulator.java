@@ -55,7 +55,7 @@ public class BeanPopulator {
     public BeanPopulator(Class beanType) throws Exception {
         checkClass = beanType;
         Method[] methods = beanType.getDeclaredMethods();
-        methodVsDataName = new HashMap<Method,String>();
+        methodVsDataName = new HashMap<>();
 
         for(Method method: methods) {
             if(method.getName().startsWith(SET_PREFIX)) {
@@ -98,7 +98,7 @@ public class BeanPopulator {
      * @return list of headers expected by the populator.
      */
     public List<String> getHeaderNames() {
-        List<String> rtnList = new ArrayList<String>();
+        List<String> rtnList = new ArrayList<>();
         for(String headerName : methodVsDataName.values()) {
             rtnList.add(headerName);
         }

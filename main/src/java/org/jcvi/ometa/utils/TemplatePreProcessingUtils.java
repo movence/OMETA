@@ -34,7 +34,7 @@ public class TemplatePreProcessingUtils {
         //boolean isProjectUpdate = eventName.replaceAll("\\s","").equals("ProjectUpdate");
         boolean isSampleRegistration = eventName.contains(Constants.EVENT_SAMPLE_REGISTRATION);
 
-        List<HeaderDetail> headers = new ArrayList<HeaderDetail>();
+        List<HeaderDetail> headers = new ArrayList<>();
 
         headers.add(new HeaderDetail(Constants.ATTR_PROJECT_NAME, true, "string", "", null));
 
@@ -148,7 +148,7 @@ public class TemplatePreProcessingUtils {
                 .append(Constants.ATTR_DESCRIPTION).append(",")
                 .append(Constants.ATTR_OPTIONS).append(",")
                 .append(Constants.ATTR_ORDER).append("\n");
-        Map<String, StringBuilder> emaMap = new HashMap<String, StringBuilder>(eventNameList.size());
+        Map<String, StringBuilder> emaMap = new HashMap<>(eventNameList.size());
         for(LookupValue lv : eventNameList){
             emaMap.put(lv.getName(), new StringBuilder());
         }
@@ -312,11 +312,11 @@ public class TemplatePreProcessingUtils {
     }
 
     public List<GridBean> parseEventFile(String originalFileName, File uploadedFile, String projectName, boolean isProjectRegistration, boolean isSampleRegistration) throws Exception {
-        List<GridBean> gridBeans = new ArrayList<GridBean>();
+        List<GridBean> gridBeans = new ArrayList<>();
 
         String fileType = originalFileName.substring(originalFileName.lastIndexOf(".") + 1);
 
-        List<String> columns = new ArrayList<String>();
+        List<String> columns = new ArrayList<>();
 
         String currProjectName = null;
 
@@ -381,7 +381,7 @@ public class TemplatePreProcessingUtils {
                             }
                         }
 
-                        gBean.setBeanList(new ArrayList<FileReadAttributeBean>());
+                        gBean.setBeanList(new ArrayList<>());
                         for (; colIndex < columns.size(); colIndex++) {
                             FileReadAttributeBean fBean = new FileReadAttributeBean();
                             fBean.setProjectName(isProjectRegistration ? currProjectName : projectName);
@@ -480,7 +480,7 @@ public class TemplatePreProcessingUtils {
                                 }
                             }
 
-                            gBean.setBeanList(new ArrayList<FileReadAttributeBean>());
+                            gBean.setBeanList(new ArrayList<>());
                             for (; colIndex < columns.size(); colIndex++) {
                                 FileReadAttributeBean fBean = new FileReadAttributeBean();
                                 fBean.setProjectName(isProjectRegistration ? currProjectName : projectName);
@@ -511,20 +511,20 @@ public class TemplatePreProcessingUtils {
      * @throws Exception
      */
     public List<Map<String, String>> parseNonEventFile(File beanFile) throws Exception {
-        List<Map<String, String>> dataList = new ArrayList<Map<String, String>>();
+        List<Map<String, String>> dataList = new ArrayList<>();
 
         CSVReader reader = new CSVReader(new FileReader(beanFile));
 
         String[] line;
         int lineCount = 0;
-        List<String> columns = new ArrayList<String>();
+        List<String> columns = new ArrayList<>();
 
         while((line = reader.readNext()) != null) {
             if(lineCount == 0) { //headers
                 Collections.addAll(columns, line);
             } else {
 
-                Map<String, String> data = new HashMap<String, String>();
+                Map<String, String> data = new HashMap<>();
                 for(int i = 0;i < columns.size();i++) {
                     data.put(columns.get(i), line[i]);
                 }

@@ -93,7 +93,7 @@ public class MockWebDataBeanPersister { //implements WebDataFacadeI {
     }
 
     public Map<String,ProjectAttribute> getProjectAttributes(String projectName) throws Exception {
-        Map<String,ProjectAttribute> rtnList = new HashMap<String,ProjectAttribute>();
+        Map<String,ProjectAttribute> rtnList = new HashMap<>();
         ProjectAttribute pa = new ProjectAttribute();
         pa.setProjectId(PROJECT_ID);
         pa.setAttributeStringValue(PROJECT_ATT_VAL_1);
@@ -113,7 +113,7 @@ public class MockWebDataBeanPersister { //implements WebDataFacadeI {
     }
 
     public List<Sample> getSamplesForProject(String projectName) throws Exception {
-        List<Sample> rtnList = new ArrayList<Sample>();
+        List<Sample> rtnList = new ArrayList<>();
         for(int i=0;i<5; i++) {
             Sample s = new Sample();
             s.setProjectName(projectName);
@@ -127,7 +127,7 @@ public class MockWebDataBeanPersister { //implements WebDataFacadeI {
     }
 
     public Map<String,SampleAttribute> getSampleAttributes(String sampleName) throws Exception {
-        Map<String,SampleAttribute> rtnList = new HashMap<String,SampleAttribute>();
+        Map<String,SampleAttribute> rtnList = new HashMap<>();
         SampleAttribute sa = new SampleAttribute();
         sa.setProjectId(PROJECT_ID);
         sa.setSampleId(SAMPLE_ID);
@@ -150,7 +150,7 @@ public class MockWebDataBeanPersister { //implements WebDataFacadeI {
     }
 
     public List<Event> getEventsForProject(String projectName) throws Exception {
-        List<Event> rtnList = new ArrayList<Event>();
+        List<Event> rtnList = new ArrayList<>();
         Event pe = new Event();
         pe.setEventName("Project Kickoff");
         pe.setEventValue("" + TODAYS_DATE );

@@ -136,7 +136,7 @@ public class WritebackBeanPersister implements BeanPersistenceFacadeI {
             LookupValue editLV = lookupValueDAO.getLookupValue("General-Edit", session);
             Group editGroup = groupDAO.getGroupByLookupId(editLV.getLookupValueId(), session);
 
-            List<ActorGroup> groups = new ArrayList<ActorGroup>(2);
+            List<ActorGroup> groups = new ArrayList<>(2);
             //add view group
             ActorGroup actgrp = new ActorGroup();
             actgrp.setActorGroupId(guidGetter.getGuid());
@@ -206,7 +206,7 @@ public class WritebackBeanPersister implements BeanPersistenceFacadeI {
             StringBuilder errors = new StringBuilder();
 
             LookupValueDAO lookupValueDAO = daoFactory.getLookupValueDAO();
-            List<LookupValue> loadingList = new ArrayList<LookupValue>(lookupValueList.size()); //load all or nothing list
+            List<LookupValue> loadingList = new ArrayList<>(lookupValueList.size()); //load all or nothing list
 
             for (LookupValue lookupValue : lookupValueList) {
                 String lvName = lookupValue.getName();
@@ -284,7 +284,7 @@ public class WritebackBeanPersister implements BeanPersistenceFacadeI {
             StringBuilder errors = new StringBuilder();
 
             DictionaryDAO dictionaryDAO = daoFactory.getDictionaryDAO();
-            List<Dictionary> loadingList = new ArrayList<Dictionary>(dictList.size()); //load all or nothing list
+            List<Dictionary> loadingList = new ArrayList<>(dictList.size()); //load all or nothing list
 
             for (Dictionary dict : dictList) {
                 String dictType = dict.getDictionaryType();
@@ -412,7 +412,7 @@ public class WritebackBeanPersister implements BeanPersistenceFacadeI {
     public void writeBackSamples(List<Sample> sBeans, String actorUserName) throws Exception {
         Long actorId = getActorId(actorUserName, session);
         try {
-            Map<String, Long> projNameVsId = new HashMap<String, Long>();
+            Map<String, Long> projNameVsId = new HashMap<>();
             for (Sample sample : sBeans) {
                 if (sample.getProjectId() == null) {
                     String projectName = sample.getProjectName();
@@ -459,7 +459,7 @@ public class WritebackBeanPersister implements BeanPersistenceFacadeI {
 
         try {
             ProjectMetaAttributeDAO pmaDAO = daoFactory.getProjectMetaAttributeDAO();
-            Map<String, Long> projNameVsId = new HashMap<String, Long>();
+            Map<String, Long> projNameVsId = new HashMap<>();
             for (ProjectMetaAttribute attribute : pmaBeans) {
                 if (attribute.getProjectId() == null) {
                     String projectName = attribute.getProjectName();
@@ -500,7 +500,7 @@ public class WritebackBeanPersister implements BeanPersistenceFacadeI {
 
         try {
             SampleMetaAttributeDAO smaDAO = daoFactory.getSampleMetaAttributeDAO();
-            Map<String, Long> projNameVsId = new HashMap<String, Long>();
+            Map<String, Long> projNameVsId = new HashMap<>();
             for (SampleMetaAttribute attribute : smaBeans) {
                 validateSampleMetaAttributeInput(attribute);
 
@@ -548,7 +548,7 @@ public class WritebackBeanPersister implements BeanPersistenceFacadeI {
             ProjectMetaAttribute pma = null;
             SampleMetaAttribute sma = null;
 
-            Map<String, Long> projNameVsId = new HashMap<String, Long>();
+            Map<String, Long> projNameVsId = new HashMap<>();
             for (EventMetaAttribute attribute : emaBeans) {
                 LookupValue attributeNameLookup = lvDAO.getLookupValue(attribute.getAttributeName(), session);
                 if(attributeNameLookup == null) {
@@ -635,7 +635,7 @@ public class WritebackBeanPersister implements BeanPersistenceFacadeI {
         // Check in with Security.  Do this early to avoid wasting cycles on other things.  This process will
         // except out of this method, if user does not have access to ALL projects in the list.
         SecurityDAO securityDAO = daoFactory.getSecurityDAO();
-        List<String> projectList = new ArrayList<String>();
+        List<String> projectList = new ArrayList<>();
         for (FileReadAttributeBean forSecurityBean : aBeans) {
             String forSecurityBeanProjectName = forSecurityBean.getProjectName();
             if (!projectList.contains(forSecurityBeanProjectName))

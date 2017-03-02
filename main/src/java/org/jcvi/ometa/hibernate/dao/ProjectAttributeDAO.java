@@ -71,7 +71,7 @@ public class ProjectAttributeDAO extends HibernateDAO {
     }
 
     public List<ProjectAttribute> readAll( Long projectId, Session session ) throws DAOException {
-        List<ProjectAttribute> attributeList = new ArrayList<ProjectAttribute>();
+        List<ProjectAttribute> attributeList = new ArrayList<>();
         try {
             Criteria crit = session.createCriteria( ProjectAttribute.class );
             crit.add( Restrictions.eq( "projectId", projectId ) );
@@ -110,7 +110,7 @@ public class ProjectAttributeDAO extends HibernateDAO {
     }
 
     public List<ProjectAttribute> readAll( List<Long> projectIds, Session session ) throws DAOException {
-        List<ProjectAttribute> attributeList = new ArrayList<ProjectAttribute>();
+        List<ProjectAttribute> attributeList = new ArrayList<>();
         try {
             if ( projectIds.size() > 0 ) {
                 Criteria crit = session.createCriteria( ProjectAttribute.class );

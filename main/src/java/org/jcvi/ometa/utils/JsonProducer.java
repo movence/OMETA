@@ -147,18 +147,18 @@ public class JsonProducer implements Runnable {
             //Normal status data retrieval
             LookupValue tempLookupValue;
 
-            List<String> projectNameList = new ArrayList<String>();
+            List<String> projectNameList = new ArrayList<>();
             if (projectNames.contains(","))
                 projectNameList.addAll(Arrays.asList(projectNames.split(",")));
             else
                 projectNameList.add(projectNames);
 
-            List<String> availableAttributes = new ArrayList<String>();
+            List<String> availableAttributes = new ArrayList<>();
             availableAttributes.add("Sample Name");
 
             List<Project> projects = pseEjb.getProjects(projectNameList);
-            List<Long> projectIds = new ArrayList<Long>();
-            Map<String, Long> projectNameVsId = new HashMap<String, Long>();
+            List<Long> projectIds = new ArrayList<>();
+            Map<String, Long> projectNameVsId = new HashMap<>();
             for (Project project : projects) {
                 projectIds.add(project.getProjectId());
                 projectNameVsId.put(project.getProjectName(), project.getProjectId());
@@ -184,9 +184,9 @@ public class JsonProducer implements Runnable {
             if (attributes == null || attributes.equals("") || "ALL".equals(attributes)) {
                 parameterizedAttributes = availableAttributes;
             } else {
-                parameterizedAttributes = new ArrayList<String>();
+                parameterizedAttributes = new ArrayList<>();
 
-                ArrayList<String> tokenizedAttribute = new ArrayList<String>(Arrays.asList(attributes.split(",")));
+                ArrayList<String> tokenizedAttribute = new ArrayList<>(Arrays.asList(attributes.split(",")));
 
                 for (String tempAttribute : tokenizedAttribute) {
                     if (availableAttributes.contains(tempAttribute))
@@ -214,7 +214,7 @@ public class JsonProducer implements Runnable {
             style.setFont(font);
             /*------------ XLS Part END ------------*/
 
-            List<String> attributeList = new ArrayList<String>();
+            List<String> attributeList = new ArrayList<>();
             String bioSampleId = "BioSample ID";
             for (String tempAttribute : parameterizedAttributes) {
                 tempAttribute = (tempAttribute.equals("BioSample_Accession") || tempAttribute.equals("BioSample Accession")) ? bioSampleId : tempAttribute;
@@ -236,22 +236,22 @@ public class JsonProducer implements Runnable {
             json.put("projectNames", projectNames);
 
             List<ProjectAttribute> allProjectAttributes = pseEjb.getProjectAttributes(projectIds);
-            Map<Long, List<ProjectAttribute>> projIdVsAttributes = new HashMap<Long, List<ProjectAttribute>>();
+            Map<Long, List<ProjectAttribute>> projIdVsAttributes = new HashMap<>();
             for (ProjectAttribute pa : allProjectAttributes) {
                 List<ProjectAttribute> paList = projIdVsAttributes.get(pa.getProjectId());
                 if (paList == null) {
-                    paList = new ArrayList<ProjectAttribute>();
+                    paList = new ArrayList<>();
                     projIdVsAttributes.put(pa.getProjectId(), paList);
                 }
                 paList.add(pa);
             }
 
             List<Sample> allSamplesAllProjects = pseEjb.getSamplesForProjects(projectIds);
-            Map<Long, List<Sample>> projectIdVsSampleList = new HashMap<Long, List<Sample>>();
+            Map<Long, List<Sample>> projectIdVsSampleList = new HashMap<>();
             for (Sample sample : allSamplesAllProjects) {
                 List<Sample> thisProjectsSamples = projectIdVsSampleList.get(sample.getProjectId());
                 if (thisProjectsSamples == null) {
-                    thisProjectsSamples = new ArrayList<Sample>();
+                    thisProjectsSamples = new ArrayList<>();
                     projectIdVsSampleList.put(sample.getProjectId(), thisProjectsSamples);
                 }
                 thisProjectsSamples.add(sample);
@@ -259,9 +259,9 @@ public class JsonProducer implements Runnable {
 
 
             /************* Main LOOP starts *****************/
-            List<JSONObject> sampleList = new ArrayList<JSONObject>();
-            List<String> statusList = new ArrayList<String>();
-            List<JSONObject> sumList = new ArrayList<JSONObject>();
+            List<JSONObject> sampleList = new ArrayList<>();
+            List<String> statusList = new ArrayList<>();
+            List<JSONObject> sumList = new ArrayList<>();
 
             //Add Aim Column to production status summary page
             statusList.add(AIM);
@@ -274,7 +274,7 @@ public class JsonProducer implements Runnable {
 
                 Long tempProjectId = project.getProjectId();
                 List<ProjectAttribute> paList = projIdVsAttributes.get(tempProjectId);
-                Map<String, Object> projectAttrMap = new HashMap<String, Object>();
+                Map<String, Object> projectAttrMap = new HashMap<>();
                 if (paList != null) {
                     for (ProjectAttribute pa : paList) {
                         ProjectMetaAttribute projectMeta = pa.getMetaAttribute();
@@ -303,7 +303,7 @@ public class JsonProducer implements Runnable {
                 currSum.put("tot", samplesForProject.size());
 
                 for (Sample sample : samplesForProject) {
-                    Map<String, Object> sampleAttrMap = new HashMap<String, Object>();
+                    Map<String, Object> sampleAttrMap = new HashMap<>();
                     sampleAttrMap.putAll(projectAttrMap);
                     sampleAttrMap.put(Constants.ATTR_SAMPLE_NAME, sample.getSampleName());
                     sampleAttrMap.put("sampleId", sample.getSampleId());
@@ -445,7 +445,7 @@ public class JsonProducer implements Runnable {
 
             String[] urls = kingdomUrl.trim().split("\\$");
             if (urls.length > 0) {
-                kingdomProjectMap = new HashMap<String, List<String>>();
+                kingdomProjectMap = new HashMap<>();
                 for (String url : urls) {
                     String kingdom = null;
                     String[] urlAttributes = url.trim().split("\\&"); //attribute seperator
@@ -464,32 +464,32 @@ public class JsonProducer implements Runnable {
             //Normal status data retrieval
             LookupValue tempLookupValue;
 
-            Map<String, Species> speciesMap = new HashMap<String, Species>();
+            Map<String, Species> speciesMap = new HashMap<>();
             for(Map.Entry<String, List<String>> entry : kingdomProjectMap.entrySet()) {
                 List<String> projectNameList = entry.getValue();
                 List<Project> projects = pseEjb.getProjects(projectNameList);
-                List<Long> projectIds = new ArrayList<Long>();
+                List<Long> projectIds = new ArrayList<>();
                 for (Project project : projects) {
                     projectIds.add(project.getProjectId());
                 }
 
                 List<ProjectAttribute> allProjectAttributes = pseEjb.getProjectAttributes(projectIds);
-                Map<Long, List<ProjectAttribute>> projIdVsAttributes = new HashMap<Long, List<ProjectAttribute>>();
+                Map<Long, List<ProjectAttribute>> projIdVsAttributes = new HashMap<>();
                 for (ProjectAttribute pa : allProjectAttributes) {
                     List<ProjectAttribute> paList = projIdVsAttributes.get(pa.getProjectId());
                     if (paList == null) {
-                        paList = new ArrayList<ProjectAttribute>();
+                        paList = new ArrayList<>();
                         projIdVsAttributes.put(pa.getProjectId(), paList);
                     }
                     paList.add(pa);
                 }
 
                 List<Sample> allSamplesAllProjects = pseEjb.getSamplesForProjects(projectIds);
-                Map<Long, List<Sample>> projectIdVsSampleList = new HashMap<Long, List<Sample>>();
+                Map<Long, List<Sample>> projectIdVsSampleList = new HashMap<>();
                 for (Sample sample : allSamplesAllProjects) {
                     List<Sample> thisProjectsSamples = projectIdVsSampleList.get(sample.getProjectId());
                     if (thisProjectsSamples == null) {
-                        thisProjectsSamples = new ArrayList<Sample>();
+                        thisProjectsSamples = new ArrayList<>();
                         projectIdVsSampleList.put(sample.getProjectId(), thisProjectsSamples);
                     }
                     thisProjectsSamples.add(sample);
@@ -573,9 +573,9 @@ public class JsonProducer implements Runnable {
                 }
             }
 
-            Map<String, Species> kingdoms = new HashMap<String, Species>();
+            Map<String, Species> kingdoms = new HashMap<>();
 
-            List<JSONObject> speciesList = new ArrayList<JSONObject>();
+            List<JSONObject> speciesList = new ArrayList<>();
 
             //TODO: return object with parent-child information rather than kingdom-genus relationship
             for(Species currSpecies : speciesMap.values()) {
@@ -640,7 +640,7 @@ public class JsonProducer implements Runnable {
 
     private Map<Long, List<EventAttribute>> getEventIdVsAttributeList(List<Event> sampleEvents, Long projectId) throws Exception {
         // Corral the ids of the events from the list of events.
-        List<Long> allEventIds = new ArrayList<Long>();
+        List<Long> allEventIds = new ArrayList<>();
         for (Event evt : sampleEvents) {
             allEventIds.add(evt.getEventId());
         }
@@ -651,11 +651,11 @@ public class JsonProducer implements Runnable {
         }
         List<EventAttribute> allEventAttributes = pseEjb.getEventAttributes(allEventIds, projectId);
         logger.debug("Got " + allEventAttributes.size() + " event attributes in getEventIdVsAttributeList ");
-        Map<Long, List<EventAttribute>> eventIdVsAttributes = new HashMap<Long, List<EventAttribute>>();
+        Map<Long, List<EventAttribute>> eventIdVsAttributes = new HashMap<>();
         for (EventAttribute ea : allEventAttributes) {
             List<EventAttribute> lea = eventIdVsAttributes.get(ea.getEventId());
             if (lea == null) {
-                lea = new ArrayList<EventAttribute>();
+                lea = new ArrayList<>();
                 eventIdVsAttributes.put(ea.getEventId(), lea);
             }
             lea.add(ea);
@@ -669,11 +669,11 @@ public class JsonProducer implements Runnable {
     private Map<Long, List<Event>> getSampleIdVsEventList(List<Long> sampleIdList) throws Exception {
         // Get all events for all samples, and remarshal them into a map of sample vs event.
         List<Event> allSampleEvents = pseEjb.getEventsForSamples(sampleIdList);
-        Map<Long, List<Event>> sampleIdVsEventList = new HashMap<Long, List<Event>>();
+        Map<Long, List<Event>> sampleIdVsEventList = new HashMap<>();
         for (Event att : allSampleEvents) {
             List<Event> atts = sampleIdVsEventList.get(att.getSampleId());
             if (atts == null) {
-                atts = new ArrayList<Event>();
+                atts = new ArrayList<>();
                 sampleIdVsEventList.put(att.getSampleId(), atts);
             }
             atts.add(att);
@@ -683,7 +683,7 @@ public class JsonProducer implements Runnable {
     }
 
     private List<Long> getSampleIdList(List<Sample> samples) {
-        List<Long> sampleIdList = new ArrayList<Long>();
+        List<Long> sampleIdList = new ArrayList<>();
         for (Sample sample : samples) {
             sampleIdList.add(sample.getSampleId());
         }
@@ -693,11 +693,11 @@ public class JsonProducer implements Runnable {
     private Map<Long, List<SampleAttribute>> getSampleVsAttributeList(List<Long> sampleIdList) throws Exception {
         // Get all sample attributes for all samples, and remarshal them into a map of sample vs attributes.
         List<SampleAttribute> allSampleAttributes = pseEjb.getSampleAttributes(sampleIdList);
-        Map<Long, List<SampleAttribute>> sampleIdVsAttributeList = new HashMap<Long, List<SampleAttribute>>();
+        Map<Long, List<SampleAttribute>> sampleIdVsAttributeList = new HashMap<>();
         for (SampleAttribute att : allSampleAttributes) {
             List<SampleAttribute> atts = sampleIdVsAttributeList.get(att.getSampleId());
             if (atts == null) {
-                atts = new ArrayList<SampleAttribute>();
+                atts = new ArrayList<>();
                 sampleIdVsAttributeList.put(att.getSampleId(), atts);
             }
             atts.add(att);

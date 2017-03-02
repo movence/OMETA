@@ -98,7 +98,7 @@ public class LookupValueDAO extends HibernateDAO {
     }
 
     public List<LookupValue> getEventLookupValueListForProjectAndSample( Long projectId, Session session ) throws DAOException {
-        List<LookupValue>  rtnVal = new ArrayList<LookupValue>();
+        List<LookupValue>  rtnVal = new ArrayList<>();
         try {
             String hql = "from LookupValue where lookupValueId in "
                     + "(select distinct(eventTypeLookupId) from EventMetaAttribute where projectId=" + projectId + ") ";

@@ -120,5 +120,5 @@ public class FileCollector {
         return rtnfiles;
     }*/
 
-    private List<File> makeEmptyList() { return new ArrayList<File>(); };
+    private List<File> makeEmptyList() { return new ArrayList<>(); };
 }

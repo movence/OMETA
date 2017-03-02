@@ -59,7 +59,7 @@ public class EventHistory extends ActionSupport {
 
         try {
 
-            projectNameList = new ArrayList<String>();
+            projectNameList = new ArrayList<>();
             if( projectNames == null || projectNames.equals( "" ))
                 projectNameList.add("ALL");
             else if( projectNames.contains(","))

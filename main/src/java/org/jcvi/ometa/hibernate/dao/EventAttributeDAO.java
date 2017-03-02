@@ -66,7 +66,7 @@ public class EventAttributeDAO extends HibernateDAO {
             Criteria crit = session.createCriteria( EventAttribute.class );
             crit.add( Restrictions.eq("eventId", eventId) );
             List<EventAttribute> results = crit.list();
-            List<Long> nameLookupIds = new ArrayList<Long>();
+            List<Long> nameLookupIds = new ArrayList<>();
             if ( results != null && results.size() > 0 ) {
                 for ( EventAttribute ea: results ) {
                     nameLookupIds.add( ea.getNameLookupValueId() );
@@ -77,7 +77,7 @@ public class EventAttributeDAO extends HibernateDAO {
 
                 List<EventMetaAttribute> metaResults = crit.list();
                 if ( metaResults != null ) {
-                    Map<Long,EventMetaAttribute> nameIdVsMetaAttribute = new HashMap<Long,EventMetaAttribute>();
+                    Map<Long,EventMetaAttribute> nameIdVsMetaAttribute = new HashMap<>();
                     for ( EventMetaAttribute ema: metaResults ) {
                         nameIdVsMetaAttribute.put( ema.getNameLookupId(), ema );
                     }
@@ -127,7 +127,7 @@ public class EventAttributeDAO extends HibernateDAO {
     }
 
     public List<EventAttribute> getEventAttributes( List<Long> eventIds, Long projectId, Session session ) throws DAOException {
-        List<EventAttribute> eaList = new ArrayList<EventAttribute>();
+        List<EventAttribute> eaList = new ArrayList<>();
         try {
             if ( eventIds.size() > 0 ) {
 
@@ -138,7 +138,7 @@ public class EventAttributeDAO extends HibernateDAO {
                 crit = session.createCriteria(Event.class);
                 crit.add(Restrictions.in("eventId", eventIds));
                 List<Event> events = crit.list();
-                Map<Long, Long> eventVsEventType = new HashMap<Long, Long>();
+                Map<Long, Long> eventVsEventType = new HashMap<>();
                 for(Event event : events) {
                     if(!eventVsEventType.containsKey(event.getEventId())) {
                         eventVsEventType.put(event.getEventId(), event.getEventType());
@@ -147,7 +147,7 @@ public class EventAttributeDAO extends HibernateDAO {
 
                 if(results != null && results.size() > 0) {
 
-                    List<Long> nameLookupIds = new ArrayList<Long>();
+                    List<Long> nameLookupIds = new ArrayList<>();
                     for ( EventAttribute ea: results ) {
                         nameLookupIds.add( ea.getNameLookupValueId() );
                     }
@@ -157,12 +157,12 @@ public class EventAttributeDAO extends HibernateDAO {
                     List<EventMetaAttribute> metaResults = crit.list();
 
                     if(metaResults != null) {
-                        Map<Long, Map<Long, EventMetaAttribute>> eventTypeToNameMap = new HashMap<Long, Map<Long, EventMetaAttribute>>();
+                        Map<Long, Map<Long, EventMetaAttribute>> eventTypeToNameMap = new HashMap<>();
                         for(EventMetaAttribute ema: metaResults) {
                             if(eventTypeToNameMap.containsKey(ema.getEventTypeLookupId())) {
                                 eventTypeToNameMap.get(ema.getEventTypeLookupId()).put(ema.getNameLookupId(), ema);
                             } else {
-                                Map<Long, EventMetaAttribute> nameVsEma = new TreeMap<Long, EventMetaAttribute>();
+                                Map<Long, EventMetaAttribute> nameVsEma = new TreeMap<>();
                                 nameVsEma.put(ema.getNameLookupId(), ema);
                                 eventTypeToNameMap.put(ema.getEventTypeLookupId(), nameVsEma);
                             }

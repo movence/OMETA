@@ -129,7 +129,7 @@ public class EventLoader extends ActionSupport implements Preparable {
     @Override
     public void prepare() throws Exception {
         //get project list for the drop down box
-        List<String> projectNameList = new ArrayList<String>();
+        List<String> projectNameList = new ArrayList<>();
         if (projectNames == null || projectNames.equals("")) {
             projectNameList.add("ALL");
         } else if (projectNames.contains(",")) {
@@ -181,7 +181,7 @@ public class EventLoader extends ActionSupport implements Preparable {
                     loadHelper.setSubmissionId(Long.toString(CommonTool.getGuid()));
 
                     // manually create grid list then delegate it to the helper
-                    List<GridBean> singleGridList = new ArrayList<GridBean>(1);
+                    List<GridBean> singleGridList = new ArrayList<>(1);
                     GridBean singleGridBean = new GridBean();
 
                     singleGridBean.setProjectName(isProjectRegistration ? this.loadingProject.getProjectName() : this.projectName);

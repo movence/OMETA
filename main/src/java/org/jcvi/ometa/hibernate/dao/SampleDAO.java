@@ -148,7 +148,7 @@ public class SampleDAO extends HibernateDAO {
 
     /** Return a list of all Samples. */
     public List<Sample> getAllSamples( Session session ) throws DAOException {
-        List<Sample> returnVal = new ArrayList<Sample>();
+        List<Sample> returnVal = new ArrayList<>();
         try {
             Criteria crit = session.createCriteria( Sample.class );
             returnVal.addAll( crit.list() );
@@ -160,7 +160,7 @@ public class SampleDAO extends HibernateDAO {
     }
 
     public List<Sample> getChildSamples(Long sampleId, Session session) throws DAOException {
-        List<Sample> returnVal = new ArrayList<Sample>();
+        List<Sample> returnVal = new ArrayList<>();
         try {
             Criteria crit = session.createCriteria( Sample.class );
             crit.add(Restrictions.eq("parentSampleId", sampleId));
@@ -227,7 +227,7 @@ public class SampleDAO extends HibernateDAO {
     }
 
     public List<Sample> getAllSamples(Long projectId, Session session) throws DAOException {
-        List<Sample> sampleList = new ArrayList<Sample>();
+        List<Sample> sampleList = new ArrayList<>();
         try {
             Criteria crit = session.createCriteria( Sample.class );
             crit.add( Restrictions.eq( "projectId", projectId ) );
@@ -241,7 +241,7 @@ public class SampleDAO extends HibernateDAO {
     }
 
     public List<Sample> getAllSamplesBySearch(Long projectId, String sampleVal, int firstResult, int maxResult, Session session) throws DAOException {
-        List<Sample> sampleList = new ArrayList<Sample>();
+        List<Sample> sampleList = new ArrayList<>();
         try {
             Criteria crit = session.createCriteria( Sample.class );
             crit.add( Restrictions.eq( "projectId", projectId ) );
@@ -275,7 +275,7 @@ public class SampleDAO extends HibernateDAO {
     }
 
     public List<Sample> getAllSamples(List<Long> projectIds, Session session) throws DAOException {
-        List<Sample> sampleList = new ArrayList<Sample>();
+        List<Sample> sampleList = new ArrayList<>();
         try {
             if ( projectIds.size() > 0 ) {
                 Criteria crit = session.createCriteria( Sample.class );
@@ -293,7 +293,7 @@ public class SampleDAO extends HibernateDAO {
     }
 
     public List<Sample> getSamplesByPublicFlag(Long projectId, boolean isPublic, Session session) throws Exception {
-        List<Sample> sampleList = new ArrayList<Sample>();
+        List<Sample> sampleList = new ArrayList<>();
         try {
             Criteria crit = session.createCriteria( Sample.class );
             crit.add(
@@ -311,7 +311,7 @@ public class SampleDAO extends HibernateDAO {
     }
 
     public List<Sample> getAllSamples(Long flexId, String type, String sSearch, String sortCol, String sortDir, List<String> columnName, List<String> columnSearchArguments, Session session) throws DAOException {
-        List<Sample> sampleList = new ArrayList<Sample>();
+        List<Sample> sampleList = new ArrayList<>();
         try {
             List results = null;
 
@@ -429,7 +429,7 @@ public class SampleDAO extends HibernateDAO {
 
     public List<Sample> getAllSamples(String projectIds, String attributeNames, String sSearch, String sortType,
                                       String sortCol, String sortDir, List<String> columnName, List<String> columnSearchArguments, Session session) throws DAOException {
-        List<Sample> sampleList = new ArrayList<Sample>();
+        List<Sample> sampleList = new ArrayList<>();
         String defaultAttributes[] = {Constants.ATTR_PROJECT_NAME, Constants.ATTR_SAMPLE_NAME, Constants.ATTR_PARENT_SAMPLE_NAME};
 
         try {

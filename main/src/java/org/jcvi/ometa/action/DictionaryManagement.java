@@ -42,7 +42,7 @@ public class DictionaryManagement extends ActionSupport {
             this.dictionaryList = readPersister.getDictionaries(true);
             List<DictionaryDependency> dictionaryDependencyList = readPersister.getDictionaryDependencies();
 
-            dependencyMap = new HashMap<Long, Long>(dictionaryDependencyList.size());
+            dependencyMap = new HashMap<>(dictionaryDependencyList.size());
 
             for(DictionaryDependency dictDependency : dictionaryDependencyList){
                 this.dependencyMap.put(dictDependency.getDictionaryId(), dictDependency.getParentId());
@@ -71,7 +71,7 @@ public class DictionaryManagement extends ActionSupport {
             this.dictionaryList = readPersister.getDictionaries(true);
             List<DictionaryDependency> dictionaryDependencyList = readPersister.getDictionaryDependencies();
 
-            dependencyMap = new HashMap<Long, Long>(dictionaryDependencyList.size());
+            dependencyMap = new HashMap<>(dictionaryDependencyList.size());
 
             for(DictionaryDependency dictDependency : dictionaryDependencyList){
                 this.dependencyMap.put(dictDependency.getDictionaryId(), dictDependency.getParentId());

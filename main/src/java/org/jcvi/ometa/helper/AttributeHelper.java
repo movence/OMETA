@@ -29,7 +29,7 @@ public class AttributeHelper {
     }
 
     public List<AttributePair> getAllAttributeByIDs(Long projectId, Long eventId, String ids, String idType) throws Exception {
-        List<AttributePair> pairList = new ArrayList<AttributePair>();
+        List<AttributePair> pairList = new ArrayList<>();
 
         Project currProject = readPersister.getProject(projectId);
 
@@ -55,9 +55,9 @@ public class AttributeHelper {
                 if(currCoreObject != null) {
                     Event currEvent = readPersister.getLatestEventForSample(projectId, isProject ? null : currSample.getSampleId(), eventId);
 
-                    List<FileReadAttributeBean> beanList = new ArrayList<FileReadAttributeBean>();
+                    List<FileReadAttributeBean> beanList = new ArrayList<>();
 
-                    Map<Long, EventAttribute> eaMap = new HashMap<Long, EventAttribute>();
+                    Map<Long, EventAttribute> eaMap = new HashMap<>();
                     if(currEvent != null) { //there could be no event, then move on to project/sample attributes
                         //get the latest event attributes
                         List<EventAttribute> eaList = readPersister.getEventAttributes(currEvent.getEventId(), projectId);
@@ -74,14 +74,14 @@ public class AttributeHelper {
                     Map<Long, SampleAttribute> saMap = null;
                     if(isProject) {
                         paList = readPersister.getProjectAttributes(projectId);
-                        paMap = new HashMap<Long, ProjectAttribute>(paList.size());
+                        paMap = new HashMap<>(paList.size());
                         for(ProjectAttribute pa : paList) {
                             if(pa.getMetaAttribute() != null)
                                 paMap.put(pa.getMetaAttribute().getLookupValue().getLookupValueId(), pa);
                         }
                     } else {
                         saList = readPersister.getSampleAttributes(currSample.getSampleId());
-                        saMap = new HashMap<Long, SampleAttribute>(saList.size());
+                        saMap = new HashMap<>(saList.size());
                         for(SampleAttribute sa : saList) {
                             if(sa.getMetaAttribute() != null)
                                 saMap.put(sa.getMetaAttribute().getLookupValue().getLookupValueId(), sa);
@@ -139,7 +139,7 @@ public class AttributeHelper {
     }
 
     public static Map<String, String> attributeListToMap(List<FileReadAttributeBean> attributeList) {
-        Map<String, String> resultMap = new HashMap<String, String>();
+        Map<String, String> resultMap = new HashMap<>();
 
         if(attributeList != null && attributeList.size() > 0) {
             for(FileReadAttributeBean bean : attributeList) {

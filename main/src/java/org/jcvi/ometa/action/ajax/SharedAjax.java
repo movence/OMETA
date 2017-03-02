@@ -111,14 +111,14 @@ public class SharedAjax extends ActionSupport implements IAjaxAction {
 
             ProjectMap pMap = this.getProjectInformation(this.projectId, true);
 
-            Map<String, Object> projectMap = new LinkedHashMap<String, Object>();
+            Map<String, Object> projectMap = new LinkedHashMap<>();
 
             projectMap.put(Constants.ATTR_PROJECT_NAME, pMap.getProject().getProjectName());
 
             List<LookupValue> allLV = readPersister.getEventTypesForProject(projectId);
-            List<String> attributeList = new ArrayList<String>(0);
-            Map<String, String> attributeType = new HashMap<String, String>(0);
-            final List<String> sortedMetaAttributeNames = new ArrayList<String>(0);
+            List<String> attributeList = new ArrayList<>(0);
+            Map<String, String> attributeType = new HashMap<>(0);
+            final List<String> sortedMetaAttributeNames = new ArrayList<>(0);
 
             attributeType.put("Sample Name", "string");
             attributeType.put("Parent", "string");
@@ -203,7 +203,7 @@ public class SharedAjax extends ActionSupport implements IAjaxAction {
 
             this.getCurrentUserName();
 
-            Map<String, String> generalInfo = new HashMap<String, String>(2);
+            Map<String, String> generalInfo = new HashMap<>(2);
             generalInfo.put("actor", this.userName);
             generalInfo.put("attributes", this.projectPopupAttributes);
             aaData.add(generalInfo);
@@ -213,20 +213,20 @@ public class SharedAjax extends ActionSupport implements IAjaxAction {
             List<Project> projects = null;
             if(this.projectName != null && !this.projectName.isEmpty()) {
                 Project requestedProject = this.readPersister.getProject(this.projectName);
-                projects = new ArrayList<Project>(1);
+                projects = new ArrayList<>(1);
                 projects.add(requestedProject);
             } else {
                 projects = this.readPersister.getAuthorizedProjects(this.userName, AccessLevel.View);
             }
             for(Project project : projects) {
-                Map<String, Object> projectMap = new HashMap<String, Object>();
+                Map<String, Object> projectMap = new HashMap<>();
                 projectMap.put("project", project);
 
                 String projectPIName = "";
                 String projectCoPIName = "";
 
                 List<ProjectAttribute> projectAttributes = readPersister.getProjectAttributes(project.getProjectId());
-                Map<String, Object> attributeMap = new HashMap<String, Object>(projectAttributes.size());
+                Map<String, Object> attributeMap = new HashMap<>(projectAttributes.size());
 
                 for (ProjectAttribute pa : projectAttributes) {
                     ProjectMetaAttribute pma = pa.getMetaAttribute();
@@ -288,7 +288,7 @@ public class SharedAjax extends ActionSupport implements IAjaxAction {
                 Sample sample = readPersister.getSample(this.projectId, this.sampleVal);
                 sampleAttributes = readPersister.getSampleAttributes(sample.getSampleId());
 
-                Map<String, Object> attributeMap = new HashMap<String, Object>(sampleAttributes.size());
+                Map<String, Object> attributeMap = new HashMap<>(sampleAttributes.size());
                 if(sampleAttributes != null) {
                     for (SampleAttribute sa : sampleAttributes) {
                         SampleMetaAttribute sma = sa.getMetaAttribute();
@@ -310,7 +310,7 @@ public class SharedAjax extends ActionSupport implements IAjaxAction {
                     if (sampleLevel != null && !sampleLevel.equals("1")) {
                         samples = readPersister.getChildSamples(sampleId);
                     } else {
-                        samples = new ArrayList<Sample>();
+                        samples = new ArrayList<>();
                         samples.add(readPersister.getSample(sampleId));
                     }
                 } else
@@ -320,7 +320,7 @@ public class SharedAjax extends ActionSupport implements IAjaxAction {
                 int intSampleLevel = Integer.parseInt(sampleLevel);
                 for (Sample sample : samples) {
                     if (intSampleLevel == 0 || (sample.getSampleLevel() != null && sample.getSampleLevel() == intSampleLevel)) { //filter by sample level
-                        Map<String, String> sampleMap = new HashMap<String, String>();
+                        Map<String, String> sampleMap = new HashMap<>();
                         sampleMap.put("id", "" + sample.getSampleId());
                         sampleMap.put("name", sample.getSampleName());
                         aaData.add(sampleMap);
@@ -440,7 +440,7 @@ public class SharedAjax extends ActionSupport implements IAjaxAction {
                 boolean isSampleRegistration = filter.equals("sr");
                 boolean isProjectRegistration = filter.equals("pr");
 
-                List<LookupValue> filteredList = new ArrayList<LookupValue>();
+                List<LookupValue> filteredList = new ArrayList<>();
                 for(LookupValue lv : eventNameList) {
                     String eventName = lv.getName();
                     if(isProjectRegistration) {
@@ -483,15 +483,15 @@ public class SharedAjax extends ActionSupport implements IAjaxAction {
 
             ProjectMap pMap = this.getProjectInformation(this.projectId, false);
             if(pMap.isViewable()) { //only if the user has view permission on a project
-                Map<String, Object> containerMap = new HashMap<String, Object>();
-                List<Long> projectIds = new ArrayList<Long>();
+                Map<String, Object> containerMap = new HashMap<>();
+                List<Long> projectIds = new ArrayList<>();
                 projectIds.add(this.projectId);
 
                 if (subType == null)
                     subType = "A";
                 if (subType.equals("P") || subType.equals("A")) {
                     List<ProjectMetaAttribute> allProjectMetaAttributes = readPersister.getProjectMetaAttributes(projectIds);
-                    List<String> projectMetaList = new ArrayList<String>();
+                    List<String> projectMetaList = new ArrayList<>();
                     if (subType.equals("A"))
                         projectMetaList.add("Project Name");
                     for (ProjectMetaAttribute pma : allProjectMetaAttributes) {
@@ -503,7 +503,7 @@ public class SharedAjax extends ActionSupport implements IAjaxAction {
                 }
                 if (subType.equals("S") || subType.equals("A")) {
                     List<SampleMetaAttribute> allSampleMetaAttributes = readPersister.getSampleMetaAttributes(projectIds);
-                    List<String> sampleMetaList = new ArrayList<String>();
+                    List<String> sampleMetaList = new ArrayList<>();
                     if (subType.equals("A")) {
                         sampleMetaList.add("Sample Name");
                         sampleMetaList.add("Parent Sample");
@@ -517,7 +517,7 @@ public class SharedAjax extends ActionSupport implements IAjaxAction {
                 }
                 if (subType.equals("E") || subType.equals("A")) {
                     List<EventMetaAttribute> allEventMetaAttributes = readPersister.getEventMetaAttributes(projectIds);
-                    Map<String, List<String>> groupedEMA = new HashMap<String, List<String>>();
+                    Map<String, List<String>> groupedEMA = new HashMap<>();
                     for (EventMetaAttribute ema : allEventMetaAttributes) {
                         if(ema.getEventTypeLookupValue() != null && ema.getLookupValue() != null && ema.isActive()) {
                             String et = ema.getEventTypeLookupValue().getName();
@@ -525,7 +525,7 @@ public class SharedAjax extends ActionSupport implements IAjaxAction {
                             if(groupedEMA.containsKey(et)) {
                                 groupedEMA.get(et).add(name);
                             } else {
-                                List<String> newList = new ArrayList<String>();
+                                List<String> newList = new ArrayList<>();
                                 newList.add(name);
                                 groupedEMA.put(et, newList);
                             }
@@ -535,7 +535,7 @@ public class SharedAjax extends ActionSupport implements IAjaxAction {
                 }
                 aaData.add(containerMap);
             } else {
-                Map<String, String> errorMap = new HashMap<String, String>(1);
+                Map<String, String> errorMap = new HashMap<>(1);
                 errorMap.put("error", Constants.DENIED_USER_VIEW_MESSAGE);
                 aaData.add(errorMap);
             }
@@ -562,14 +562,14 @@ public class SharedAjax extends ActionSupport implements IAjaxAction {
 
                 ProjectMap pMap = this.getProjectInformation(this.projectId, true);
 
-                Map<String, Object> projectMap = new HashMap<String, Object>();
+                Map<String, Object> projectMap = new HashMap<>();
                 projectMap.put("editable", pMap.isEditable()?1:0);
 
                 projectMap.put(Constants.ATTR_PROJECT_NAME, pMap.getProject().getProjectName());
                 projectMap.put("Project Registration", CommonTool.convertTimestampToDate(pMap.getProject().getCreationDate()));
 
                 List<EventMetaAttribute> registrationEMAList = readPersister.getEventMetaAttributes(this.projectId);
-                Map<String, String> attributeType = new LinkedHashMap<String, String>(0);
+                Map<String, String> attributeType = new LinkedHashMap<>(0);
 
                 attributeType.put("Event Type", "string");
                 attributeType.put("Sample Name", "string");
@@ -612,7 +612,7 @@ public class SharedAjax extends ActionSupport implements IAjaxAction {
                     if(sampleLevel!=null && !sampleLevel.equals("1")) {
                         samples = readPersister.getChildSamples(sampleId);
                     } else {
-                        samples = new ArrayList<Sample>();
+                        samples = new ArrayList<>();
                         samples.add(readPersister.getSample(sampleId));
                     }
                 } else
@@ -625,7 +625,7 @@ public class SharedAjax extends ActionSupport implements IAjaxAction {
                 int intSampleLevel = Integer.parseInt(sampleLevel);
                 for (Sample sample : samples) {
                     if (intSampleLevel == 0 || (sample.getSampleLevel() != null && sample.getSampleLevel() == intSampleLevel)) { //filter by sample level
-                        Map<String, String> sampleMap = new HashMap<String, String>();
+                        Map<String, String> sampleMap = new HashMap<>();
                         sampleMap.put("id", ""+sample.getSampleId());
                         sampleMap.put("name", sample.getSampleName());
                         aaData.add(sampleMap);
@@ -638,7 +638,7 @@ public class SharedAjax extends ActionSupport implements IAjaxAction {
                     boolean isSampleRegistration = filter.equals("sr");
                     boolean isProjectRegistration = filter.equals("pr");
 
-                    List<LookupValue> filteredList = new ArrayList<LookupValue>();
+                    List<LookupValue> filteredList = new ArrayList<>();
                     for(LookupValue lv : eventNameList) {
                         String eventName = lv.getName();
                         if(isProjectRegistration) {
@@ -668,15 +668,15 @@ public class SharedAjax extends ActionSupport implements IAjaxAction {
 
                 ProjectMap pMap = this.getProjectInformation(this.projectId, false);
                 if(pMap.isViewable()) { //only if the user has view permission on a project
-                    Map<String, Object> containerMap = new HashMap<String, Object>();
-                    List<Long> projectIds = new ArrayList<Long>();
+                    Map<String, Object> containerMap = new HashMap<>();
+                    List<Long> projectIds = new ArrayList<>();
                     projectIds.add(this.projectId);
 
                     if (subType == null)
                         subType = "A";
                     if (subType.equals("P") || subType.equals("A")) {
                         List<ProjectMetaAttribute> allProjectMetaAttributes = readPersister.getProjectMetaAttributes(projectIds);
-                        List<String> projectMetaList = new ArrayList<String>();
+                        List<String> projectMetaList = new ArrayList<>();
                         if (subType.equals("A"))
                             projectMetaList.add("Project Name");
                         for (ProjectMetaAttribute pma : allProjectMetaAttributes) {
@@ -688,7 +688,7 @@ public class SharedAjax extends ActionSupport implements IAjaxAction {
                     }
                     if (subType.equals("S") || subType.equals("A")) {
                         List<SampleMetaAttribute> allSampleMetaAttributes = readPersister.getSampleMetaAttributes(projectIds);
-                        List<String> sampleMetaList = new ArrayList<String>();
+                        List<String> sampleMetaList = new ArrayList<>();
                         if (subType.equals("A")) {
                             sampleMetaList.add("Sample Name");
                             sampleMetaList.add("Parent Sample");
@@ -702,7 +702,7 @@ public class SharedAjax extends ActionSupport implements IAjaxAction {
                     }
                     if (subType.equals("E") || subType.equals("A")) {
                         List<EventMetaAttribute> allEventMetaAttributes = readPersister.getEventMetaAttributes(projectIds);
-                        Map<String, List<String>> groupedEMA = new HashMap<String, List<String>>();
+                        Map<String, List<String>> groupedEMA = new HashMap<>();
                         for (EventMetaAttribute ema : allEventMetaAttributes) {
                             if(ema.getEventTypeLookupValue() != null && ema.getLookupValue() != null && ema.isActive()) {
                                 String et = ema.getEventTypeLookupValue().getName();
@@ -710,7 +710,7 @@ public class SharedAjax extends ActionSupport implements IAjaxAction {
                                 if(groupedEMA.containsKey(et)) {
                                     groupedEMA.get(et).add(name);
                                 } else {
-                                    List<String> newList = new ArrayList<String>();
+                                    List<String> newList = new ArrayList<>();
                                     newList.add(name);
                                     groupedEMA.put(et, newList);
                                 }
@@ -720,7 +720,7 @@ public class SharedAjax extends ActionSupport implements IAjaxAction {
                     }
                     aaData.add(containerMap);
                 } else {
-                    Map<String, String> errorMap = new HashMap<String, String>(1);
+                    Map<String, String> errorMap = new HashMap<>(1);
                     errorMap.put("error", Constants.DENIED_USER_VIEW_MESSAGE);
                     aaData.add(errorMap);
                 }
@@ -741,7 +741,7 @@ public class SharedAjax extends ActionSupport implements IAjaxAction {
                 List<AttributePair> pairList = attributeHelper.getAllAttributeByIDs(this.projectId, this.eventId, this.ids, subType);
                 if(pairList != null) {
                     for(AttributePair pair : pairList) {
-                        Map<String, Object> jsonPair = new HashMap<String, Object>(3);
+                        Map<String, Object> jsonPair = new HashMap<>(3);
                         jsonPair.put("type", pair.getSample() == null ? "project" : "sample");
                         jsonPair.put(Constants.ATTR_PROJECT_NAME, pair.getProject().getProjectName());
                         jsonPair.put("object", pair.getSample() == null ? pair.getProject() : pair.getSample());
@@ -797,7 +797,7 @@ public class SharedAjax extends ActionSupport implements IAjaxAction {
             pMap = new ProjectMap();
             pMap.setProject(project);
 
-            List<String> projectNamesList = new ArrayList<String>();
+            List<String> projectNamesList = new ArrayList<>();
             projectNamesList.add(pMap.getProject().getProjectName());
 
             try { //check view permission

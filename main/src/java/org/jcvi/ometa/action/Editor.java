@@ -110,12 +110,12 @@ public class Editor extends ActionSupport {
                 tx = (UserTransaction) new InitialContext().lookup("java:comp/UserTransaction");
                 tx.begin();
 
-                List<EventMetaAttribute> emaList = new ArrayList<EventMetaAttribute>();
-                List<LookupValue> lkvList = new ArrayList<LookupValue>();
-                List<FileReadAttributeBean> attrBeanList = new ArrayList<FileReadAttributeBean>();
+                List<EventMetaAttribute> emaList = new ArrayList<>();
+                List<LookupValue> lkvList = new ArrayList<>();
+                List<FileReadAttributeBean> attrBeanList = new ArrayList<>();
 
                 List<EventMetaAttribute> existingEmaList = readPersister.getEventMetaAttributes(projectId);
-                List<String> existingEmaNames = new ArrayList<String>();
+                List<String> existingEmaNames = new ArrayList<>();
                 for (EventMetaAttribute ema : existingEmaList) {
                     if (ema.getEventTypeLookupValue().getName().equals(LOOKUP_VALUE_NAME_PROJECT_UPDATE))
                         if (!existingEmaNames.contains(ema.getLookupValue().getName()))
@@ -261,12 +261,12 @@ public class Editor extends ActionSupport {
                 tx = (UserTransaction) new InitialContext().lookup("java:comp/UserTransaction");
                 tx.begin();
 
-                List<EventMetaAttribute> emaList = new ArrayList<EventMetaAttribute>();
-                List<LookupValue> lkvList = new ArrayList<LookupValue>();
-                List<FileReadAttributeBean> attrBeanList = new ArrayList<FileReadAttributeBean>();
+                List<EventMetaAttribute> emaList = new ArrayList<>();
+                List<LookupValue> lkvList = new ArrayList<>();
+                List<FileReadAttributeBean> attrBeanList = new ArrayList<>();
 
                 List<EventMetaAttribute> existingEmaList = readPersister.getEventMetaAttributes(projectId);
-                List<String> existingEmaNames = new ArrayList<String>();
+                List<String> existingEmaNames = new ArrayList<>();
                 for (EventMetaAttribute ema : existingEmaList) {
                     if (ema.getEventTypeLookupValue().getName().equals(LOOKUP_VALUE_NAME_SAMPLE_UPDATE))
                         if (!existingEmaNames.contains(ema.getLookupValue().getName()))

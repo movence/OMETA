@@ -87,7 +87,7 @@ public class BioportalOntologyService {
     }
 
     private List<OntologyTerm> processSearchResult(String result) throws Exception {
-        List<OntologyTerm> terms = new ArrayList<OntologyTerm>();
+        List<OntologyTerm> terms = new ArrayList<>();
 
         JSONObject json = new JSONObject(result);
         JSONArray dataArray = json.getJSONArray("collection");

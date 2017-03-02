@@ -59,7 +59,7 @@ public class Ontology extends ActionSupport {
         String rtnVal = SUCCESS;
         Map<String, String> ontologyMap = ontologyService.getOntologies();
         if(ontologyMap!=null && ontologyMap.size()>0) {
-            ontologies = new ArrayList<String>();
+            ontologies = new ArrayList<>();
             for(Map.Entry<String, String> entry : ontologyMap.entrySet()) {
                 ontologies.add(String.format("%s (%s)", entry.getValue(), entry.getKey())); //make "ontology (abbreviation)"
             }

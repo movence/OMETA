@@ -134,7 +134,7 @@ public class BulkLoader {
     }
 
     private List<String> findNewDataFiles() throws Exception {
-        List<String> fileList = new ArrayList<String>();
+        List<String> fileList = new ArrayList<>();
         String[] acceptedFileExtensions = { "csv", "zip" };
 
         File storageDirectory = new File(this.BULK_FILE_DIRECTORY);
@@ -226,7 +226,7 @@ public class BulkLoader {
                                String logPath, String failPath) throws Exception {
 
         String logFileName = null;
-        List<String> files = new ArrayList<String>(2);
+        List<String> files = new ArrayList<>(2);
         if(logPath != null) {
             files.add(logPath);
             logFileName = logPath.substring(logPath.lastIndexOf(File.separator) + 1);

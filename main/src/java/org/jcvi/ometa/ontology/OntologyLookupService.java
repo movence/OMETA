@@ -41,7 +41,7 @@ public class OntologyLookupService {
     private Map<String, String> ontologies;
 
     public OntologyLookupService() {
-        ontologies = new TreeMap<String, String>();
+        ontologies = new TreeMap<>();
     }
 
     private Query getOntologyQuery() throws Exception {
@@ -105,7 +105,7 @@ public class OntologyLookupService {
     }
 
     public Map<String, OntologyTerm> getParentsToRoot(String termId, String ontology) {
-        Map<String, OntologyTerm> parents = new LinkedHashMap<String, OntologyTerm>();
+        Map<String, OntologyTerm> parents = new LinkedHashMap<>();
         try {
             Map<String, OntologyTerm> directParents = this.getParents(termId, ontology);
             for(Map.Entry<String, OntologyTerm> entry : directParents.entrySet()) {
@@ -147,7 +147,7 @@ public class OntologyLookupService {
     }
 
     private Map<String, OntologyTerm> convertToOntologyMap(Map<String, String> map) {
-        Map<String, OntologyTerm> ontologyMap = new LinkedHashMap<String, OntologyTerm>();
+        Map<String, OntologyTerm> ontologyMap = new LinkedHashMap<>();
         if(map!=null && map.size()>0) {
             for(Map.Entry<String, String> entry : map.entrySet()) {
                 OntologyTerm term = new OntologyTerm(entry.getKey(), entry.getValue());
@@ -157,7 +157,7 @@ public class OntologyLookupService {
         return ontologyMap;
     }
     public List<OntologyTerm> convertOntologyMapToList(Map<String, OntologyTerm> map) {
-        List<OntologyTerm> list = new ArrayList<OntologyTerm>(map.size());
+        List<OntologyTerm> list = new ArrayList<>(map.size());
         for(Map.Entry<String, OntologyTerm> entry : map.entrySet()) {
             list.add(entry.getValue());
         }

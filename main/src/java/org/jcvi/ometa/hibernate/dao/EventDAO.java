@@ -144,7 +144,7 @@ public class EventDAO extends HibernateDAO {
             Long flexId, String identifier, String sSearch,
             String sortCol, String sortDir, int start, int count,
             String fromd, String tod, List<String> columnName, List<String> columnSearchArguments, Session session) throws DAOException {
-        List<Event> eventList = new ArrayList<Event>();
+        List<Event> eventList = new ArrayList<>();
         try {
             List results = null;
 
@@ -260,7 +260,7 @@ public class EventDAO extends HibernateDAO {
     }
 
     public List<Event> getAllEvents(List<Long> flexIds, String identifier, Session session) throws DAOException {
-        List<Event> eventList = new ArrayList<Event>();
+        List<Event> eventList = new ArrayList<>();
         if (flexIds == null  ||  flexIds.size() == 0)
             return eventList;
 
@@ -289,7 +289,7 @@ public class EventDAO extends HibernateDAO {
     }
 
     public List<Event> getEventByType( Long projectId, Long eventTypeId, Session session) throws DAOException {
-        List<Event> eventList = new ArrayList<Event>();
+        List<Event> eventList = new ArrayList<>();
 
         try {
             Criteria crit = session.createCriteria(Event.class);
@@ -313,7 +313,7 @@ public class EventDAO extends HibernateDAO {
     }
 
     public List<Event> getEventByTypeAndSample(Long sampleId, Long eventTypeId, Session session) throws DAOException {
-        List<Event> eventList = new ArrayList<Event>();
+        List<Event> eventList = new ArrayList<>();
 
         try {
             Criteria crit = session.createCriteria(Event.class);

@@ -301,7 +301,7 @@ public class ProjectSampleEventTrackerStateless implements ProjectSampleEventWri
                 for(MultiLoadParameter.ProjectPair projectPair : multiLoadParameter.getProjectPairs()) {
                     rowIndex = projectPair.getRowIndex();
 
-                    List<Project> projectList = new ArrayList<Project>(1);
+                    List<Project> projectList = new ArrayList<>(1);
                     projectList.add(projectPair.getProject());
                     beanPersister.writeBackProjects(projectList, userName);
 
@@ -316,7 +316,7 @@ public class ProjectSampleEventTrackerStateless implements ProjectSampleEventWri
                     }
                     if(projectPair.getAttributes() == null || projectPair.getAttributes().size() == 0) {
                         //still record project registration events with no attributes
-                        List<FileReadAttributeBean> fakeList = new ArrayList<FileReadAttributeBean>(1);
+                        List<FileReadAttributeBean> fakeList = new ArrayList<>(1);
                         FileReadAttributeBean fakeAttributeBean = new FileReadAttributeBean();
                         fakeAttributeBean.setProjectName(projectPair.getProject().getProjectName());
                         fakeList.add(fakeAttributeBean);
@@ -329,13 +329,13 @@ public class ProjectSampleEventTrackerStateless implements ProjectSampleEventWri
                 for(MultiLoadParameter.SamplePair samplePair : multiLoadParameter.getSamplePairs()) {
                     rowIndex = samplePair.getRowIndex();
 
-                    List<Sample> sampleList = new ArrayList<Sample>(1);
+                    List<Sample> sampleList = new ArrayList<>(1);
                     sampleList.add(samplePair.getSample());
                     beanPersister.writeBackSamples(sampleList, userName);
 
                     if(samplePair.getAttributes() == null || samplePair.getAttributes().size() == 0) {
                         //still record project registration events with no attributes
-                        List<FileReadAttributeBean> fakeList = new ArrayList<FileReadAttributeBean>(1);
+                        List<FileReadAttributeBean> fakeList = new ArrayList<>(1);
                         FileReadAttributeBean fakeAttributeBean = new FileReadAttributeBean();
                         fakeAttributeBean.setProjectName(samplePair.getSample().getProjectName());
                         fakeList.add(fakeAttributeBean);

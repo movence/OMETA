@@ -143,7 +143,7 @@ public class ProjectDAO extends HibernateDAO {
      * @throws DAOException in response to other exceptions.
      */
     public List<Project> getProjects( List<String> projectNames, Session session ) throws DAOException {
-        List<Project> returnVal = new ArrayList<Project>();
+        List<Project> returnVal = new ArrayList<>();
         try {
             if ( projectNames.size() > 0 ) {
                 Criteria crit = session.createCriteria( Project.class );
@@ -161,7 +161,7 @@ public class ProjectDAO extends HibernateDAO {
     }
 
     public List<Project> getProjectsByPublicFlag(boolean isPublic, Session session) throws Exception {
-        List<Project> rtnVal = new ArrayList<Project>();
+        List<Project> rtnVal = new ArrayList<>();
         try {
             Criteria crit = session.createCriteria( Project.class );
             crit.add( Restrictions.eq( "isPublic", isPublic?1:0 ) );
@@ -176,7 +176,7 @@ public class ProjectDAO extends HibernateDAO {
 
     /** Return a list of all projects. */
     public List<Project> getAllProjects( Session session ) throws DAOException {
-        List<Project> returnVal = new ArrayList<Project>();
+        List<Project> returnVal = new ArrayList<>();
         try {
             Criteria crit = session.createCriteria( Project.class );
             returnVal.addAll( crit.list() );
@@ -189,7 +189,7 @@ public class ProjectDAO extends HibernateDAO {
 
     /** Return a list of all projects. */
     public List<String> getSecuredProjectNames( Session session ) throws DAOException {
-        List<String> returnVal = new ArrayList<String>();
+        List<String> returnVal = new ArrayList<>();
         try {
             SQLQuery query = session.createSQLQuery(SECURED_PROJECTS_SQL_QUERY);
             query.addScalar(RTN_PROJECT_NAME, StandardBasicTypes.STRING);
@@ -203,7 +203,7 @@ public class ProjectDAO extends HibernateDAO {
     }
 
     public List<Project> getChildProjects( Long projectId, Session session ) throws DAOException {
-        List<Project> returnVal = new ArrayList<Project>();
+        List<Project> returnVal = new ArrayList<>();
         try {
             SQLQuery query = session.createSQLQuery( CHILD_PROJECTS_SQL_QUERY );
             /*query.addScalar(RTN_PROJECT_NAME, Hibernate.STRING );

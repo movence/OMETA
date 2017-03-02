@@ -168,7 +168,7 @@ public class EventLoadHelper {
             List<EventMetaAttribute> emas = readPersister.getEventMetaAttributes(parentProject.getProjectId()); //, Constants.EVENT_PROJECT_REGISTRATION);
             List<EventMetaAttribute> newEmas = null;
             if (emas != null && emas.size() > 0) {
-                newEmas = new ArrayList<EventMetaAttribute>(emas.size());
+                newEmas = new ArrayList<>(emas.size());
                 for (EventMetaAttribute ema : emas) {
                     EventMetaAttribute newEma = CommonTool.createEMA(
                             null, project.getProjectName(), ema.getEventName(), ema.getAttributeName(),
@@ -185,7 +185,7 @@ public class EventLoadHelper {
             List<SampleMetaAttribute> smas = readPersister.getSampleMetaAttributes(parentProject.getProjectId());
             List<SampleMetaAttribute> newSmas = null;
             if(smas != null && smas.size() > 0) {
-                newSmas = new ArrayList<SampleMetaAttribute>(smas.size());
+                newSmas = new ArrayList<>(smas.size());
                 for(SampleMetaAttribute sma : smas) {
                     SampleMetaAttribute newSma = new SampleMetaAttribute();
                     newSma.setProjectName(project.getProjectName());
@@ -204,7 +204,7 @@ public class EventLoadHelper {
             List<ProjectMetaAttribute> pmas = readPersister.getProjectMetaAttributes(parentProject.getProjectId());
             List<ProjectMetaAttribute> newPmas = null;
             if (pmas != null && pmas.size() > 0) {
-                newPmas = new ArrayList<ProjectMetaAttribute>(pmas.size());
+                newPmas = new ArrayList<>(pmas.size());
                 for (ProjectMetaAttribute pma : pmas) {
                     ProjectMetaAttribute newPma = new ProjectMetaAttribute();
                     newPma.setProjectName(project.getProjectName());
@@ -294,7 +294,7 @@ public class EventLoadHelper {
     }
 
     private List<FileReadAttributeBean> feedAndFilterFileReadBeans(String eventName, String projectName, String sampleName, List<FileReadAttributeBean> loadingList) throws Exception {
-        List<FileReadAttributeBean> processedList = new ArrayList<FileReadAttributeBean>();
+        List<FileReadAttributeBean> processedList = new ArrayList<>();
         String sampleIdentifier = null;
         boolean isSequenceSubmission = (eventName.contains(Constants.EVENT_SAMPLE_REGISTRATION) || eventName.contains(Constants.EVENT_CORE_SAMPLE_REGISTRATION))
                 && eventName.contains(Constants.EVENT_SEQUENCE_SUBMISSION);

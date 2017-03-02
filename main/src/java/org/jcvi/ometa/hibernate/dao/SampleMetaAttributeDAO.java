@@ -68,7 +68,7 @@ public class SampleMetaAttributeDAO extends HibernateDAO {
      */
     public List<SampleMetaAttribute> readAll(Long projectId, Session session)
             throws DAOException {
-        List<SampleMetaAttribute> attributeList = new ArrayList<SampleMetaAttribute>();
+        List<SampleMetaAttribute> attributeList = new ArrayList<>();
         try {
             Criteria crit = session.createCriteria(SampleMetaAttribute.class);
             crit.add(Restrictions.eq("projectId", projectId));
@@ -95,7 +95,7 @@ public class SampleMetaAttributeDAO extends HibernateDAO {
      */
     public List<SampleMetaAttribute> readAll(List<Long> projectIds, Session session)
             throws DAOException {
-        List<SampleMetaAttribute> attributeList = new ArrayList<SampleMetaAttribute>();
+        List<SampleMetaAttribute> attributeList = new ArrayList<>();
         try {
             if (projectIds.size() > 0) {
                 Criteria crit = session.createCriteria(SampleMetaAttribute.class);
@@ -128,7 +128,7 @@ public class SampleMetaAttributeDAO extends HibernateDAO {
      * get all unique meta-attributes
      */
     public List<SampleMetaAttribute> readAllUnique(Session session) throws DAOException {
-        List<SampleMetaAttribute> attributeList = new ArrayList<SampleMetaAttribute>();
+        List<SampleMetaAttribute> attributeList = new ArrayList<>();
         try {
             String sql =
                     " select SMA.* from sample_meta_attribute SMA, " +

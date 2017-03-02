@@ -183,29 +183,29 @@ public class BeanWriter {
         List<Sample> samples = this.readEjb.getSamplesForProject(projectId);
 
         if(samples!=null && samples.size()>0) {
-            List<Long> sampleIdList = new ArrayList<Long>();
+            List<Long> sampleIdList = new ArrayList<>();
             for (Sample sample : samples) {
                 sampleIdList.add(sample.getSampleId());
             }
 
             List<SampleAttribute> allSampleAttributes = this.readEjb.getSampleAttributes(sampleIdList);
-            Map<Long, List<SampleAttribute>> sampleIdVsAttributeList = new HashMap<Long, List<SampleAttribute>>();
+            Map<Long, List<SampleAttribute>> sampleIdVsAttributeList = new HashMap<>();
             for (SampleAttribute att : allSampleAttributes) {
                 List<SampleAttribute> atts = sampleIdVsAttributeList.get(att.getSampleId());
                 if (atts == null) {
-                    atts = new ArrayList<SampleAttribute>();
+                    atts = new ArrayList<>();
                     sampleIdVsAttributeList.put(att.getSampleId(), atts);
                 }
                 atts.add(att);
             }
 
             List<Event> allSampleEvents = this.readEjb.getEventsForSamples(sampleIdList);
-            Map<Long, List<Event>> sampleIdVsEventList = new HashMap<Long, List<Event>>();
+            Map<Long, List<Event>> sampleIdVsEventList = new HashMap<>();
             for (Event att : allSampleEvents) {
                 if(att.getEventTypeLookupValue().getName().equals(eventName)) {
                     List<Event> atts = sampleIdVsEventList.get(att.getSampleId());
                     if (atts == null) {
-                        atts = new ArrayList<Event>();
+                        atts = new ArrayList<>();
                         sampleIdVsEventList.put(att.getSampleId(), atts);
                     }
                     atts.add(att);
@@ -214,7 +214,7 @@ public class BeanWriter {
 
             //Create Header
             List<EventMetaAttribute> eventMetaAttributeList = this.readEjb.getEventMetaAttributes(projectName, eventName);
-            List<String> headerList = new ArrayList<String>(eventMetaAttributeList.size());
+            List<String> headerList = new ArrayList<>(eventMetaAttributeList.size());
             writer.append("Sample Name");
             writer.append(",");
             for(EventMetaAttribute ema : eventMetaAttributeList){
@@ -230,7 +230,7 @@ public class BeanWriter {
             HashMap<String, String> sampleData;
             for (Sample sample : samples) {
                 List<SampleAttribute> sampleAttributes = sampleIdVsAttributeList.get(sample.getSampleId());
-                sampleData = new HashMap<String, String>(sampleAttributes.size());
+                sampleData = new HashMap<>(sampleAttributes.size());
 
                 writer.append(sample.getSampleName());
                 writer.append(',');
@@ -284,7 +284,7 @@ public class BeanWriter {
             List<LookupValue> lvBeans = this.getGenericModelBeans(file, LookupValue.class);
 
             //load only new lookup values
-            List<LookupValue> newLv = new ArrayList<LookupValue>();
+            List<LookupValue> newLv = new ArrayList<>();
             for(LookupValue lv : lvBeans) {
                 LookupValue existingLV = this.readEjb.getLookupValue(lv.getName(), lv.getType());
                 if(existingLV == null) {
@@ -300,7 +300,7 @@ public class BeanWriter {
             List<Dictionary> dictBeans = this.getGenericModelBeans(file, Dictionary.class);
 
             //load only new dictionaries
-            List<Dictionary> newDict = new ArrayList<Dictionary>();
+            List<Dictionary> newDict = new ArrayList<>();
             for(Dictionary dict : dictBeans){
                 String code = dict.getDictionaryCode();
                 if(code == null || code.equals("")) code = dict.getDictionaryValue();
@@ -377,9 +377,9 @@ public class BeanWriter {
     /** Get all project names of projects encountered in this multi-file.  Exclude any that are newly-creating. */
     private List<String> getProjectsToSecure(MultiLoadParameter parameter) {
 
-        Set<String> projectsToSecure = new HashSet<String>();
+        Set<String> projectsToSecure = new HashSet<>();
         //Do not bother with projects newly-created.
-        Set<String> exclusionSet = new HashSet<String>();
+        Set<String> exclusionSet = new HashSet<>();
         if (parameter.getProjects() != null) {
             for (List<Project> projects: parameter.getProjects()) {
                 for (Project project: projects) {
@@ -429,7 +429,7 @@ public class BeanWriter {
             }
         }
 
-        List<String> rtnList = new ArrayList<String>();
+        List<String> rtnList = new ArrayList<>();
         rtnList.addAll(projectsToSecure);
         return rtnList;
     }
@@ -456,7 +456,7 @@ public class BeanWriter {
         List<B> beans = null;
 
         try {
-            beans = new ArrayList<B>();
+            beans = new ArrayList<>();
             BeanPopulator beanPopulator = new BeanPopulator(beanClass);
 
             String inputFileName = file.getName();

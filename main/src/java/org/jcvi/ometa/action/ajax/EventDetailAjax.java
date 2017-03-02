@@ -113,8 +113,8 @@ public class EventDetailAjax extends ActionSupport implements IAjaxAction {
                 if(filteredList.size() == 0) filteredList = samples;
 
                 Map<Long, List<SampleAttribute>> sampleIdVsAttributes = this.getSampleVsAttributeList(filteredList);
-                Map<Long, String> sampleNameById = new HashMap<Long, String>();
-                Map<Long, String> actors = new HashMap<Long, String>();
+                Map<Long, String> sampleNameById = new HashMap<>();
+                Map<Long, String> actors = new HashMap<>();
                 for (Sample sample : filteredList) {
                     if (sample.getSampleLevel() != null && sample.getSampleLevel() > 1 && sample.getParentSampleId() != null) {
                         if(!sampleNameById.containsKey(sample.getParentSampleId())) {
@@ -128,7 +128,7 @@ public class EventDetailAjax extends ActionSupport implements IAjaxAction {
                         actors.put(tempActor.getLoginId(), tempActor.getLastName() + ", " + tempActor.getFirstName());
                     }
 
-                    Map<String, Object> sampleMap = new HashMap<String, Object>();
+                    Map<String, Object> sampleMap = new HashMap<>();
                     sampleMap.put("sample", sample);
                     sampleMap.put("sampleName", sample.getSampleName());
                     sampleMap.put("parentSampleName", sampleNameById.get(sample.getParentSampleId()));
@@ -136,13 +136,13 @@ public class EventDetailAjax extends ActionSupport implements IAjaxAction {
                     sampleMap.put("createdOn", ModelValidator.PST_DEFAULT_DATE_FORMAT.format(sample.getCreationDate()));
 
                     if(sampleIdVsAttributes.containsKey(sample.getSampleId())) {
-                        Map<String, Object> attributeMap = new LinkedHashMap<String, Object>();
+                        Map<String, Object> attributeMap = new LinkedHashMap<>();
 
                         List<Event> sampleEvents = this.readPersister.getEventsForSample(sample.getSampleId());
                         if(!sampleEvents.isEmpty()) {
                             Event registrationEvent = sampleEvents.get(0);
                             List<EventMetaAttribute> registrationEMA = this.readPersister.getEventMetaAttributes(sample.getProjectId(), registrationEvent.getEventTypeLookupValue().getLookupValueId());
-                            final List<String> orderedEMANames = new ArrayList<String>(registrationEMA.size());
+                            final List<String> orderedEMANames = new ArrayList<>(registrationEMA.size());
                             for (EventMetaAttribute ema : registrationEMA) {
                                 orderedEMANames.add(ema.getLookupValue().getName());
                             }
@@ -193,10 +193,10 @@ public class EventDetailAjax extends ActionSupport implements IAjaxAction {
                 List<Event> filteredList = eventList.subList(iDisplayStart, iDisplayStart+iDisplayLength>eventList.size()?eventList.size():iDisplayLength+iDisplayStart);
                 Map<Long, List<EventAttribute>> eventIdVsAttributes = this.getEventIdVsAttributeList(filteredList);
 
-                Map<Long, String> sampleIdtoNames = new HashMap<Long, String>();
-                Map<Long, String> actors = new HashMap<Long, String>();
+                Map<Long, String> sampleIdtoNames = new HashMap<>();
+                Map<Long, String> actors = new HashMap<>();
                 for (Event event : filteredList) {
-                    Map<String, Object> eventMap = new HashMap<String, Object>();
+                    Map<String, Object> eventMap = new HashMap<>();
 
                     String sampleName = null;
                     if(event.getSampleId() != null && event.getSampleId() != 0) {
@@ -225,7 +225,7 @@ public class EventDetailAjax extends ActionSupport implements IAjaxAction {
                     eventMap.put("canEdit", canEdit);
 
                     if(eventIdVsAttributes.containsKey(event.getEventId())) {
-                        Map<String, Object> attributeMap = new LinkedHashMap<String, Object>();
+                        Map<String, Object> attributeMap = new LinkedHashMap<>();
 
                         List<EventAttribute> eventAttributes = eventIdVsAttributes.get(event.getEventId());
                         CommonTool.sortEventAttributeByOrder(eventAttributes); // sort event attribute by meta attribute order
@@ -262,7 +262,7 @@ public class EventDetailAjax extends ActionSupport implements IAjaxAction {
         String userName = ServletActionContext.getRequest().getRemoteUser();
         Project currProject = readPersister.getProject(projectId);
         projectName = currProject.getProjectName();
-        List<String> projectNamesList = new ArrayList<String>();
+        List<String> projectNamesList = new ArrayList<>();
         projectNamesList.add(projectName);
         try {
             readPersister.getAuthorizedProjectNames(projectNamesList, userName, ResponseToFailedAuthorization.ThrowException, AccessLevel.Edit, QueryEntityType.Project);
@@ -301,18 +301,18 @@ public class EventDetailAjax extends ActionSupport implements IAjaxAction {
     }
 
     private Map<Long, List<SampleAttribute>> getSampleVsAttributeList(List<Sample> samples) throws Exception {
-        List<Long> allSampleIds = new ArrayList<Long>();
+        List<Long> allSampleIds = new ArrayList<>();
         for (Sample sample : samples) {
             allSampleIds.add(sample.getSampleId());
         }
 
         List<SampleAttribute> allSampleAttributes = readPersister.getSampleAttributes(allSampleIds);
-        Map<Long, List<SampleAttribute>> sampleIdVsAttributeList = new HashMap<Long, List<SampleAttribute>>();
+        Map<Long, List<SampleAttribute>> sampleIdVsAttributeList = new HashMap<>();
         for (SampleAttribute att : allSampleAttributes) {
             if(att.getMetaAttribute() != null && att.getMetaAttribute().isActive()) {
                 List<SampleAttribute> attributeList = sampleIdVsAttributeList.get(att.getSampleId());
                 if (attributeList == null) {
-                    attributeList = new ArrayList<SampleAttribute>();
+                    attributeList = new ArrayList<>();
                     sampleIdVsAttributeList.put(att.getSampleId(), attributeList);
                 }
                 attributeList.add(att);
@@ -325,18 +325,18 @@ public class EventDetailAjax extends ActionSupport implements IAjaxAction {
     private Map<Long, List<EventAttribute>> getEventIdVsAttributeList(List<Event> events) throws Exception {
         Map<Long, List<EventAttribute>> eventIdVsAttributes = null;
 
-        List<Long> allEventIds = new ArrayList<Long>();
+        List<Long> allEventIds = new ArrayList<>();
         for (Event evt : events) {
             allEventIds.add(evt.getEventId());
         }
 
         if (allEventIds.size() > 0) {
             List<EventAttribute> allEventAttributes = readPersister.getEventAttributes(allEventIds, projectId);
-            eventIdVsAttributes = new HashMap<Long, List<EventAttribute>>();
+            eventIdVsAttributes = new HashMap<>();
             for (EventAttribute ea : allEventAttributes) {
                 List<EventAttribute> lea = eventIdVsAttributes.get(ea.getEventId());
                 if (lea == null) {
-                    lea = new ArrayList<EventAttribute>();
+                    lea = new ArrayList<>();
                     eventIdVsAttributes.put(ea.getEventId(), lea);
                 }
                 lea.add(ea);

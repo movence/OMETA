@@ -81,7 +81,7 @@ public class ProjectSetup extends ActionSupport {
         UserTransaction tx = null;
 
         try {
-            projectNameList = new ArrayList<String>();
+            projectNameList = new ArrayList<>();
             projectNameList.add("ALL");
             projectList = readPersister.getProjects(projectNameList);
 
@@ -106,7 +106,7 @@ public class ProjectSetup extends ActionSupport {
                     loadingProject.setProjectLevel(1);
                 }
 
-                List<Project> projectList = new ArrayList<Project>();
+                List<Project> projectList = new ArrayList<>();
                 projectList.add(loadingProject);
 
                 List<ProjectMetaAttribute> pmaList = null;
@@ -114,9 +114,9 @@ public class ProjectSetup extends ActionSupport {
                 List<FileReadAttributeBean> fbList = null;
 
                 if (beanList != null && beanList.size() > 0) {
-                    pmaList = new ArrayList<ProjectMetaAttribute>();
-                    emaList = new ArrayList<EventMetaAttribute>();
-                    fbList = new ArrayList<FileReadAttributeBean>();
+                    pmaList = new ArrayList<>();
+                    emaList = new ArrayList<>();
+                    fbList = new ArrayList<>();
 
                     for (MetadataSetupReadBean bean : beanList) {
                         if (bean.getName() != null && bean.getValue()!=null) {

@@ -107,7 +107,7 @@ public class ActorDAO extends HibernateDAO {
     }
 
     public List<Actor> getAllActor(Session session) throws DAOException {
-        List<Actor> actors = new ArrayList<Actor>();
+        List<Actor> actors = new ArrayList<>();
         try {
             Criteria crit = session.createCriteria(Actor.class);
             List modelObjects = crit.list();
@@ -174,7 +174,7 @@ public class ActorDAO extends HibernateDAO {
     }
 
     public List<ActorGroup> getActorGroup(Long userId, Session session) throws DAOException {
-        List<ActorGroup> groups = new ArrayList<ActorGroup>();
+        List<ActorGroup> groups = new ArrayList<>();
         try {
             Criteria crit = session.createCriteria(ActorGroup.class);
             crit.add( Restrictions.eq( "actorId", userId ) );

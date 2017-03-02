@@ -45,7 +45,7 @@ public class EventsToFile {
 
 
         Project project = ejb.getProject(params.getProject());
-        Map<String, Object> paMap = new HashMap<String, Object>();
+        Map<String, Object> paMap = new HashMap<>();
         List<ProjectAttribute> paList = ejb.getProjectAttributes(project.getProjectId());
         this.getValueMap(attributeList, paList, paMap);
 
@@ -53,7 +53,7 @@ public class EventsToFile {
         LookupValue eventTypeLV = ejb.getLookupValue(params.getEvent(), ModelValidator.EVENT_TYPE_LV_TYPE_NAME);
 
         for(String sampleName : params.getSample()) {
-            Map<String, Object> attributeMap = new HashMap<String, Object>(); //event attribute name-value map
+            Map<String, Object> attributeMap = new HashMap<>(); //event attribute name-value map
             attributeMap.putAll(paMap);
 
             Sample sample = ejb.getSample(project.getProjectId(), sampleName); //current sample
@@ -124,7 +124,7 @@ public class EventsToFile {
             params.setProject(jsonObject.getString("project"));
             params.setEvent(jsonObject.getString("event"));
 
-            List<String> samples = new ArrayList<String>();
+            List<String> samples = new ArrayList<>();
             JSONArray sampleArr = jsonObject.getJSONArray("sample");
             if(sampleArr.length()>0) {
                 for(int i=0;i<sampleArr.length();i++) {
@@ -133,7 +133,7 @@ public class EventsToFile {
             }
             params.setSample(samples);
 
-            List<String> attributes = new ArrayList<String>();
+            List<String> attributes = new ArrayList<>();
             JSONArray attributeArr = jsonObject.getJSONArray("attribute");
             if(attributeArr.length()>0) {
                 for(int i=0;i<attributeArr.length();i++) {
@@ -142,7 +142,7 @@ public class EventsToFile {
             }
             params.setAttribute(attributes);
 
-            Map<String, Object> filters = new HashMap<String, Object>();
+            Map<String, Object> filters = new HashMap<>();
             JSONObject filterMap = jsonObject.getJSONObject("filter");
             Iterator filterIterator = filterMap.keys();
             while(filterIterator.hasNext()) {

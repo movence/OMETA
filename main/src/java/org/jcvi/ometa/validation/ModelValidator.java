@@ -69,7 +69,7 @@ public class ModelValidator {
     public Set<String> getValidLookupValueTypes() { return validLookupValueTypes; }
 
     public ModelValidator() {
-        validDataTypes = new HashSet<String>();
+        validDataTypes = new HashSet<>();
         validDataTypes.add(DATE_DATA_TYPE);
         validDataTypes.add(STRING_DATA_TYPE);
         validDataTypes.add(FLOAT_DATA_TYPE);
@@ -77,7 +77,7 @@ public class ModelValidator {
         validDataTypes.add(URL_DATA_TYPE);
         validDataTypes.add(FILE_DATA_TYPE);
 
-        validLookupValueTypes = new HashSet<String>();
+        validLookupValueTypes = new HashSet<>();
         validLookupValueTypes.add(ATTRIBUTE_LV_TYPE_NAME);
         validLookupValueTypes.add(EVENT_STATUS_LV_TYPE_NAME);
         validLookupValueTypes.add(EVENT_TYPE_LV_TYPE_NAME);

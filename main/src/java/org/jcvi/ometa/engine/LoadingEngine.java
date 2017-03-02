@@ -268,7 +268,7 @@ public class LoadingEngine {
         try {
             if(path.isDirectory() && path.canRead()) {
                 File[] files = path.listFiles();
-                List<File> filesToProcess = new ArrayList<File>(files.length);
+                List<File> filesToProcess = new ArrayList<>(files.length);
 
                 for(File file : files) {
                     //make sure project files get processed first before samples
@@ -437,7 +437,7 @@ public class LoadingEngine {
                         continue;
                     } else {
                         File singleEventFile = new File(scratchLoc.getAbsoluteFile() + File.separator + "temp.csv");
-                        List<String> lines = new ArrayList<String>(2);
+                        List<String> lines = new ArrayList<>(2);
                         lines.add(eventNameLine);
                         lines.add(headerLine);
                         lines.add(currLine);
