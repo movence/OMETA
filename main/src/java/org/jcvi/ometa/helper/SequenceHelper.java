@@ -35,12 +35,7 @@ public class SequenceHelper {
     private final String DPCC_SUBMISSION_URL;
     private ProjectSampleEventPresentationBusiness readEjb;
 
-    private final FileFilter notHiddenFileFilter = new FileFilter() {
-        @Override
-        public boolean accept(File file) {
-            return !file.isHidden() && file.exists() && file.isFile();
-        }
-    };
+    private final FileFilter notHiddenFileFilter = file -> !file.isHidden() && file.exists() && file.isFile();
 
     public SequenceHelper() {
         Properties props = PropertyHelper.getHostnameProperties(Constants.PROPERTIES_FILE_NAME);
@@ -256,22 +251,14 @@ public class SequenceHelper {
                     zipFile.extractAll(sequenceFileDirectory.getAbsolutePath());
 
 
-                    final FileFilter notHiddenDirectoryFilter = new FileFilter() {
-                        @Override
-                        public boolean accept(File file) {
-                            String[] skip = { // name of directories to be skipped
-                                    "__MACOSX"
-                            };
-                            List<String> skipList = Arrays.asList(skip);
-                            return !file.isHidden() && file.exists() && file.isDirectory() && !skipList.contains(file.getName());
-                        }
+                    final FileFilter notHiddenDirectoryFilter = file -> {
+                        String[] skip = { // name of directories to be skipped
+                                "__MACOSX"
+                        };
+                        List<String> skipList = Arrays.asList(skip);
+                        return !file.isHidden() && file.exists() && file.isDirectory() && !skipList.contains(file.getName());
                     };
-                    final FileFilter wildFilter = new FileFilter() {
-                        @Override
-                        public boolean accept(File file) {
-                            return !file.isHidden() && file.exists();
-                        }
-                    };
+                    final FileFilter wildFilter = file -> !file.isHidden() && file.exists();
 
                     // move all files in a sub-directory to parent directory
                     for(File subItem : sequenceFileDirectory.listFiles(notHiddenDirectoryFilter)) {

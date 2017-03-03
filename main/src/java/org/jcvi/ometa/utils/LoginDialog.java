@@ -59,13 +59,11 @@ public class LoginDialog {
         dialog.add( passwordField );
         dialog.add( okButton );
 
-        okButton.addActionListener( new ActionListener() {
-            public void actionPerformed( ActionEvent evt ) {
-                loginAndPassword[ 0 ] = userField.getText().trim();
-                loginAndPassword[ 1 ] = new String( passwordField.getPassword() );
-                infoCollected = true;
-                dialog.setVisible( false );
-            }
+        okButton.addActionListener(evt -> {
+            loginAndPassword[ 0 ] = userField.getText().trim();
+            loginAndPassword[ 1 ] = new String( passwordField.getPassword() );
+            infoCollected = true;
+            dialog.setVisible( false );
         });
 
         dialog.setVisible( true );

@@ -166,12 +166,7 @@ public class BulkLoader {
                                                     zipFile.extractAll(zipDirectory.getAbsolutePath());
                                                     FileUtils.forceDeleteOnExit(fileItem);
 
-                                                    File[] filesInZip = zipDirectory.listFiles(new FileFilter() {
-                                                        @Override
-                                                        public boolean accept(File file) {
-                                                            return FilenameUtils.isExtension(file.getName(), "csv");
-                                                        }
-                                                    });
+                                                    File[] filesInZip = zipDirectory.listFiles(file -> FilenameUtils.isExtension(file.getName(), "csv"));
 
                                                     // missing or multiple csv data file error
                                                     if(filesInZip.length == 0) {

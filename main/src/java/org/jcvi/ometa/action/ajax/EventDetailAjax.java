@@ -148,17 +148,14 @@ public class EventDetailAjax extends ActionSupport implements IAjaxAction {
                             }
 
                             List<SampleAttribute> sampleAttributes = sampleIdVsAttributes.get(sample.getSampleId());
-                            sampleAttributes.sort(new Comparator<SampleAttribute>() {
-                                @Override
-                                public int compare(SampleAttribute sa1, SampleAttribute sa2) {
-                                    Integer sa1Index = orderedEMANames.indexOf(sa1.getMetaAttribute().getLookupValue().getName());
-                                    Integer sa2Index = orderedEMANames.indexOf(sa2.getMetaAttribute().getLookupValue().getName());
+                            sampleAttributes.sort((sa1, sa2) -> {
+                                Integer sa1Index = orderedEMANames.indexOf(sa1.getMetaAttribute().getLookupValue().getName());
+                                Integer sa2Index = orderedEMANames.indexOf(sa2.getMetaAttribute().getLookupValue().getName());
 
-                                    //Sample Attrs on top of list
-                                    if (sa1Index == -1) sa1Index = orderedEMANames.size() + 1;
-                                    if (sa2Index == -1) sa2Index = orderedEMANames.size() + 1;
-                                    return sa1Index.compareTo(sa2Index);
-                                }
+                                //Sample Attrs on top of list
+                                if (sa1Index == -1) sa1Index = orderedEMANames.size() + 1;
+                                if (sa2Index == -1) sa2Index = orderedEMANames.size() + 1;
+                                return sa1Index.compareTo(sa2Index);
                             });
                             for (SampleAttribute sa : sampleIdVsAttributes.get(sample.getSampleId())) {
                                 if (sa.getMetaAttribute() != null) {

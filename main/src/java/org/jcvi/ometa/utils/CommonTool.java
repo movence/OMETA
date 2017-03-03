@@ -311,30 +311,20 @@ public class CommonTool {
     }
 
     public static void sortEventAttributeByOrder(List<EventAttribute> eaList) {
-        eaList.sort(new Comparator<EventAttribute>() {
-            @Override
-            public int compare(EventAttribute o1, EventAttribute o2) {
-                return o1.getMetaAttribute() == null && o2.getMetaAttribute() == null ? 0
-                        : o1.getMetaAttribute() == null ? -1
-                        : o2.getMetaAttribute() == null ? 1
-                        : o1.getMetaAttribute().getOrder() == null && o2.getMetaAttribute().getOrder() == null ? 0
-                        : o1.getMetaAttribute().getOrder() == null ? -1
-                        : o2.getMetaAttribute().getOrder() == null ? 1
-                        : o1.getMetaAttribute().getOrder().compareTo(o2.getMetaAttribute().getOrder());
-            }
-        });
+        eaList.sort((o1, o2) -> o1.getMetaAttribute() == null && o2.getMetaAttribute() == null ? 0
+                : o1.getMetaAttribute() == null ? -1
+                : o2.getMetaAttribute() == null ? 1
+                : o1.getMetaAttribute().getOrder() == null && o2.getMetaAttribute().getOrder() == null ? 0
+                : o1.getMetaAttribute().getOrder() == null ? -1
+                : o2.getMetaAttribute().getOrder() == null ? 1
+                : o1.getMetaAttribute().getOrder().compareTo(o2.getMetaAttribute().getOrder()));
     }
 
     public static void sortEventMetaAttributeByOrder(List<EventMetaAttribute> emaList) {
-        emaList.sort(new Comparator<EventMetaAttribute>() {
-            @Override
-            public int compare(EventMetaAttribute o1, EventMetaAttribute o2) {
-                return o1.getOrder() == null && o2.getOrder() == null ? 0
-                        : o1.getOrder() == null ? -1
-                        : o2.getOrder() == null ? 1
-                        : o1.getOrder().compareTo(o2.getOrder());
-            }
-        });
+        emaList.sort((o1, o2) -> o1.getOrder() == null && o2.getOrder() == null ? 0
+                : o1.getOrder() == null ? -1
+                : o2.getOrder() == null ? 1
+                : o1.getOrder().compareTo(o2.getOrder()));
     }
 
     public static EventMetaAttribute createEMA(
