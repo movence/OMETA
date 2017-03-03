@@ -148,7 +148,7 @@ public class EventDetailAjax extends ActionSupport implements IAjaxAction {
                             }
 
                             List<SampleAttribute> sampleAttributes = sampleIdVsAttributes.get(sample.getSampleId());
-                            Collections.sort(sampleAttributes, new Comparator<SampleAttribute>() {
+                            sampleAttributes.sort(new Comparator<SampleAttribute>() {
                                 @Override
                                 public int compare(SampleAttribute sa1, SampleAttribute sa2) {
                                     Integer sa1Index = orderedEMANames.indexOf(sa1.getMetaAttribute().getLookupValue().getName());

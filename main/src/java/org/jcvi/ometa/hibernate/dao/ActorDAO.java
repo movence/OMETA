@@ -30,6 +30,7 @@ import org.jcvi.ometa.model.ActorGroup;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Created by IntelliJ IDEA.
@@ -111,11 +112,11 @@ public class ActorDAO extends HibernateDAO {
         try {
             Criteria crit = session.createCriteria(Actor.class);
             List modelObjects = crit.list();
-            if (modelObjects != null && modelObjects.size() > 0) {
-                for(int i = 0;i < modelObjects.size();i++) {
-                    actors.add((Actor)modelObjects.get(i));
-                }
-            }
+
+            modelObjects.stream()
+                    .filter(Objects::nonNull)
+                    .forEach(modelObject -> actors.add((Actor) modelObject));
+
         } catch(Exception ex) {
             throw new DAOException(ex);
         }
@@ -179,11 +180,11 @@ public class ActorDAO extends HibernateDAO {
             Criteria crit = session.createCriteria(ActorGroup.class);
             crit.add( Restrictions.eq( "actorId", userId ) );
             List modelObjects = crit.list();
-            if (modelObjects != null && modelObjects.size() > 0) {
-                for(int i = 0;i < modelObjects.size();i++) {
-                    groups.add((ActorGroup)modelObjects.get(i));
-                }
-            }
+
+            modelObjects.stream()
+                    .filter(Objects::nonNull)
+                    .forEach(modelObject -> groups.add((ActorGroup) modelObject));
+
         } catch(Exception ex) {
             throw new DAOException(ex);
         }

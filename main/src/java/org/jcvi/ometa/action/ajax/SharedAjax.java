@@ -149,7 +149,7 @@ public class SharedAjax extends ActionSupport implements IAjaxAction {
 
             List<ProjectAttribute> projectAttributes = readPersister.getProjectAttributes(this.projectId);
 
-            Collections.sort(projectAttributes, new Comparator<ProjectAttribute>() {
+            projectAttributes.sort(new Comparator<ProjectAttribute>() {
                 @Override
                 public int compare(ProjectAttribute pa1, ProjectAttribute pa2) {
                     Integer pa1Index = sortedMetaAttributeNames.indexOf(pa1.getMetaAttribute().getLookupValue().getName());

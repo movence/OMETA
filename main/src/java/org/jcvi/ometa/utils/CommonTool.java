@@ -311,7 +311,7 @@ public class CommonTool {
     }
 
     public static void sortEventAttributeByOrder(List<EventAttribute> eaList) {
-        Collections.sort(eaList, new Comparator<EventAttribute>() {
+        eaList.sort(new Comparator<EventAttribute>() {
             @Override
             public int compare(EventAttribute o1, EventAttribute o2) {
                 return o1.getMetaAttribute() == null && o2.getMetaAttribute() == null ? 0
@@ -326,7 +326,7 @@ public class CommonTool {
     }
 
     public static void sortEventMetaAttributeByOrder(List<EventMetaAttribute> emaList) {
-        Collections.sort(emaList, new Comparator<EventMetaAttribute>() {
+        emaList.sort(new Comparator<EventMetaAttribute>() {
             @Override
             public int compare(EventMetaAttribute o1, EventMetaAttribute o2) {
                 return o1.getOrder() == null && o2.getOrder() == null ? 0
