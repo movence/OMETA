@@ -191,11 +191,7 @@ public class BeanWriter {
             List<SampleAttribute> allSampleAttributes = this.readEjb.getSampleAttributes(sampleIdList);
             Map<Long, List<SampleAttribute>> sampleIdVsAttributeList = new HashMap<>();
             for (SampleAttribute att : allSampleAttributes) {
-                List<SampleAttribute> atts = sampleIdVsAttributeList.get(att.getSampleId());
-                if (atts == null) {
-                    atts = new ArrayList<>();
-                    sampleIdVsAttributeList.put(att.getSampleId(), atts);
-                }
+                List<SampleAttribute> atts = sampleIdVsAttributeList.computeIfAbsent(att.getSampleId(), k -> new ArrayList<>());
                 atts.add(att);
             }
 
@@ -203,11 +199,7 @@ public class BeanWriter {
             Map<Long, List<Event>> sampleIdVsEventList = new HashMap<>();
             for (Event att : allSampleEvents) {
                 if(att.getEventTypeLookupValue().getName().equals(eventName)) {
-                    List<Event> atts = sampleIdVsEventList.get(att.getSampleId());
-                    if (atts == null) {
-                        atts = new ArrayList<>();
-                        sampleIdVsEventList.put(att.getSampleId(), atts);
-                    }
+                    List<Event> atts = sampleIdVsEventList.computeIfAbsent(att.getSampleId(), k -> new ArrayList<>());
                     atts.add(att);
                 }
             }

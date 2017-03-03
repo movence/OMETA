@@ -238,22 +238,14 @@ public class JsonProducer implements Runnable {
             List<ProjectAttribute> allProjectAttributes = pseEjb.getProjectAttributes(projectIds);
             Map<Long, List<ProjectAttribute>> projIdVsAttributes = new HashMap<>();
             for (ProjectAttribute pa : allProjectAttributes) {
-                List<ProjectAttribute> paList = projIdVsAttributes.get(pa.getProjectId());
-                if (paList == null) {
-                    paList = new ArrayList<>();
-                    projIdVsAttributes.put(pa.getProjectId(), paList);
-                }
+                List<ProjectAttribute> paList = projIdVsAttributes.computeIfAbsent(pa.getProjectId(), k -> new ArrayList<>());
                 paList.add(pa);
             }
 
             List<Sample> allSamplesAllProjects = pseEjb.getSamplesForProjects(projectIds);
             Map<Long, List<Sample>> projectIdVsSampleList = new HashMap<>();
             for (Sample sample : allSamplesAllProjects) {
-                List<Sample> thisProjectsSamples = projectIdVsSampleList.get(sample.getProjectId());
-                if (thisProjectsSamples == null) {
-                    thisProjectsSamples = new ArrayList<>();
-                    projectIdVsSampleList.put(sample.getProjectId(), thisProjectsSamples);
-                }
+                List<Sample> thisProjectsSamples = projectIdVsSampleList.computeIfAbsent(sample.getProjectId(), k -> new ArrayList<>());
                 thisProjectsSamples.add(sample);
             }
 
@@ -476,22 +468,14 @@ public class JsonProducer implements Runnable {
                 List<ProjectAttribute> allProjectAttributes = pseEjb.getProjectAttributes(projectIds);
                 Map<Long, List<ProjectAttribute>> projIdVsAttributes = new HashMap<>();
                 for (ProjectAttribute pa : allProjectAttributes) {
-                    List<ProjectAttribute> paList = projIdVsAttributes.get(pa.getProjectId());
-                    if (paList == null) {
-                        paList = new ArrayList<>();
-                        projIdVsAttributes.put(pa.getProjectId(), paList);
-                    }
+                    List<ProjectAttribute> paList = projIdVsAttributes.computeIfAbsent(pa.getProjectId(), k -> new ArrayList<>());
                     paList.add(pa);
                 }
 
                 List<Sample> allSamplesAllProjects = pseEjb.getSamplesForProjects(projectIds);
                 Map<Long, List<Sample>> projectIdVsSampleList = new HashMap<>();
                 for (Sample sample : allSamplesAllProjects) {
-                    List<Sample> thisProjectsSamples = projectIdVsSampleList.get(sample.getProjectId());
-                    if (thisProjectsSamples == null) {
-                        thisProjectsSamples = new ArrayList<>();
-                        projectIdVsSampleList.put(sample.getProjectId(), thisProjectsSamples);
-                    }
+                    List<Sample> thisProjectsSamples = projectIdVsSampleList.computeIfAbsent(sample.getProjectId(), k -> new ArrayList<>());
                     thisProjectsSamples.add(sample);
                 }
                 for(Project project : projects) {
@@ -653,11 +637,7 @@ public class JsonProducer implements Runnable {
         logger.debug("Got " + allEventAttributes.size() + " event attributes in getEventIdVsAttributeList ");
         Map<Long, List<EventAttribute>> eventIdVsAttributes = new HashMap<>();
         for (EventAttribute ea : allEventAttributes) {
-            List<EventAttribute> lea = eventIdVsAttributes.get(ea.getEventId());
-            if (lea == null) {
-                lea = new ArrayList<>();
-                eventIdVsAttributes.put(ea.getEventId(), lea);
-            }
+            List<EventAttribute> lea = eventIdVsAttributes.computeIfAbsent(ea.getEventId(), k -> new ArrayList<>());
             lea.add(ea);
         }
         if (eventIdVsAttributes.size() == 0) {
@@ -671,11 +651,7 @@ public class JsonProducer implements Runnable {
         List<Event> allSampleEvents = pseEjb.getEventsForSamples(sampleIdList);
         Map<Long, List<Event>> sampleIdVsEventList = new HashMap<>();
         for (Event att : allSampleEvents) {
-            List<Event> atts = sampleIdVsEventList.get(att.getSampleId());
-            if (atts == null) {
-                atts = new ArrayList<>();
-                sampleIdVsEventList.put(att.getSampleId(), atts);
-            }
+            List<Event> atts = sampleIdVsEventList.computeIfAbsent(att.getSampleId(), k -> new ArrayList<>());
             atts.add(att);
         }
 
@@ -695,11 +671,7 @@ public class JsonProducer implements Runnable {
         List<SampleAttribute> allSampleAttributes = pseEjb.getSampleAttributes(sampleIdList);
         Map<Long, List<SampleAttribute>> sampleIdVsAttributeList = new HashMap<>();
         for (SampleAttribute att : allSampleAttributes) {
-            List<SampleAttribute> atts = sampleIdVsAttributeList.get(att.getSampleId());
-            if (atts == null) {
-                atts = new ArrayList<>();
-                sampleIdVsAttributeList.put(att.getSampleId(), atts);
-            }
+            List<SampleAttribute> atts = sampleIdVsAttributeList.computeIfAbsent(att.getSampleId(), k -> new ArrayList<>());
             atts.add(att);
         }
 

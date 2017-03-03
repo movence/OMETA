@@ -310,11 +310,7 @@ public class EventDetailAjax extends ActionSupport implements IAjaxAction {
         Map<Long, List<SampleAttribute>> sampleIdVsAttributeList = new HashMap<>();
         for (SampleAttribute att : allSampleAttributes) {
             if(att.getMetaAttribute() != null && att.getMetaAttribute().isActive()) {
-                List<SampleAttribute> attributeList = sampleIdVsAttributeList.get(att.getSampleId());
-                if (attributeList == null) {
-                    attributeList = new ArrayList<>();
-                    sampleIdVsAttributeList.put(att.getSampleId(), attributeList);
-                }
+                List<SampleAttribute> attributeList = sampleIdVsAttributeList.computeIfAbsent(att.getSampleId(), k -> new ArrayList<>());
                 attributeList.add(att);
             }
         }
@@ -334,11 +330,7 @@ public class EventDetailAjax extends ActionSupport implements IAjaxAction {
             List<EventAttribute> allEventAttributes = readPersister.getEventAttributes(allEventIds, projectId);
             eventIdVsAttributes = new HashMap<>();
             for (EventAttribute ea : allEventAttributes) {
-                List<EventAttribute> lea = eventIdVsAttributes.get(ea.getEventId());
-                if (lea == null) {
-                    lea = new ArrayList<>();
-                    eventIdVsAttributes.put(ea.getEventId(), lea);
-                }
+                List<EventAttribute> lea = eventIdVsAttributes.computeIfAbsent(ea.getEventId(), k -> new ArrayList<>());
                 lea.add(ea);
             }
         }
