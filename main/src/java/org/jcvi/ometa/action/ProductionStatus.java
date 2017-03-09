@@ -42,6 +42,7 @@ import org.jcvi.ometa.validation.ModelValidator;
 import org.jtc.common.util.property.PropertyHelper;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class ProductionStatus extends ActionSupport implements IAjaxAction {
     private Logger logger = Logger.getLogger(ProductionStatus.class);
@@ -209,10 +210,9 @@ public class ProductionStatus extends ActionSupport implements IAjaxAction {
 
             // Obtain collections of data for all projects.
             List<Project> projects = readPersister.getProjects(projectNameList);
-            List<Long> projectIds = new ArrayList<>();
-            for (Project project : projects) {
-                projectIds.add(project.getProjectId());
-            }
+            List<Long> projectIds = projects.stream()
+                    .map(Project::getProjectId)
+                    .collect(Collectors.toList());
 
             List<ProjectAttribute> allProjectAttributes = readPersister.getProjectAttributes(projectIds);
             Map<Long, List<ProjectAttribute>> projIdVsAttributes = new HashMap<>();
@@ -249,10 +249,9 @@ public class ProductionStatus extends ActionSupport implements IAjaxAction {
 
                 List<Sample> samples = projectIdVsSampleList.get(project.getProjectId());
                 if(samples!=null && samples.size()>0) {
-                    List<Long> sampleIdList = new ArrayList<>();
-                    for (Sample sample : samples) {
-                        sampleIdList.add(sample.getSampleId());
-                    }
+                    List<Long> sampleIdList = samples.stream()
+                            .map(Sample::getSampleId)
+                            .collect(Collectors.toList());
 
                     Map<Long, List<SampleAttribute>> sampleIdVsAttributeList = getSampleVsAttributeList(sampleIdList);
                     Map<Long, List<Event>> sampleIdVsEventList = getSampleIdVsEventList(sampleIdList);
@@ -418,10 +417,9 @@ public class ProductionStatus extends ActionSupport implements IAjaxAction {
             iTotalDisplayRecords=iTotalRecords=samples.size();
             samples = samples.subList(iDisplayStart, iDisplayStart+iDisplayLength>samples.size()?samples.size():iDisplayLength+iDisplayStart);
 
-            List<Long> sampleIdList = new ArrayList<>();
-            for (Sample sample : samples) {
-                sampleIdList.add(sample.getSampleId());
-            }
+            List<Long> sampleIdList = samples.stream()
+                    .map(Sample::getSampleId)
+                    .collect(Collectors.toList());
             Map<Long, List<SampleAttribute>> sampleIdVsAttributeList = getSampleVsAttributeList(sampleIdList);
             Map<Long, List<Event>> sampleIdVsEventList = getSampleIdVsEventList(sampleIdList);
 
@@ -521,10 +519,9 @@ public class ProductionStatus extends ActionSupport implements IAjaxAction {
     }
     private Map<Long, List<EventAttribute>> getEventIdVsAttributeList(List<Event> sampleEvents, Long projectId) throws Exception {
         // Corral the ids of the events from the list of events.
-        List<Long> allEventIds = new ArrayList<>();
-        for (Event evt : sampleEvents) {
-            allEventIds.add(evt.getEventId());
-        }
+        List<Long> allEventIds = sampleEvents.stream()
+                .map(Event::getEventId)
+                .collect(Collectors.toList());
 
         // Remarshal the event attributes into a map keyed off the event id.
         if (allEventIds == null || allEventIds.size() == 0) {

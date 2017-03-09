@@ -37,6 +37,7 @@ import org.jtc.common.util.property.PropertyHelper;
 import java.io.File;
 import java.sql.Timestamp;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Created by IntelliJ IDEA.
@@ -298,10 +299,9 @@ public class EventDetailAjax extends ActionSupport implements IAjaxAction {
     }
 
     private Map<Long, List<SampleAttribute>> getSampleVsAttributeList(List<Sample> samples) throws Exception {
-        List<Long> allSampleIds = new ArrayList<>();
-        for (Sample sample : samples) {
-            allSampleIds.add(sample.getSampleId());
-        }
+        List<Long> allSampleIds = samples.stream()
+                .map(Sample::getSampleId)
+                .collect(Collectors.toList());
 
         List<SampleAttribute> allSampleAttributes = readPersister.getSampleAttributes(allSampleIds);
         Map<Long, List<SampleAttribute>> sampleIdVsAttributeList = new HashMap<>();
@@ -318,10 +318,9 @@ public class EventDetailAjax extends ActionSupport implements IAjaxAction {
     private Map<Long, List<EventAttribute>> getEventIdVsAttributeList(List<Event> events) throws Exception {
         Map<Long, List<EventAttribute>> eventIdVsAttributes = null;
 
-        List<Long> allEventIds = new ArrayList<>();
-        for (Event evt : events) {
-            allEventIds.add(evt.getEventId());
-        }
+        List<Long> allEventIds = events.stream()
+                .map(Event::getEventId)
+                .collect(Collectors.toList());
 
         if (allEventIds.size() > 0) {
             List<EventAttribute> allEventAttributes = readPersister.getEventAttributes(allEventIds, projectId);

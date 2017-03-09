@@ -32,6 +32,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Created by IntelliJ IDEA.
@@ -267,11 +268,9 @@ public abstract class HibernateDAO {
             return;
 
         // Get mapping of all lookup value ids for query.
-        List<Long> lookupValueIds = new ArrayList<>();
-        for (B model : models) {
-            Long lkuvluId = model.getNameLookupId();
-            lookupValueIds.add(lkuvluId);
-        }
+        List<Long> lookupValueIds = models.stream()
+                .map(MetaAttributeModelBean::getNameLookupId)
+                .collect(Collectors.toList());
 
         // Query to get all the lookup values for the ids.
         Criteria crit = session.createCriteria(LookupValue.class);

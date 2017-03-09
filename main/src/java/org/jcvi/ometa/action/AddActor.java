@@ -69,17 +69,13 @@ public class AddActor extends ActionSupport {
         try {
             String userName = ServletActionContext.getRequest().getRemoteUser();
 
-            boolean isActorAdmin = false;
+            boolean isActorAdmin;
             Set<String> dataRoleSet = new HashSet<>(Arrays.asList(this.ACTOR_ADMINS));
             // check if current user has proper role
             Actor adminActor = this.readPersister.getActorByUserName(userName);
             List<ActorGroup> actorGroups = this.readPersister.getActorGroup(adminActor.getLoginId());
-            for(ActorGroup ag : actorGroups) {
-                if(dataRoleSet.contains(ag.getGroup().getGroupNameLookupValue().getName())) {
-                    isActorAdmin = true;
-                    break;
-                }
-            }
+            isActorAdmin = actorGroups.stream()
+                    .anyMatch(ag -> dataRoleSet.contains(ag.getGroup().getGroupNameLookupValue().getName()));
 
             if(!isActorAdmin) { // actor does not have access privilege to this function
                 rtnVal = "denied";

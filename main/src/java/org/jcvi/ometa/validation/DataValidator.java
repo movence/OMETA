@@ -135,20 +135,13 @@ public class DataValidator{
     }
 
     public static boolean checkFieldUniqueness(String value, String dataType, Long currentSampleId, List<SampleAttribute> sampleAttributeList) {
-        for(SampleAttribute sampleAttribute : sampleAttributeList){
-            if(sampleAttribute.getSampleId().compareTo(currentSampleId) != 0) {
-                String attrValue = (dataType.equals("string")) ? sampleAttribute.getAttributeStringValue()
-                        : (dataType.equals("int")) ? ((sampleAttribute.getAttributeIntValue() != null ) ? sampleAttribute.getAttributeIntValue().toString() : null)
-                        : (dataType.equals("date")) ? ((sampleAttribute.getAttributeDateValue() != null) ? sampleAttribute.getAttributeDateValue().toString() : null)
-                        : ((sampleAttribute.getAttributeFloatValue() != null) ? sampleAttribute.getAttributeFloatValue().toString() : null);
-
-                if (attrValue != null && attrValue.equals(value)) {
-                    return false;
-                }
-            }
-        }
-
-        return true;
+        return sampleAttributeList.stream()
+                .filter(sampleAttribute -> sampleAttribute.getSampleId().compareTo(currentSampleId) != 0)
+                .map(sampleAttribute -> (dataType.equals("string")) ? sampleAttribute.getAttributeStringValue()
+                                    : (dataType.equals("int")) ? ((sampleAttribute.getAttributeIntValue() != null) ? sampleAttribute.getAttributeIntValue().toString() : null)
+                                    : (dataType.equals("date")) ? ((sampleAttribute.getAttributeDateValue() != null) ? sampleAttribute.getAttributeDateValue().toString() : null)
+                                    : ((sampleAttribute.getAttributeFloatValue() != null) ? sampleAttribute.getAttributeFloatValue().toString() : null))
+                .noneMatch(attrValue -> attrValue != null && attrValue.equals(value));
     }
 
     public String getMessage() {

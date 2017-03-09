@@ -37,6 +37,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Created by IntelliJ IDEA.
@@ -460,10 +461,9 @@ public class JsonProducer implements Runnable {
             for(Map.Entry<String, List<String>> entry : kingdomProjectMap.entrySet()) {
                 List<String> projectNameList = entry.getValue();
                 List<Project> projects = pseEjb.getProjects(projectNameList);
-                List<Long> projectIds = new ArrayList<>();
-                for (Project project : projects) {
-                    projectIds.add(project.getProjectId());
-                }
+                List<Long> projectIds = projects.stream()
+                        .map(Project::getProjectId)
+                        .collect(Collectors.toList());
 
                 List<ProjectAttribute> allProjectAttributes = pseEjb.getProjectAttributes(projectIds);
                 Map<Long, List<ProjectAttribute>> projIdVsAttributes = new HashMap<>();
@@ -624,10 +624,9 @@ public class JsonProducer implements Runnable {
 
     private Map<Long, List<EventAttribute>> getEventIdVsAttributeList(List<Event> sampleEvents, Long projectId) throws Exception {
         // Corral the ids of the events from the list of events.
-        List<Long> allEventIds = new ArrayList<>();
-        for (Event evt : sampleEvents) {
-            allEventIds.add(evt.getEventId());
-        }
+        List<Long> allEventIds = sampleEvents.stream()
+                .map(Event::getEventId)
+                .collect(Collectors.toList());
 
         // Remarshal the event attributes into a map keyed off the event id.
         if (allEventIds == null || allEventIds.size() == 0) {
@@ -659,11 +658,9 @@ public class JsonProducer implements Runnable {
     }
 
     private List<Long> getSampleIdList(List<Sample> samples) {
-        List<Long> sampleIdList = new ArrayList<>();
-        for (Sample sample : samples) {
-            sampleIdList.add(sample.getSampleId());
-        }
-        return sampleIdList;
+        return samples.stream()
+                .map(Sample::getSampleId)
+                .collect(Collectors.toList());
     }
 
     private Map<Long, List<SampleAttribute>> getSampleVsAttributeList(List<Long> sampleIdList) throws Exception {

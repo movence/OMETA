@@ -30,6 +30,7 @@ import org.jcvi.ometa.model.EventMetaAttribute;
 import org.jcvi.ometa.model.ModelBean;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Created by IntelliJ IDEA.
@@ -66,11 +67,12 @@ public class EventAttributeDAO extends HibernateDAO {
             Criteria crit = session.createCriteria( EventAttribute.class );
             crit.add( Restrictions.eq("eventId", eventId) );
             List<EventAttribute> results = crit.list();
-            List<Long> nameLookupIds = new ArrayList<>();
+            List<Long> nameLookupIds;
             if ( results != null && results.size() > 0 ) {
-                for ( EventAttribute ea: results ) {
-                    nameLookupIds.add( ea.getNameLookupValueId() );
-                }
+                nameLookupIds = results.stream()
+                        .map(EventAttribute::getNameLookupValueId)
+                        .collect(Collectors.toList());
+
                 crit = session.createCriteria(EventMetaAttribute.class);
                 crit.add(Restrictions.in( "nameLookupId", nameLookupIds ) )
                         .add(Restrictions.eq( "projectId", projectId ) );
@@ -146,11 +148,10 @@ public class EventAttributeDAO extends HibernateDAO {
                 }
 
                 if(results != null && results.size() > 0) {
+                    List<Long> nameLookupIds = results.stream()
+                            .map(EventAttribute::getNameLookupValueId)
+                            .collect(Collectors.toList());
 
-                    List<Long> nameLookupIds = new ArrayList<>();
-                    for ( EventAttribute ea: results ) {
-                        nameLookupIds.add( ea.getNameLookupValueId() );
-                    }
                     crit = session.createCriteria(EventMetaAttribute.class);
                     crit.add(Restrictions.in("nameLookupId", nameLookupIds))
                             .add(Restrictions.eq("projectId", projectId));

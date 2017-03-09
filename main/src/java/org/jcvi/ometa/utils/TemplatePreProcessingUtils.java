@@ -15,6 +15,8 @@ import org.jtc.common.util.scratch.ScratchUtils;
 
 import java.io.*;
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 /**
  * Created by IntelliJ IDEA.
@@ -334,9 +336,9 @@ public class TemplatePreProcessingUtils {
                 if(sheet != null && sheet.getLastRowNum() > 1) {
                     //get columns from excel sheet
                     Row attributeNames = sheet.getRow(0);
-                    for(int i = 0; i < attributeNames.getLastCellNum(); i++) {
-                        columns.add(this.extractRealAttributeName(attributeNames.getCell(i).getStringCellValue()));
-                    }
+                    columns = IntStream.range(0, attributeNames.getLastCellNum())
+                            .mapToObj(i -> this.extractRealAttributeName(attributeNames.getCell(i).getStringCellValue()))
+                            .collect(Collectors.toList());
                     hasSampleName = columns.indexOf(Constants.ATTR_SAMPLE_NAME) >= 0;
                     hasParentSampleName = columns.indexOf(Constants.ATTR_PARENT_SAMPLE_NAME) >= 0;
                     hasPublicFlag = columns.indexOf(Constants.ATTR_PUBLIC_FLAG) >= 0;

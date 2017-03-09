@@ -20,6 +20,7 @@ import org.jtc.common.util.property.PropertyHelper;
 
 import java.io.*;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Created by mkuscuog on 3/9/2015.
@@ -122,10 +123,9 @@ public class GCIDMetadata extends ActionSupport {
 
                 List<Sample> samples = projectIdVsSampleList.get(project.getProjectId());
                 if(samples!=null && samples.size()>0) {
-                    List<Long> sampleIdList = new ArrayList<>();
-                    for (Sample sample : samples) {
-                        sampleIdList.add(sample.getSampleId());
-                    }
+                    List<Long> sampleIdList = samples.stream()
+                            .map(Sample::getSampleId)
+                            .collect(Collectors.toList());
 
                     Map<Long, List<SampleAttribute>> sampleIdVsAttributeList = getSampleVsAttributeList(sampleIdList);
                     Map<Long, List<Event>> sampleIdVsEventList = getSampleIdVsEventList(sampleIdList);
@@ -433,10 +433,9 @@ public class GCIDMetadata extends ActionSupport {
     }
     private Map<Long, List<EventAttribute>> getEventIdVsAttributeList(List<Event> sampleEvents, Long projectId) throws Exception {
         // Corral the ids of the events from the list of events.
-        List<Long> allEventIds = new ArrayList<>();
-        for (Event evt : sampleEvents) {
-            allEventIds.add(evt.getEventId());
-        }
+        List<Long> allEventIds = sampleEvents.stream()
+                .map(Event::getEventId)
+                .collect(Collectors.toList());
 
         // Remarshal the event attributes into a map keyed off the event id.
         if (allEventIds == null || allEventIds.size() == 0) {

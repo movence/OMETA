@@ -169,17 +169,10 @@ public class DPCCHelper {
 
 
     public static FileReadAttributeBean findAttribute(String attributeValue, List<FileReadAttributeBean> loadingList) throws Exception {
-        FileReadAttributeBean bean = null;
-
-        loop:
-        for(FileReadAttributeBean fBean : loadingList) {
-            if(fBean.getAttributeName().toLowerCase().contains(attributeValue.toLowerCase())) {
-                //index = loadingList.indexOf(fBean);
-                bean = fBean;
-                break loop;
-            }
-        }
-        return bean;
+        return loadingList.stream()
+                .filter(fBean -> fBean.getAttributeName().toLowerCase().contains(attributeValue.toLowerCase()))
+                .findFirst()
+                .orElse(null);
     }
 
 

@@ -8,6 +8,7 @@ import org.jcvi.ometa.utils.Constants;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
@@ -38,12 +39,8 @@ public class DPCCValidator {
         }
 
         if(!isValid) {
-            for(String noValue : Constants.DPCC_DATE_NO_VALUES) {
-                if(noValue.toLowerCase().equals(value.toLowerCase())) {
-                    isValid = true;
-                    break;
-                }
-            }
+            isValid = Arrays.stream(Constants.DPCC_DATE_NO_VALUES).
+                    anyMatch(noValue -> noValue.toLowerCase().equals(value.toLowerCase()));
         }
 
         if(!isValid) {

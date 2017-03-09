@@ -38,6 +38,7 @@ import javax.naming.NamingException;
 import java.io.File;
 import java.io.FileWriter;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Created by IntelliJ IDEA.
@@ -183,10 +184,9 @@ public class BeanWriter {
         List<Sample> samples = this.readEjb.getSamplesForProject(projectId);
 
         if(samples!=null && samples.size()>0) {
-            List<Long> sampleIdList = new ArrayList<>();
-            for (Sample sample : samples) {
-                sampleIdList.add(sample.getSampleId());
-            }
+            List<Long> sampleIdList = samples.stream()
+                    .map(Sample::getSampleId)
+                    .collect(Collectors.toList());
 
             List<SampleAttribute> allSampleAttributes = this.readEjb.getSampleAttributes(sampleIdList);
             Map<Long, List<SampleAttribute>> sampleIdVsAttributeList = new HashMap<>();
@@ -373,11 +373,10 @@ public class BeanWriter {
         //Do not bother with projects newly-created.
         Set<String> exclusionSet = new HashSet<>();
         if (parameter.getProjects() != null) {
-            for (List<Project> projects: parameter.getProjects()) {
-                for (Project project: projects) {
-                    exclusionSet.add(project.getProjectName().intern());
-                }
-            }
+            exclusionSet = parameter.getProjects().stream()
+                    .flatMap(Collection::stream)
+                    .map(project -> project.getProjectName().intern())
+                    .collect(Collectors.toSet());
         }
 
         //Do bother with everything NOT on that list.

@@ -74,14 +74,8 @@ public class FileDownloader extends ActionSupport {
             Project currProject = this.readPersister.getProject(Long.parseLong(currProjectId));
             Long projectViewGroup= currProject.getViewGroup();
 
-            boolean hasAccess = false;
-
-            for(ActorGroup actorGroup : actorGroups) {
-                if(projectViewGroup.equals(actorGroup.getGroupId())) {
-                    hasAccess = true;
-                    break;
-                }
-            }
+            boolean hasAccess = actorGroups.stream()
+                    .anyMatch(actorGroup -> projectViewGroup.equals(actorGroup.getGroupId()));
 
             if(hasAccess) {
                 File file = new File(this.PROJECT_FILE_STORAGE + File.separator + this.fp);

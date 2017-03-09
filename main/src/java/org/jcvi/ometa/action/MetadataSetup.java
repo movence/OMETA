@@ -44,6 +44,7 @@ import javax.transaction.Status;
 import javax.transaction.SystemException;
 import javax.transaction.UserTransaction;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Created by IntelliJ IDEA.
@@ -423,10 +424,9 @@ public class MetadataSetup extends ActionSupport implements IAjaxAction, Prepara
                     }
                     //sample meta attribute
                     List<SampleMetaAttribute> smas = psept.getSampleMetaAttributes(projectId);
-                    List<String> smaNames = new ArrayList<>();
-                    for(SampleMetaAttribute sma : smas) {
-                        smaNames.add(sma.getAttributeName());
-                    }
+                    List<String> smaNames = smas.stream()
+                            .map(SampleMetaAttribute::getAttributeName)
+                            .collect(Collectors.toList());
 
                     List<EventMetaAttributeContainer> tempList = new ArrayList<>(emas.size());
                     for(EventMetaAttribute ema : emas) {

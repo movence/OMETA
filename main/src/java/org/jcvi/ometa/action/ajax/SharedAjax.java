@@ -360,7 +360,7 @@ public class SharedAjax extends ActionSupport implements IAjaxAction {
             if(fileAttribute != null){
                 String value = fileAttribute.getAttributeStringValue();
                 String[] paths = value.split(",");
-                String absoluteFileName = null;
+                String absoluteFileName;
                 File file = null;
 
                 if(this.fileName.equals("DOWNLOADALL")){
@@ -394,12 +394,10 @@ public class SharedAjax extends ActionSupport implements IAjaxAction {
                     this.dataTemplateContentType = "application/zip";
                     returnValue = Constants.STRUTS_FILE_DOWNLOAD;
                 } else {
-                    for(String path : paths){
-                        if(path.contains(this.fileName)){
-                            absoluteFileName = path;
-                            break;
-                        }
-                    }
+                    absoluteFileName = Arrays.stream(paths)
+                            .filter(path -> path.contains(this.fileName))
+                            .findFirst()
+                            .orElse(null);
 
                     if(absoluteFileName != null) {
                         String absoluteFilePath = this.fileStoragePath + File.separator + Constants.DIRECTORY_PROJECT + File.separator + File.separator + absoluteFileName;

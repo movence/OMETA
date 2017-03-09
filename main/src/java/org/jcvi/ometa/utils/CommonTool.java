@@ -257,12 +257,11 @@ public class CommonTool {
                                 } else {
                                     String parentDictType = dictTypeMap.get(dictOpts[1]);
                                     if (parentDictType == null) {
-                                        for (EventMetaAttribute ema_ : list) {
-                                            if (ema_.getLookupValue().getName().equals(dictOpts[1])) {
-                                                parentDictType = ema_.getOptions().replace("Dictionary:", "");
-                                                break;
-                                            }
-                                        }
+                                        parentDictType = list.stream()
+                                                .filter(ema_ -> ema_.getLookupValue().getName().equals(dictOpts[1]))
+                                                .findFirst()
+                                                .map(ema_ -> ema_.getOptions().replace("Dictionary:", ""))
+                                                .orElse(parentDictType);
                                     }
 
                                     if (parentDictType != null) {

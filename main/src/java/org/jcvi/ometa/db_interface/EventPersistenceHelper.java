@@ -392,14 +392,10 @@ public class EventPersistenceHelper {
                         }
                     }
                     List<String> controlValueList = Arrays.asList(controlValues.split(";"));
-                    boolean found = true;
+                    boolean found;
                     if (attributeValue.contains(",")) {
-                        for (String currentAttributeValue : attributeValue.split(",")) {
-                            if (controlValueList.indexOf(currentAttributeValue.trim()) < 0) {
-                                found = false;
-                                break;
-                            }
-                        }
+                        found = !Arrays.stream(attributeValue.split(","))
+                                .anyMatch(currentAttributeValue -> controlValueList.indexOf(currentAttributeValue.trim()) < 0);
                     } else {
                         found = controlValueList.indexOf(attributeValue) >= 0;
                     }
