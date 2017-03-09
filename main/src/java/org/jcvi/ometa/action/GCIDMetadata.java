@@ -219,8 +219,7 @@ public class GCIDMetadata extends ActionSupport {
             while ((inputLine = br.readLine()) != null) {
                 String[] attributes = inputLine.split(",");
 
-                for(String attr : attributes)
-                    this.outputAttributes.add(attr);
+                this.outputAttributes.addAll(Arrays.asList(attributes));
             }
         } catch (FileNotFoundException e) {
             e.printStackTrace();

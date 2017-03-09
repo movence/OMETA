@@ -99,9 +99,7 @@ public class BeanPopulator {
      */
     public List<String> getHeaderNames() {
         List<String> rtnList = new ArrayList<>();
-        for(String headerName : methodVsDataName.values()) {
-            rtnList.add(headerName);
-        }
+        rtnList.addAll(methodVsDataName.values());
         return rtnList;
     }
 
