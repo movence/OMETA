@@ -12,6 +12,7 @@ import org.jcvi.ometa.validation.ModelValidator;
 import java.io.*;
 import java.sql.Timestamp;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * User: hkim
@@ -34,15 +35,8 @@ public class EventsToFile {
         StringBuilder outputs = new StringBuilder(); //tab-delimited output
         List<String> attributeList = params.getAttribute();
 
-        StringBuilder headers = new StringBuilder();
-        for(int i=0;i<attributeList.size();i++) {
-            if(i>0) {
-                headers.append("\t");
-            }
-            headers.append(attributeList.get(i));
-        }
-        outputs.append(headers.toString() + "\n");
-
+        String headers = attributeList.stream().collect(Collectors.joining("\t"));
+        outputs.append(headers + "\n");
 
         Project project = ejb.getProject(params.getProject());
         Map<String, Object> paMap = new HashMap<>();

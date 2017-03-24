@@ -33,6 +33,7 @@ import org.jcvi.ometa.model.Project;
 import org.jcvi.ometa.exception.ForbiddenResourceException;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Created by IntelliJ IDEA.
@@ -328,56 +329,36 @@ public class SecurityDAO extends HibernateDAO {
     }
 
     private List<String> uniquifyNames(List<String> names) {
-        Set<String> uniqueNames = new HashSet<>();
-        uniqueNames.addAll( names );
-        List<String> rtnList = new ArrayList<>();
-        rtnList.addAll( uniqueNames );
-        return rtnList;
+        return names.stream().distinct().collect(Collectors.toList());
     }
 
     private List<Long> uniquifyIds( List<Long> names ) {
-        Set<Long> uniqueNames = new HashSet<>();
-        uniqueNames.addAll( names );
-        List<Long> rtnList = new ArrayList<>();
-        rtnList.addAll( uniqueNames );
-        return rtnList;
+        return names.stream().distinct().collect(Collectors.toList());
     }
 
     /** Roll a list of strings into a comma-separated single string. */
     private String joinNameList(List<String> names) {
-        StringBuilder bldr = new StringBuilder();
+        String bldr;
 
         if ( names != null ) {
-            for ( String nextName: uniquifyNames(names) ) {
-                if ( bldr.length() > 0 ) {
-                    bldr.append( "','" );
-                }
-                bldr.append( nextName );
-            }
-        }
-        else {
+            bldr = uniquifyNames(names).stream().collect(Collectors.joining("','"));
+        } else {
             throw new IllegalArgumentException( "Null name list not allowed." );
         }
 
-        return bldr.toString();
+        return bldr;
     }
 
     /** Roll a list of numeric IDs into a comma-separated single string. */
     private String joinIdList(List<Long> projects) {
-        StringBuilder bldr = new StringBuilder();
+        String bldr;
         if ( projects != null ) {
-            for ( Long nextProject: projects ) {
-                if ( bldr.length() > 0 ) {
-                    bldr.append( "," );
-                }
-                bldr.append( nextProject );
-            }
-        }
-        else {
+            bldr = projects.stream().map(String::valueOf).collect(Collectors.joining(","));
+        } else {
             throw new IllegalArgumentException( "Null id list not allowed." );
         }
 
-        return bldr.toString();
+        return bldr;
     }
 
 }

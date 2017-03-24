@@ -20,6 +20,7 @@ import java.io.File;
 import java.io.FileFilter;
 import java.io.FileWriter;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * User: movence
@@ -322,17 +323,7 @@ public class SequenceHelper {
     }
 
     private String joinParsedCSVData(String[] data) {
-        StringBuffer sb = new StringBuffer();
-
-        for(int i = 0; i < data.length; i++) {
-            if(i > 0) {
-                sb.append(",");
-            }
-
-            sb.append(data[i] == null ? "" : data[i]);
-        }
-
-        return sb.toString();
+        return Arrays.stream(data).map(datum -> datum == null ? "" : datum).collect(Collectors.joining(","));
     }
 
     public Map<String, List<String>> parseSequenceFileIntoMapBySI(File sequenceFile) throws Exception {

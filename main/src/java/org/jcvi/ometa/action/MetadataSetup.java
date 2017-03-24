@@ -418,10 +418,9 @@ public class MetadataSetup extends ActionSupport implements IAjaxAction, Prepara
 
                     //project meta attribute
                     List<ProjectMetaAttribute> pmas = psept.getProjectMetaAttributes(projectId);
-                    List<String> pmaNames = new ArrayList<>(pmas.size());
-                    for(ProjectMetaAttribute pma : pmas) {
-                        pmaNames.add(pma.getAttributeName());
-                    }
+                    List<String> pmaNames = pmas.stream()
+                            .map(ProjectMetaAttribute::getAttributeName)
+                            .collect(Collectors.toList());
                     //sample meta attribute
                     List<SampleMetaAttribute> smas = psept.getSampleMetaAttributes(projectId);
                     List<String> smaNames = smas.stream()

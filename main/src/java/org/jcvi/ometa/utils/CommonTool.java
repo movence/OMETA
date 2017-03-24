@@ -35,6 +35,7 @@ import java.sql.Timestamp;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Created by IntelliJ IDEA.
@@ -105,14 +106,9 @@ public class CommonTool {
                             decoratedValue
                     );
                 } else if(decoratedValue.contains("http://")){
-                    String[] decoratedValueArr = decoratedValue.split(",");
-                    StringBuilder dvBuild = new StringBuilder();
-                    for(String url : decoratedValueArr){
-                        if(dvBuild.length() > 0) dvBuild.append(" - ");
-                        dvBuild.append(convertIntoATag(url, url));
-                    }
-
-                    decoratedValue = dvBuild.toString();
+                    decoratedValue = Arrays.stream(decoratedValue.split(","))
+                            .map(url -> convertIntoATag(url, url))
+                            .collect(Collectors.joining(" - "));
                 }
             }
         }

@@ -26,6 +26,7 @@ import uk.ac.ebi.ook.web.services.Query;
 import uk.ac.ebi.ook.web.services.QueryServiceLocator;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Created by IntelliJ IDEA.
@@ -157,10 +158,7 @@ public class OntologyLookupService {
         return ontologyMap;
     }
     public List<OntologyTerm> convertOntologyMapToList(Map<String, OntologyTerm> map) {
-        List<OntologyTerm> list = new ArrayList<>(map.size());
-        for(Map.Entry<String, OntologyTerm> entry : map.entrySet()) {
-            list.add(entry.getValue());
-        }
-        return list;
+        return map.entrySet().stream()
+                .map(Map.Entry::getValue).collect(Collectors.toList());
     }
 }

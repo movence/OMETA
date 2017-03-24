@@ -28,6 +28,7 @@ import java.sql.*;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Created by IntelliJ IDEA.
@@ -244,15 +245,9 @@ public class ProductionLoader {
     private String getBlobResult(Blob blob) throws Exception {
         String rtnVal = null;
         if (blob != null) {
-            Reader rdr = new InputStreamReader(blob.getBinaryStream());
-            BufferedReader br = new BufferedReader(rdr);
-            StringBuilder bldr = new StringBuilder();
-            String inline = null;
-            while (null != (inline = br.readLine())) {
-                bldr.append(inline);
+            try (BufferedReader br = new BufferedReader(new InputStreamReader(blob.getBinaryStream()))) {
+                rtnVal = br.lines().collect(Collectors.joining());
             }
-            br.close();
-            rtnVal = bldr.toString();
         }
 
         return rtnVal;

@@ -9,6 +9,7 @@ import org.jtc.common.util.property.PropertyHelper;
 
 import java.sql.Timestamp;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * User: movence
@@ -61,10 +62,7 @@ public class AttributeHelper {
                     if(currEvent != null) { //there could be no event, then move on to project/sample attributes
                         //get the latest event attributes
                         List<EventAttribute> eaList = readPersister.getEventAttributes(currEvent.getEventId(), projectId);
-                        for(EventAttribute ea : eaList) {
-                            if(ea.getMetaAttribute() != null)
-                                eaMap.put(ea.getMetaAttribute().getLookupValue().getLookupValueId(), ea);
-                        }
+                        eaMap = eaList.stream().filter(ea -> ea.getMetaAttribute() != null).collect(Collectors.toMap(ea -> ea.getMetaAttribute().getLookupValue().getLookupValueId(), ea -> ea, (a, b) -> b));
                     }
 
                     //get project/sample attributes

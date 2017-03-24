@@ -143,10 +143,9 @@ public class EventDetailAjax extends ActionSupport implements IAjaxAction {
                         if(!sampleEvents.isEmpty()) {
                             Event registrationEvent = sampleEvents.get(0);
                             List<EventMetaAttribute> registrationEMA = this.readPersister.getEventMetaAttributes(sample.getProjectId(), registrationEvent.getEventTypeLookupValue().getLookupValueId());
-                            final List<String> orderedEMANames = new ArrayList<>(registrationEMA.size());
-                            for (EventMetaAttribute ema : registrationEMA) {
-                                orderedEMANames.add(ema.getLookupValue().getName());
-                            }
+                            final List<String> orderedEMANames = registrationEMA.stream()
+                                    .map(ema -> ema.getLookupValue().getName())
+                                    .collect(Collectors.toList());
 
                             List<SampleAttribute> sampleAttributes = sampleIdVsAttributes.get(sample.getSampleId());
                             sampleAttributes.sort((sa1, sa2) -> {
