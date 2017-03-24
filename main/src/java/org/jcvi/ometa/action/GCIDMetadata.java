@@ -221,9 +221,6 @@ public class GCIDMetadata extends ActionSupport {
 
                 this.outputAttributes.addAll(Arrays.asList(attributes));
             }
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-            logger.error(e.toString());
         } catch (IOException e) {
             e.printStackTrace();
             logger.error(e.toString());
@@ -309,9 +306,6 @@ public class GCIDMetadata extends ActionSupport {
             bos = new ByteArrayOutputStream();
             workbook.write(bos);
             this.dataTemplateStream = new ByteArrayInputStream(bos.toByteArray());
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-            logger.error(e.toString());
         } catch (IOException e) {
             e.printStackTrace();
             logger.error(e.toString());
@@ -341,9 +335,6 @@ public class GCIDMetadata extends ActionSupport {
 
                 this.attrNameMapping.put(attributes[0], attributes[1]);
             }
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-            logger.error(e.toString());
         } catch (IOException e) {
             e.printStackTrace();
             logger.error(e.toString());

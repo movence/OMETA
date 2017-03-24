@@ -172,10 +172,8 @@ public class StandaloneSessionAndTransactionManager implements SessionAndTransac
             Context ctx = new InitialContext();
             logger.info(fullyQualifiedSessionFactory);
             sessionFactory = (SessionFactory)ctx.lookup(fullyQualifiedSessionFactory);
-        } catch (ClassCastException cse) {
+        } catch (ClassCastException | NamingException cse) {
             throw new DAOException(cse, FAILED_TO_OBTAIN_SESSION_FACTORY_ERROR + fullyQualifiedSessionFactory);
-        } catch (NamingException ne) {
-            throw new DAOException(ne, FAILED_TO_OBTAIN_SESSION_FACTORY_ERROR + fullyQualifiedSessionFactory);
         }
         return sessionFactory;
     }

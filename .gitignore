@@ -13,3 +13,4 @@ build/hibernate
 build/resource
 jcvi.ipr
 jcvi.iws
+.git-rewrite/

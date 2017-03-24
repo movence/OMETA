@@ -170,9 +170,6 @@ public class OntologyAjax extends ActionSupport implements IAjaxAction {
                 }*/
             }
 
-        } catch (OntologyServiceException ose) {
-            logger.error(ose.getMessage());
-            rtnVal = ERROR;
         } catch (Exception e) {
             logger.error(e.getMessage());
             rtnVal = ERROR;
