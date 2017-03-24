@@ -315,28 +315,24 @@ public class SampleDAO extends HibernateDAO {
         try {
             List results = null;
 
-            String sql = " select S1.*, S2.sample_name parent, CONCAT(A.actor_last_name,',',A.actor_first_name) user," +
+            StringBuilder sql = new StringBuilder(" select S1.*, S2.sample_name parent, CONCAT(A.actor_last_name,',',A.actor_first_name) user," +
                     " SA2.sampla_attribute_date attribute_value_date, SA2.sampla_attribute_float attribute_value_float, SA2.sampla_attribute_str attribute_value_str, SA2.sampla_attribute_int attribute_value_int " +
                     " from sample S1 " +
                     " left join sample S2 on S1.sample_sample_parent_id=S2.sample_id " +
                     " left join actor A on S1.sample_created_by=A.actor_id " +
                     " left join (select SA1.* from sample_attribute SA1, lookup_value LV " +
-                    " where SA1.sampla_lkuvlu_attribute_id = LV.lkuvlu_id and LV.lkuvlu_name = '"+ sortCol +
-                    "') SA2 on S1.sample_id = SA2.sampla_sample_id where ";
+                    " where SA1.sampla_lkuvlu_attribute_id = LV.lkuvlu_id and LV.lkuvlu_name = '" + sortCol +
+                    "') SA2 on S1.sample_id = SA2.sampla_sample_id where ");
 
             if("sample".equals(type))
-                sql += "S1.sample_id=";
+                sql.append("S1.sample_id=");
             else
-                sql += "S1.sample_projet_id=";
-            sql+=flexId;
+                sql.append("S1.sample_projet_id=");
+            sql.append(flexId);
 
             if(sSearch!=null && !sSearch.isEmpty()) {
                 sSearch = "%"+sSearch+"%";
-                sql+=" and (LOWER(S1.sample_name) like '"+sSearch+"' or S1.sample_create_date like '"+sSearch+"' " +
-                        " or (S1.sample_id in (select SA.sampla_sample_id from sample_attribute SA, lookup_value LV " +
-                        "   where COALESCE(SA.sampla_attribute_date,LOWER(SA.sampla_attribute_float),LOWER(SA.sampla_attribute_str),LOWER(SA.sampla_attribute_int)) like '"+sSearch+"'" +
-                        " or (SA.sampla_lkuvlu_attribute_id=LV.lkuvlu_id and LOWER(LV.lkuvlu_name) like '"+sSearch+"')) " +
-                        " or LOWER(S2.sample_name) like '"+sSearch+"' or ((LOWER(A.actor_first_name) like '"+sSearch+"' or LOWER(A.actor_last_name) like '"+sSearch+"'))))";
+                sql.append(" and (LOWER(S1.sample_name) like '").append(sSearch).append("' or S1.sample_create_date like '").append(sSearch).append("' ").append(" or (S1.sample_id in (select SA.sampla_sample_id from sample_attribute SA, lookup_value LV ").append("   where COALESCE(SA.sampla_attribute_date,LOWER(SA.sampla_attribute_float),LOWER(SA.sampla_attribute_str),LOWER(SA.sampla_attribute_int)) like '").append(sSearch).append("'").append(" or (SA.sampla_lkuvlu_attribute_id=LV.lkuvlu_id and LOWER(LV.lkuvlu_name) like '").append(sSearch).append("')) ").append(" or LOWER(S2.sample_name) like '").append(sSearch).append("' or ((LOWER(A.actor_first_name) like '").append(sSearch).append("' or LOWER(A.actor_last_name) like '").append(sSearch).append("'))))");
             }
 
             if(columnName!=null && !columnName.isEmpty()){
@@ -344,7 +340,7 @@ public class SampleDAO extends HibernateDAO {
                         "LV.lkuvlu_name = '#columnName#' and COALESCE(SA.sampla_attribute_date,LOWER(SA.sampla_attribute_float),LOWER(SA.sampla_attribute_str),LOWER(SA.sampla_attribute_int)) #columnSearch#))";
 
 
-                sql += " and (";
+                sql.append(" and (");
 
                 for(int i = 0; i<columnName.size(); i++){
                     String key = columnName.get(i);
@@ -354,13 +350,13 @@ public class SampleDAO extends HibernateDAO {
                     String logicGate = i == 0 ? "" : valueArr[2].equals("not") ? "and not" : valueArr[2];
 
                     if (key.equals("Sample Name")) {
-                        sql += operation.equals("like") ? " " + logicGate + " LOWER(S1.sample_name) like '%" + searchVal + "%' "
+                        sql.append(operation.equals("like") ? " " + logicGate + " LOWER(S1.sample_name) like '%" + searchVal + "%' "
                                 : operation.equals("in") ? " " + logicGate + " LOWER(S1.sample_name) in ('" + searchVal.replaceAll(",", "','") + "') "
-                                : " " + logicGate + " LOWER(S1.sample_name) = '" + searchVal + "' ";
+                                : " " + logicGate + " LOWER(S1.sample_name) = '" + searchVal + "' ");
                     } else if (key.equals("Parent")) {
-                        sql += operation.equals("like") ? " " + logicGate + " LOWER(S2.sample_name) like '%" + searchVal + "%' "
+                        sql.append(operation.equals("like") ? " " + logicGate + " LOWER(S2.sample_name) like '%" + searchVal + "%' "
                                 : operation.equals("in") ? " " + logicGate + " LOWER(S2.sample_name) in ('" + searchVal.replaceAll(",", "','") + "') "
-                                : " " + logicGate + " LOWER(S2.sample_name) = '" + searchVal + "' ";
+                                : " " + logicGate + " LOWER(S2.sample_name) = '" + searchVal + "' ");
                     } else if (key.equals("User")) {
                         String flNameSeparator = ", ";
                         if(searchVal.contains(flNameSeparator)){
@@ -368,50 +364,50 @@ public class SampleDAO extends HibernateDAO {
                             String firstName = searchValArr[1];
                             String lastName = searchValArr[0];
 
-                            sql += operation.equals("like") ? " " + logicGate + " (LOWER(A.actor_first_name) like '%" + firstName + "%' or LOWER(A.actor_last_name) like '%" + lastName + "%') "
+                            sql.append(operation.equals("like") ? " " + logicGate + " (LOWER(A.actor_first_name) like '%" + firstName + "%' or LOWER(A.actor_last_name) like '%" + lastName + "%') "
                                     : operation.equals("in") ? " " + logicGate + " (LOWER(A.actor_first_name) in ('" + firstName.replaceAll(",", "','") + "') or LOWER(A.actor_last_name) in ('" + lastName.replaceAll(",", "','") + "')) "
-                                    : " " + logicGate + " (LOWER(A.actor_first_name) = '" + firstName + "' or LOWER(A.actor_last_name) = '" + lastName + "') ";
+                                    : " " + logicGate + " (LOWER(A.actor_first_name) = '" + firstName + "' or LOWER(A.actor_last_name) = '" + lastName + "') ");
                         } else {
-                            sql += operation.equals("like") ? " " + logicGate + " (LOWER(A.actor_first_name) like '%" + searchVal + "%' or LOWER(A.actor_last_name) like '%" + searchVal + "%') "
+                            sql.append(operation.equals("like") ? " " + logicGate + " (LOWER(A.actor_first_name) like '%" + searchVal + "%' or LOWER(A.actor_last_name) like '%" + searchVal + "%') "
                                     : operation.equals("in") ? " " + logicGate + " (LOWER(A.actor_first_name) in ('" + searchVal.replaceAll(",", "','") + "') or LOWER(A.actor_last_name) in ('" + searchVal.replaceAll(",", "','") + "')) "
-                                    : " " + logicGate + " (LOWER(A.actor_first_name) = '" + searchVal + "' or LOWER(A.actor_last_name) = '" + searchVal + "') ";
+                                    : " " + logicGate + " (LOWER(A.actor_first_name) = '" + searchVal + "' or LOWER(A.actor_last_name) = '" + searchVal + "') ");
                         }
                     } else if (key.equals("Date")) {
-                        sql += operation.equals("like") ? " " + logicGate + " S1.sample_create_date like '%" + searchVal + "%' "
+                        sql.append(operation.equals("like") ? " " + logicGate + " S1.sample_create_date like '%" + searchVal + "%' "
                                 : operation.equals("in") ? " " + logicGate + " S1.sample_create_date in ('" + searchVal.replaceAll(",", "','") + "') "
                                 : operation.equals("equals") ? " " + logicGate + " S1.sample_create_date = '" + searchVal + "' "
-                                : " " + logicGate + " S1.sample_create_date " + (operation.equals("less")?"<":">") + " '" + searchVal + "' ";
+                                : " " + logicGate + " S1.sample_create_date " + (operation.equals("less") ? "<" : ">") + " '" + searchVal + "' ");
                     } else {
-                        sql += operation.equals("like") ? columnSearchSql.replace("#logicGate#", logicGate).replace("#columnName#", key).replace("#columnSearch#", "like '%" + searchVal + "%'")
+                        sql.append(operation.equals("like") ? columnSearchSql.replace("#logicGate#", logicGate).replace("#columnName#", key).replace("#columnSearch#", "like '%" + searchVal + "%'")
                                 : operation.equals("in") ? columnSearchSql.replace("#logicGate#", logicGate).replace("#columnName#", key).replace("#columnSearch#", "in ('" + searchVal.replaceAll(",", "','") + "')")
                                 : operation.equals("equals") ? columnSearchSql.replace("#logicGate#", logicGate).replace("#columnName#", key).replace("#columnSearch#", "= '" + searchVal + "'")
-                                : columnSearchSql.replace("#logicGate#", logicGate).replace("#columnName#", key).replace("#columnSearch#", (operation.equals("less")?"<":">") + " '" + searchVal + "'");
+                                : columnSearchSql.replace("#logicGate#", logicGate).replace("#columnName#", key).replace("#columnSearch#", (operation.equals("less") ? "<" : ">") + " '" + searchVal + "'"));
                     }
                 }
 
-                sql += ")";
+                sql.append(")");
             }
 
             if(sortCol!=null && !sortCol.isEmpty() && sortDir!=null && !sortDir.isEmpty()) {
-                sql += " order by";
+                sql.append(" order by");
                 boolean isDateSort = false;
                 if(sortCol.equals("sample"))
-                    sql += " sample_name ";
+                    sql.append(" sample_name ");
                 else if(sortCol.equals("parent"))
-                    sql += " parent ";
+                    sql.append(" parent ");
                 else if(sortCol.equals("user"))
-                    sql += " user ";
+                    sql.append(" user ");
                 else if(sortCol.equals("date")) {
-                    sql += " sample_create_date ";
+                    sql.append(" sample_create_date ");
                     isDateSort = true;
                 }else
-                    sql += " COALESCE(attribute_value_date, attribute_value_float, attribute_value_str, attribute_value_int) ";
-                sql += sortDir;
+                    sql.append(" COALESCE(attribute_value_date, attribute_value_float, attribute_value_str, attribute_value_int) ");
+                sql.append(sortDir);
 
-                if(isDateSort) sql += ", sample_name asc";
+                if(isDateSort) sql.append(", sample_name asc");
             }
 
-            SQLQuery query = session.createSQLQuery( sql );
+            SQLQuery query = session.createSQLQuery(sql.toString());
             query.addEntity("S", Sample.class);
             results = query.list();
 
@@ -441,7 +437,7 @@ public class SampleDAO extends HibernateDAO {
 
             String sql = null;
             String sub_sql = null;
-            String col_s_sql = null;
+            StringBuilder col_s_sql = null;
             String sql_s_default =
                     "select distinct #selector# "+
                             "  from project p left join project p_1 on p.projet_projet_parent_id=p_1.projet_id " +
@@ -513,7 +509,7 @@ public class SampleDAO extends HibernateDAO {
                 String columnSearchSqlProject = " #logicGate# p.projet_id in (select PA.projea_projet_id from project_attribute PA, lookup_value LV where PA.projea_lkuvlu_attribute_id = LV.lkuvlu_id and " +
                         "LV.lkuvlu_name = '#columnName#' and COALESCE(PA.projea_attribute_date,LOWER(PA.projea_attribute_float),LOWER(PA.projea_attribute_str),LOWER(PA.projea_attribute_int)) #columnSearch#))";
 
-                col_s_sql = " and (";
+                col_s_sql = new StringBuilder(" and (");
 
                 for(int i = 0; i<columnName.size(); i++){
                     String key = columnName.get(i);
@@ -523,31 +519,31 @@ public class SampleDAO extends HibernateDAO {
                     String logicGate = i == 0 ? "" : valueArr[2].equals("not") ? "and not" : valueArr[2];
 
                     if (key.equals("Project Name")) {
-                        col_s_sql += operation.equals("like") ? " " + logicGate + " LOWER(p.projet_name) like '%" + searchVal + "%' "
+                        col_s_sql.append(operation.equals("like") ? " " + logicGate + " LOWER(p.projet_name) like '%" + searchVal + "%' "
                                 : operation.equals("in") ? " " + logicGate + " LOWER(p.projet_name) in ('" + searchVal.replaceAll(",", "','") + "') "
-                                : " " + logicGate + " LOWER(p.projet_name) = '" + searchVal + "' ";
+                                : " " + logicGate + " LOWER(p.projet_name) = '" + searchVal + "' ");
                     } else if (key.equals("Sample Name")) {
-                        col_s_sql += operation.equals("like") ? " " + logicGate + " LOWER(s.sample_name) like '%" + searchVal + "%' "
+                        col_s_sql.append(operation.equals("like") ? " " + logicGate + " LOWER(s.sample_name) like '%" + searchVal + "%' "
                                 : operation.equals("in") ? " " + logicGate + " LOWER(s.sample_name) in ('" + searchVal.replaceAll(",", "','") + "') "
-                                : " " + logicGate + " LOWER(s.sample_name) = '" + searchVal + "' ";
+                                : " " + logicGate + " LOWER(s.sample_name) = '" + searchVal + "' ");
                     } else {
-                        col_s_sql += operation.equals("like") ? columnSearchSql.replace("#logicGate#", logicGate).replace("#columnName#", key).replace("#columnSearch#", "like '%" + searchVal + "%'")
+                        col_s_sql.append(operation.equals("like") ? columnSearchSql.replace("#logicGate#", logicGate).replace("#columnName#", key).replace("#columnSearch#", "like '%" + searchVal + "%'")
                                 : operation.equals("in") ? columnSearchSql.replace("#logicGate#", logicGate).replace("#columnName#", key).replace("#columnSearch#", "in ('" + searchVal.replaceAll(",", "','") + "')")
                                 : operation.equals("equals") ? columnSearchSql.replace("#logicGate#", logicGate).replace("#columnName#", key).replace("#columnSearch#", "= '" + searchVal + "'")
-                                : columnSearchSql.replace("#logicGate#", logicGate).replace("#columnName#", key).replace("#columnSearch#", (operation.equals("less")?"<":">") + " '" + searchVal + "'");
+                                : columnSearchSql.replace("#logicGate#", logicGate).replace("#columnName#", key).replace("#columnSearch#", (operation.equals("less") ? "<" : ">") + " '" + searchVal + "'"));
 
                         logicGate = "or";
 
-                        col_s_sql += operation.equals("like") ? columnSearchSqlProject.replace("#logicGate#", logicGate).replace("#columnName#", key).replace("#columnSearch#", "like '%" + searchVal + "%'")
+                        col_s_sql.append(operation.equals("like") ? columnSearchSqlProject.replace("#logicGate#", logicGate).replace("#columnName#", key).replace("#columnSearch#", "like '%" + searchVal + "%'")
                                 : operation.equals("in") ? columnSearchSqlProject.replace("#logicGate#", logicGate).replace("#columnName#", key).replace("#columnSearch#", "in ('" + searchVal.replaceAll(",", "','") + "')")
                                 : operation.equals("equals") ? columnSearchSqlProject.replace("#logicGate#", logicGate).replace("#columnName#", key).replace("#columnSearch#", "= '" + searchVal + "'")
-                                : columnSearchSqlProject.replace("#logicGate#", logicGate).replace("#columnName#", key).replace("#columnSearch#", (operation.equals("less")?"<":">") + " '" + searchVal + "'");
+                                : columnSearchSqlProject.replace("#logicGate#", logicGate).replace("#columnName#", key).replace("#columnSearch#", (operation.equals("less") ? "<" : ">") + " '" + searchVal + "'"));
 
 
                     }
                 }
 
-                col_s_sql += ")";
+                col_s_sql.append(")");
             }
 
             if(isSearch) {
@@ -597,14 +593,14 @@ public class SampleDAO extends HibernateDAO {
                     String sortWhereSql = sql_wsort.replaceFirst("#sortOpt#", sortOptionSql);
                     sql = sql.replaceAll(optSelector, sortWhereSql);
 
-                    sql = isColumnSearch ? sql.replaceAll("#col_s#", col_s_sql) : sql.replaceAll("#col_s#", "");
+                    sql = isColumnSearch ? sql.replaceAll("#col_s#", col_s_sql.toString()) : sql.replaceAll("#col_s#", "");
                 }
 
                 sql = sql.replaceFirst("#sortDir#", sortDir);
             }
 
-            sql = (!isSearch && !isSort) ? sql_s_default.replace("#opt#", col_s_sql)
-                    : sql == null && isColumnSearch ? sql_s_default.replace("#opt#", col_s_sql) + " and  s.sample_id in (" + sub_sql.replaceAll("#selector#", "s.sample_id") +" )"
+            sql = (!isSearch && !isSort) ? sql_s_default.replace("#opt#", col_s_sql.toString())
+                    : sql == null && isColumnSearch ? sql_s_default.replace("#opt#", col_s_sql.toString()) + " and  s.sample_id in (" + sub_sql.replaceAll("#selector#", "s.sample_id") +" )"
                     : sql == null ? sub_sql
                     : sql;
             sql = sql.replaceAll("#projectIds#", projectIds).replaceAll("#selector#", "s.*");

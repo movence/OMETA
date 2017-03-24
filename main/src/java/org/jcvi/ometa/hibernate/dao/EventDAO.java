@@ -148,32 +148,31 @@ public class EventDAO extends HibernateDAO {
         try {
             List results = null;
 
-            String sql = " select E.*, S.sample_name sample, CONCAT(A.actor_last_name,',',A.actor_first_name) user, LV.lkuvlu_name eventType  " +
+            StringBuilder sql = new StringBuilder(" select E.*, S.sample_name sample, CONCAT(A.actor_last_name,',',A.actor_first_name) user, LV.lkuvlu_name eventType  " +
                     " from event E " +
                     "   left join sample S on E.event_sampl_id=S.sample_id " +
                     "   left join lookup_value LV on E.event_type_lkuvl_id=LV.lkuvlu_id " +
-                    "   left join actor A on E.event_actor_created_by=A.actor_id where ";
+                    "   left join actor A on E.event_actor_created_by=A.actor_id where ");
 
             if("Sample".equals(identifier))
-                sql += "E.event_sampl_id=";
+                sql.append("E.event_sampl_id=");
             else if("Eventlist".equals(identifier))
-                sql += "E.event_projet_id=";
+                sql.append("E.event_projet_id=");
             else if("Event".equals(identifier))
-                sql += "E.event_id=";
+                sql.append("E.event_id=");
             else
-                sql += "E.event_sampl_id is null and E.event_projet_id=";
-            sql+=flexId;
+                sql.append("E.event_sampl_id is null and E.event_projet_id=");
+            sql.append(flexId);
 
             if(sSearch!=null && !sSearch.isEmpty()) {
                 sSearch = "%"+sSearch+"%";
-                sql+=" and (LOWER(LV.lkuvlu_name) like '"+sSearch+"' or LOWER(S.sample_name) like '"+sSearch+"' " +
-                        " or ((LOWER(A.actor_first_name) like '"+sSearch+"' or LOWER(A.actor_last_name) like '"+sSearch+"')))";
+                sql.append(" and (LOWER(LV.lkuvlu_name) like '").append(sSearch).append("' or LOWER(S.sample_name) like '").append(sSearch).append("' ").append(" or ((LOWER(A.actor_first_name) like '").append(sSearch).append("' or LOWER(A.actor_last_name) like '").append(sSearch).append("')))");
             }
 
             if(columnName!=null && !columnName.isEmpty()){
                 String columnSearchSql = " #logicGate# (E.event_id in (select EA.eventa_event_id from event_attribute EA, lookup_value LV1 where EA.eventa_lkuvlu_attribute_id = LV1.lkuvlu_id and " +
                         "LV1.lkuvlu_name = '#columnName#' and COALESCE(EA.eventa_attribute_date,LOWER(EA.eventa_attribute_float),LOWER(EA.eventa_attribute_str),LOWER(EA.eventa_attribute_int)) #columnSearch#))";
-                sql += " and (";
+                sql.append(" and (");
 
                 for(int i = 0; i<columnName.size(); i++) {
                     String key = columnName.get(i);
@@ -183,13 +182,13 @@ public class EventDAO extends HibernateDAO {
                     String logicGate = i == 0 ? "" : valueArr[2].equals("not") ? "and not" : valueArr[2];
 
                     if (key.equals("Sample Name")) {
-                        sql += operation.equals("like") ? " " + logicGate + " LOWER(S.sample_name) like '%" + searchVal + "%' "
+                        sql.append(operation.equals("like") ? " " + logicGate + " LOWER(S.sample_name) like '%" + searchVal + "%' "
                                 : operation.equals("in") ? " " + logicGate + " LOWER(S.sample_name) in ('" + searchVal.replaceAll(",", "','") + "') "
-                                : " " + logicGate + " LOWER(S.sample_name) = '" + searchVal + "' ";
+                                : " " + logicGate + " LOWER(S.sample_name) = '" + searchVal + "' ");
                     } else if (key.equals("Event Type")) {
-                        sql += operation.equals("like") ? " " + logicGate + " LOWER(LV.lkuvlu_name) like '%" + searchVal + "%' "
+                        sql.append(operation.equals("like") ? " " + logicGate + " LOWER(LV.lkuvlu_name) like '%" + searchVal + "%' "
                                 : operation.equals("in") ? " " + logicGate + " LOWER(LV.lkuvlu_name) in ('" + searchVal.replaceAll(",", "','") + "') "
-                                : " " + logicGate + " LOWER(LV.lkuvlu_name) = '" + searchVal + "' ";
+                                : " " + logicGate + " LOWER(LV.lkuvlu_name) = '" + searchVal + "' ");
                     } else if (key.equals("User")) {
                         String flNameSeparator = ", ";
                         if(searchVal.contains(flNameSeparator)){
@@ -197,49 +196,49 @@ public class EventDAO extends HibernateDAO {
                             String firstName = searchValArr[1];
                             String lastName = searchValArr[0];
 
-                            sql += operation.equals("like") ? " " + logicGate + " (LOWER(A.actor_first_name) like '%" + firstName + "%' or LOWER(A.actor_last_name) like '%" + lastName + "%') "
+                            sql.append(operation.equals("like") ? " " + logicGate + " (LOWER(A.actor_first_name) like '%" + firstName + "%' or LOWER(A.actor_last_name) like '%" + lastName + "%') "
                                     : operation.equals("in") ? " " + logicGate + " (LOWER(A.actor_first_name) in ('" + firstName.replaceAll(",", "','") + "') or LOWER(A.actor_last_name) in ('" + lastName.replaceAll(",", "','") + "')) "
-                                    : " " + logicGate + " (LOWER(A.actor_first_name) = '" + firstName + "' or LOWER(A.actor_last_name) = '" + lastName + "') ";
+                                    : " " + logicGate + " (LOWER(A.actor_first_name) = '" + firstName + "' or LOWER(A.actor_last_name) = '" + lastName + "') ");
                         } else {
-                            sql += operation.equals("like") ? " " + logicGate + " (LOWER(A.actor_first_name) like '%" + searchVal + "%' or LOWER(A.actor_last_name) like '%" + searchVal + "%') "
+                            sql.append(operation.equals("like") ? " " + logicGate + " (LOWER(A.actor_first_name) like '%" + searchVal + "%' or LOWER(A.actor_last_name) like '%" + searchVal + "%') "
                                     : operation.equals("in") ? " " + logicGate + " (LOWER(A.actor_first_name) in ('" + searchVal.replaceAll(",", "','") + "') or LOWER(A.actor_last_name) in ('" + searchVal.replaceAll(",", "','") + "')) "
-                                    : " " + logicGate + " (LOWER(A.actor_first_name) = '" + searchVal + "' or LOWER(A.actor_last_name) = '" + searchVal + "') ";
+                                    : " " + logicGate + " (LOWER(A.actor_first_name) = '" + searchVal + "' or LOWER(A.actor_last_name) = '" + searchVal + "') ");
                         }
                     } else if (key.equals("Date")) {
-                        sql += operation.equals("like") ? " " + logicGate + " E.event_create_date like '%" + searchVal + "%' "
+                        sql.append(operation.equals("like") ? " " + logicGate + " E.event_create_date like '%" + searchVal + "%' "
                                 : operation.equals("in") ? " " + logicGate + " E.event_create_date in ('" + searchVal.replaceAll(",", "','") + "') "
                                 : operation.equals("equals") ? " " + logicGate + " E.event_create_date = '" + searchVal + "' "
-                                : " " + logicGate + " E.event_create_date " + (operation.equals("less")?"<":">") + " '" + searchVal + "' ";
+                                : " " + logicGate + " E.event_create_date " + (operation.equals("less") ? "<" : ">") + " '" + searchVal + "' ");
                     }  else {
-                        sql += operation.equals("like") ? columnSearchSql.replace("#logicGate#", logicGate).replace("#columnName#", key).replace("#columnSearch#", "like '%" + searchVal + "%'")
+                        sql.append(operation.equals("like") ? columnSearchSql.replace("#logicGate#", logicGate).replace("#columnName#", key).replace("#columnSearch#", "like '%" + searchVal + "%'")
                                 : operation.equals("in") ? columnSearchSql.replace("#logicGate#", logicGate).replace("#columnName#", key).replace("#columnSearch#", "in ('" + searchVal.replaceAll(",", "','") + "')")
                                 : operation.equals("equals") ? columnSearchSql.replace("#logicGate#", logicGate).replace("#columnName#", key).replace("#columnSearch#", "= '" + searchVal + "'")
-                                : columnSearchSql.replace("#logicGate#", logicGate).replace("#columnName#", key).replace("#columnSearch#", (operation.equals("less")?"<":">") + " '" + searchVal + "'");
+                                : columnSearchSql.replace("#logicGate#", logicGate).replace("#columnName#", key).replace("#columnSearch#", (operation.equals("less") ? "<" : ">") + " '" + searchVal + "'"));
                     }
                 }
 
-                sql += ")";
+                sql.append(")");
             }
 
             if(fromd!=null && !fromd.isEmpty())
-                sql+=" and date(E.event_create_date)>='"+fromd+"'";
+                sql.append(" and date(E.event_create_date)>='").append(fromd).append("'");
             if(tod!=null && !tod.isEmpty())
-                sql+=" and date(E.event_create_date)<='"+tod+"'";
+                sql.append(" and date(E.event_create_date)<='").append(tod).append("'");
 
             if(sortCol!=null && !sortCol.isEmpty() && sortDir!=null && !sortDir.isEmpty()) {
-                sql += " order by";
+                sql.append(" order by");
                 if(sortCol.equals("event"))
-                    sql += " eventType ";
+                    sql.append(" eventType ");
                 else if(sortCol.equals("user"))
-                    sql += " user ";
+                    sql.append(" user ");
                 else if(sortCol.equals("sample"))
-                    sql += " sample ";
+                    sql.append(" sample ");
                 else if(sortCol.equals("date"))
-                    sql += " event_create_date ";
-                sql += sortDir;
+                    sql.append(" event_create_date ");
+                sql.append(sortDir);
             }
 
-            SQLQuery query = session.createSQLQuery(sql);
+            SQLQuery query = session.createSQLQuery(sql.toString());
             query.addEntity("E", Event.class);
             if(start>=0 && count>=0) {
                 query.setFirstResult(start);

@@ -219,8 +219,8 @@ public class SharedAjax extends ActionSupport implements IAjaxAction {
                 Map<String, Object> projectMap = new HashMap<>();
                 projectMap.put("project", project);
 
-                String projectPIName = "";
-                String projectCoPIName = "";
+                StringBuilder projectPIName = new StringBuilder();
+                StringBuilder projectCoPIName = new StringBuilder();
 
                 List<ProjectAttribute> projectAttributes = readPersister.getProjectAttributes(project.getProjectId());
                 Map<String, Object> attributeMap = new HashMap<>(projectAttributes.size());
@@ -242,13 +242,13 @@ public class SharedAjax extends ActionSupport implements IAjaxAction {
                                 } else if(attrValue.getClass() == Timestamp.class || attrValue.getClass() == Date.class) {
                                     attrValue = CommonTool.convertTimestampToDate(attrValue);
                                 } else if(attributeName.equals("Project_PI_1 First_Name")) {
-                                    projectPIName = attrValue + " ";
+                                    projectPIName = new StringBuilder(attrValue + " ");
                                 } else if(attributeName.equals("Project_PI_1 Last_Name")) {
-                                    projectPIName += attrValue;
+                                    projectPIName.append(attrValue);
                                 } else if(attributeName.equals("Project_PI_2 First_Name")) {
-                                    projectCoPIName = attrValue + " ";
+                                    projectCoPIName = new StringBuilder(attrValue + " ");
                                 } else if(attributeName.equals("Project_PI_2 Last_Name")) {
-                                    projectCoPIName += attrValue;
+                                    projectCoPIName.append(attrValue);
                                 }
                             }
                         }
@@ -256,8 +256,8 @@ public class SharedAjax extends ActionSupport implements IAjaxAction {
                     }
                 }
 
-                attributeMap.put("Project PI", projectPIName.isEmpty() ? "N/A" : projectPIName);
-                attributeMap.put("Project Co-PI", projectCoPIName.isEmpty() ? "N/A" : projectCoPIName);
+                attributeMap.put("Project PI", (projectPIName.length() == 0) ? "N/A" : projectPIName.toString());
+                attributeMap.put("Project Co-PI", (projectCoPIName.length() == 0) ? "N/A" : projectCoPIName.toString());
 
                 projectMap.put("attributes", attributeMap);
                 aaData.add(projectMap);
