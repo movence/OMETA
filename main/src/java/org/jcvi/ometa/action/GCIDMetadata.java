@@ -382,9 +382,7 @@ public class GCIDMetadata extends ActionSupport {
                 StringBuilder sb = new StringBuilder();
                 String delim = "";
 
-                for (int i = 0; i < this.genbankDatabaseNames.length; i++) {
-                    String genbankDatabaseName = this.genbankDatabaseNames[i];
-
+                for (String genbankDatabaseName : this.genbankDatabaseNames) {
                     if (map.containsKey(genbankDatabaseName)) {
                         sb.append(delim).append(
                                 (String) map.get(genbankDatabaseName));
